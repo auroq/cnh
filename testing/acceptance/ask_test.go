@@ -33,8 +33,9 @@ func ask(t *testing.T, question, from string) answer {
 }
 
 var distanceWords = map[distance]string{
-	sameLevel:    "Same level as you",
-	sameBuilding: "Same building, you are on",
+	sameLevel:     "Same level as you",
+	sameBuilding:  "Same building, you are on",
+	otherBuilding: "It is in the",
 }
 
 func saysDistance(summary string, d distance) bool {
@@ -44,7 +45,7 @@ func saysDistance(summary string, d distance) bool {
 				return false
 			}
 		}
-		return !strings.Contains(summary, "It is in the")
+		return true
 	}
 	return strings.Contains(summary, distanceWords[d])
 }
