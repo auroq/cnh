@@ -21,29 +21,29 @@ help: ## Show this help
 
 .PHONY: bootstrap-seed
 bootstrap-seed: ## First run only: create Spaces key + state bucket with local state, then move state into the bucket
-	printf 'terraform {\n  backend "local" {}\n}\n' > bootstrap/zz_seed_override.tf
-	$(OP) terraform -chdir=bootstrap init -upgrade
-	$(OP) terraform -chdir=bootstrap apply -target=onepassword_item.spaces_tfstate -target=digitalocean_project.cnh
-	$(OP) terraform -chdir=bootstrap apply
-	rm bootstrap/zz_seed_override.tf
-	$(TF) -chdir=bootstrap init -migrate-state -force-copy
-	rm -f bootstrap/terraform.tfstate bootstrap/terraform.tfstate.backup
+	printf 'terraform {\n  backend "local" {}\n}\n' > infra/bootstrap/zz_seed_override.tf
+	$(OP) terraform -chdir=infra/bootstrap init -upgrade
+	$(OP) terraform -chdir=infra/bootstrap apply -target=onepassword_item.spaces_tfstate -target=digitalocean_project.cnh
+	$(OP) terraform -chdir=infra/bootstrap apply
+	rm infra/bootstrap/zz_seed_override.tf
+	$(TF) -chdir=infra/bootstrap init -migrate-state -force-copy
+	rm -f infra/bootstrap/terraform.tfstate infra/bootstrap/terraform.tfstate.backup
 
 init-%: ## terraform init for ROOT
-	$(TF) -chdir=$* init -upgrade
+	$(TF) -chdir=infra/$* init -upgrade
 
 validate-%: ## terraform validate for ROOT (no credentials needed)
-	terraform -chdir=$* init -backend=false -upgrade >/dev/null
-	terraform -chdir=$* validate
+	terraform -chdir=infra/$* init -backend=false -upgrade >/dev/null
+	terraform -chdir=infra/$* validate
 
 plan-%: ## terraform plan for ROOT
-	$(TF) -chdir=$* plan
+	$(TF) -chdir=infra/$* plan
 
 apply-%: ## terraform apply for ROOT
-	$(TF) -chdir=$* apply
+	$(TF) -chdir=infra/$* apply
 
 destroy-%: ## terraform destroy for ROOT
-	$(TF) -chdir=$* destroy
+	$(TF) -chdir=infra/$* destroy
 
 .PHONY: up
 up: init-cluster apply-cluster kubeconfig init-platform apply-platform ## Cluster, kubeconfig, then platform add-ons
@@ -51,7 +51,7 @@ up: init-cluster apply-cluster kubeconfig init-platform apply-platform ## Cluste
 .PHONY: kubeconfig
 kubeconfig: ## Write the cluster kubeconfig to .kube/config (mode 600)
 	mkdir -p .kube
-	umask 077; $(TF) -chdir=cluster output -raw kubeconfig > .kube/config
+	umask 077; $(TF) -chdir=infra/cluster output -raw kubeconfig > .kube/config
 	kubectl config rename-context "$$(kubectl config current-context)" cnh
 	$(MAKE) --no-print-directory kubectx-merge
 	kubectl get nodes -o wide
@@ -85,9 +85,9 @@ fmt: ## terraform fmt everything
 
 .PHONY: teardown
 teardown: ## Destroy platform, cluster, then the state bucket (moves bootstrap state back to local first)
-	$(TF) -chdir=platform destroy
-	$(TF) -chdir=cluster destroy
-	printf 'terraform {\n  backend "local" {}\n}\n' > bootstrap/zz_seed_override.tf
-	$(TF) -chdir=bootstrap init -migrate-state -force-copy
-	$(OP) terraform -chdir=bootstrap destroy
-	rm bootstrap/zz_seed_override.tf
+	$(TF) -chdir=infra/platform destroy
+	$(TF) -chdir=infra/cluster destroy
+	printf 'terraform {\n  backend "local" {}\n}\n' > infra/bootstrap/zz_seed_override.tf
+	$(TF) -chdir=infra/bootstrap init -migrate-state -force-copy
+	$(OP) terraform -chdir=infra/bootstrap destroy
+	rm infra/bootstrap/zz_seed_override.tf

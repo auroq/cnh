@@ -1,8 +1,15 @@
-# cnh-platform
+# cnh
 
-The cluster and cluster-wide operators for my Cloud Native Hackathon entry (WeMakeDevs, KubeCon NA 2026, Salt Lake City).
-This repo was built **before** the hackathon as allowed setup (rules 1 and 2): it is the "venue", not the project.
-The project itself lives in its own repo, created after kickoff, and links back here.
+My Cloud Native Hackathon entry (WeMakeDevs, KubeCon NA 2026, Salt Lake City).
+
+## Before vs during the hackathon
+
+Everything up to the git tag **`pre-kickoff`** is setup done before the event, which rules 1 and 2 allow:
+the cluster and cluster-wide operators in `infra/`. It is the "venue", not the project.
+All project code and design starts after kickoff (10:00 MT, 2026-11-09), in commits after that tag.
+`git log pre-kickoff..` shows exactly the hackathon work.
+
+## Infrastructure (`infra/`)
 
 AI use: this repo was written with Claude Code (Anthropic) pairing with me.
 
@@ -10,11 +17,11 @@ AI use: this repo was written with Claude Code (Anthropic) pairing with me.
 
 | Root | State | Creates |
 |---|---|---|
-| `bootstrap/` | Spaces `cnh-tfstate` (seeded locally, then migrated) | DO project `cnh`, Spaces key (saved to 1Password), versioned state bucket |
-| `cluster/` | Spaces | VPC, DOKS in `sfo3` (3–5 × `g-8vcpu-32gb`), DO DNS zone `cnh.auroq.com` |
-| `platform/` | Spaces | Envoy Gateway + wildcard TLS (cert-manager, DNS-01), external-dns, ECK operator, Argo CD, Dash0 operator, Radar Cloud agent |
+| `infra/bootstrap/` | Spaces `cnh-tfstate` (seeded locally, then migrated) | DO project `cnh`, Spaces key (saved to 1Password), versioned state bucket |
+| `infra/cluster/` | Spaces | VPC, DOKS in `sfo3` (3–5 × `g-8vcpu-32gb`), DO DNS zone `cnh.auroq.com` |
+| `infra/platform/` | Spaces | Envoy Gateway + wildcard TLS (cert-manager, DNS-01), external-dns, ECK operator, Argo CD, Dash0 operator, Radar Cloud agent |
 
-`sandbox/` holds learning-only manifests: the OpenTelemetry demo as an Argo CD app, a single-node ECK Elasticsearch + Kibana, and a local docker compose for Elasticsearch.
+`infra/sandbox/` holds learning-only manifests: the OpenTelemetry demo as an Argo CD app, a single-node ECK Elasticsearch + Kibana, and a local docker compose for Elasticsearch.
 
 ## Secrets
 
