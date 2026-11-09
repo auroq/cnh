@@ -90,3 +90,27 @@ jobs:
           go-version-file: go.mod
       - name: Every import points inward
         run: tools/archcheck.sh
+  integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: Start Elasticsearch with the same compose file developers use
+        run: docker compose up -d --wait es
+      - name: Wait for ELSER so semantic_text writes do not race the model download
+        run: ES_URL=http://127.0.0.1:19200 ES_USERNAME=elastic tools/es-warm.sh --timeout 900
+        env:
+          ES_PASSWORD: widedoor-dev
+      - name: Integration tests against it
+        run: ES_URL=http://127.0.0.1:19200 ES_USERNAME=elastic go test -race -count=1 ./testing/integration/... 2>&1 | tee -a "$GITHUB_STEP_SUMMARY"
+        env:
+          ES_PASSWORD: widedoor-dev
+      - name: Elasticsearch logs on failure
+        if: failure()
+        run: docker compose logs es | tail -100
+      - name: Stop Elasticsearch
+        if: always()
+        run: docker compose down -v
