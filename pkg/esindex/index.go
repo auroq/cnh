@@ -109,7 +109,7 @@ func sessionDoc(s schedule.Session, now time.Time) map[string]any {
 func placeDoc(p venue.Place, now time.Time) map[string]any {
 	return map[string]any{
 		"id": p.ID, "kind": p.Kind, "name": p.Name, "venue": p.Venue, "level": p.Level,
-		"near": p.Near, "notes": p.Notes, "for": p.For, "verified": p.Verified, "source": p.Source,
+		"near": p.Near, "notes": p.Notes, "for": p.For, "route": p.Route, "verified": p.Verified, "source": p.Source,
 		"content": placeContent(p), "ingested_at": now,
 	}
 }
@@ -145,6 +145,7 @@ var PlacesMapping = map[string]any{
 			"near":        map[string]any{"type": "text"},
 			"notes":       map[string]any{"type": "text"},
 			"for":         map[string]any{"type": "keyword"},
+			"route":       map[string]any{"type": "text"},
 			"verified":    map[string]any{"type": "boolean"},
 			"source":      map[string]any{"type": "keyword", "index": false},
 			"content":     map[string]any{"type": "semantic_text"},

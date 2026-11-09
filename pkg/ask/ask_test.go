@@ -43,6 +43,7 @@ func TestRankByNearness(t *testing.T) {
 func TestSummarise(t *testing.T) {
 	restroom := Place{Name: "All-gender restroom outside 255", Venue: "Salt Palace", Level: "Level 2", Near: "Outside room 255", Verified: true}
 	elevator := Place{Name: "Elevators", Venue: "Salt Palace", Verified: false}
+	prayer := Place{Name: "Prayer room", Venue: "Hyatt Regency", Level: "Level 5", Near: "Zion room", Verified: true, Route: []string{"The Hyatt connects to the Salt Palace at the hotel lobby, Level 1."}}
 	cases := []struct {
 		name string
 		ans  Answer
@@ -50,8 +51,16 @@ func TestSummarise(t *testing.T) {
 	}{
 		{"same level", Answer{Here: Here{Venue: "Salt Palace", Level: "Level 2"}, Places: []Place{restroom}},
 			"All-gender restroom outside 255: Salt Palace, Level 2, Outside room 255. Same level as you, no stairs or elevator. Published by the organiser."},
+		{"one level up", Answer{Here: Here{Venue: "Salt Palace", Level: "Level 1"}, Places: []Place{restroom}},
+			"All-gender restroom outside 255: Salt Palace, Level 2, Outside room 255. Same building, one level up, by elevator or stairs. Published by the organiser."},
+		{"two levels down", Answer{Here: Here{Venue: "Salt Palace", Level: "Level 4"}, Places: []Place{restroom}},
+			"All-gender restroom outside 255: Salt Palace, Level 2, Outside room 255. Same building, two levels down, by elevator or stairs. Published by the organiser."},
+		{"same building and the place's level is unknown", Answer{Here: Here{Venue: "Salt Palace", Level: "Level 1"}, Places: []Place{elevator}},
+			"Elevators: Salt Palace. Same building, we do not know which level it is on. Unverified: read off a plan, nobody has checked it yet."},
 		{"other building", Answer{Here: Here{Venue: "Hyatt Regency", Level: "Level 4"}, Places: []Place{restroom}},
 			"All-gender restroom outside 255: Salt Palace, Level 2, Outside room 255. It is in the Salt Palace, you are in the Hyatt Regency. Published by the organiser."},
+		{"other building with a known route", Answer{Here: Here{Venue: "Salt Palace", Level: "Level 2"}, Places: []Place{prayer}},
+			"Prayer room: Hyatt Regency, Level 5, Zion room. It is in the Hyatt Regency, you are in the Salt Palace. The Hyatt connects to the Salt Palace at the hotel lobby, Level 1. Published by the organiser."},
 		{"unverified", Answer{Places: []Place{elevator}},
 			"Elevators: Salt Palace. Unverified: read off a plan, nobody has checked it yet."},
 		{"nothing", Answer{}, "Nothing matched. Try other words, or ask staff at registration."},
@@ -60,7 +69,7 @@ func TestSummarise(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run("when the answer is "+c.name, func(t *testing.T) {
-			t.Run("it should say where, how far, and whether it is verified", func(t *testing.T) {
+			t.Run("it should say where, the route facts it knows, and whether it is verified", func(t *testing.T) {
 				if got := Summarise(c.ans); got != c.want {
 					t.Fatalf("\n got %q\nwant %q", got, c.want)
 				}

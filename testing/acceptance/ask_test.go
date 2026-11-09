@@ -34,7 +34,7 @@ func ask(t *testing.T, question, from string) answer {
 
 var distanceWords = map[distance]string{
 	sameLevel:     "Same level as you",
-	sameBuilding:  "Same building, you are on",
+	sameBuilding:  "Same building,",
 	otherBuilding: "It is in the",
 }
 
