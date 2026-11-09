@@ -64,7 +64,7 @@ variable "enable_sandbox" {
 variable "enable_cd_gate" {
   type        = bool
   default     = false
-  description = "Create the cd-gate ServiceAccount, its token and the CD_KUBECONFIG and CD_GITHUB_TOKEN repository secrets (ADR 0008). Needs the 1Password item \"CD GitHub Token CNH\"."
+  description = "Create the cd-gate ServiceAccount, its token and the CD_KUBECONFIG repository secret (ADR 0008). Reads the GitHub token from the 1Password item \"CNH GitHub CD\"."
 }
 
 variable "github_repository" {

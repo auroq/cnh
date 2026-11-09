@@ -6,3 +6,5 @@ enable_radar     = true
 radar_cluster_id = "WPcuS8CDZUo"
 
 enable_sandbox = false
+
+enable_cd_gate = true

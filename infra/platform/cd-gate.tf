@@ -1,12 +1,12 @@
 # The post-deploy gate's identity (roadmap item 036, ADR 0008): a ServiceAccount that can only read
-# rollouts, replicasets and pods in the app namespace, a time-bound token for it, and the two GitHub
-# Actions secrets CD needs. Every secret value comes from 1Password or the cluster and goes to GitHub
-# and the vault without touching a terminal.
+# rollouts, replicasets and pods in the app namespace, a time-bound token for it, and the CD_KUBECONFIG
+# GitHub Actions secret built from it. CD_GITHUB_TOKEN was set by Aria from the same vault item this
+# provider reads. No secret value touches a terminal.
 
 data "onepassword_item" "cd_github_token" {
   count = var.enable_cd_gate ? 1 : 0
   vault = data.onepassword_vault.cnh.uuid
-  title = "CD GitHub Token CNH"
+  title = "CNH GitHub CD"
 }
 
 provider "github" {
@@ -114,14 +114,6 @@ resource "github_actions_secret" "cd_kubeconfig" {
   repository      = split("/", var.github_repository)[1]
   secret_name     = "CD_KUBECONFIG"
   plaintext_value = local.cd_kubeconfig
-}
-
-resource "github_actions_secret" "cd_github_token" {
-  count = var.enable_cd_gate ? 1 : 0
-
-  repository      = split("/", var.github_repository)[1]
-  secret_name     = "CD_GITHUB_TOKEN"
-  plaintext_value = data.onepassword_item.cd_github_token[0].credential
 }
 
 resource "onepassword_item" "cd_kubeconfig" {
