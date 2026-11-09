@@ -1,12 +1,6 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
 const learnedSentence = "Added Step-free only to what Wide Door knows about you, because you asked for an elevator";
-
-async function openPanel(page: Page) {
-  const panel = page.locator("details.profile");
-  if (!(await panel.getAttribute("open"))) await panel.locator("summary").first().click();
-  return panel;
-}
 
 test.describe("when I ask for the nearest elevator with no profile", () => {
   test.beforeEach(async ({ page }) => {
@@ -18,19 +12,16 @@ test.describe("when I ask for the nearest elevator with no profile", () => {
   });
 
   test("it should name the learned chip's remove button with where it came from", async ({ page }) => {
-    await openPanel(page);
     await expect(page.getByRole("button", { name: "Remove Step-free only, from your question" })).toBeVisible();
   });
 
   test("it should offer to keep the chip as my own choice", async ({ page }) => {
-    await openPanel(page);
     await expect(page.getByRole("button", { name: "Keep Step-free only" })).toBeVisible();
   });
 
   test.describe("and I remove it with the keyboard only", () => {
     test.beforeEach(async ({ page }) => {
-      await openPanel(page);
-      await page.getByRole("button", { name: "Remove Step-free only, from your question" }).focus();
+        await page.getByRole("button", { name: "Remove Step-free only, from your question" }).focus();
       await page.keyboard.press("Enter");
       await page.waitForURL(/removed=step-free/);
     });
@@ -41,7 +32,6 @@ test.describe("when I ask for the nearest elevator with no profile", () => {
 
     test("it should not add the chip back when I ask again", async ({ page }) => {
       await page.goto("/ask?q=nearest+elevator");
-      await openPanel(page);
       await expect(page.getByRole("button", { name: "Add Step-free only" })).toBeVisible();
     });
   });

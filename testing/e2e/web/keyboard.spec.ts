@@ -4,6 +4,7 @@ import { question } from "../helpers/pages.js";
 const stops: { name: string; find: (page: Page) => Locator }[] = [
   { name: "the skip link", find: (p) => p.getByRole("link", { name: "Skip to the answer" }) },
   { name: "the home link", find: (p) => p.getByRole("link", { name: "Wide Door" }) },
+  { name: "the profile Edit link", find: (p) => p.getByRole("link", { name: "Edit your profile" }) },
   { name: "the question field", find: (p) => p.getByRole("searchbox", { name: "What do you need?" }) },
   { name: "the location field", find: (p) => p.getByRole("textbox", { name: /Where are you\?/ }) },
   { name: "the Ask button", find: (p) => p.getByRole("button", { name: "Ask" }) },
