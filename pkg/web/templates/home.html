@@ -7,7 +7,7 @@
 <meta name="description" content="Ask the venue where the nearest step-free route, elevator, quiet room, all-gender restroom or session is. Built for screen readers, keyboards and large text.">
 <link rel="stylesheet" href="/static/style.css">
 </head>
-<body data-prefs="{{.Prefs}}"{{if .Forgot}} data-forgot="1"{{end}} data-sched="{{.Sched}}"{{if .ForgotSched}} data-forgot-sched="1"{{end}}>
+<body data-prefs="{{.Prefs}}"{{if .PrefsKnown}} data-prefs-known="1"{{end}}{{if .Forgot}} data-forgot="1"{{end}} data-sched="{{.Sched}}"{{if .ForgotSched}} data-forgot-sched="1"{{end}}>
 <a class="skip" href="#answer">Skip to the answer</a>
 <header>
   <h1>{{if and .Prefs .Sched}}<a href="/?prefs={{.Prefs}}&amp;sched={{.Sched}}">{{else if .Prefs}}<a href="/?prefs={{.Prefs}}">{{else if .Sched}}<a href="/?sched={{.Sched}}">{{else}}<a href="/">{{end}}Wide Door</a></h1>
@@ -126,7 +126,7 @@
 (function () {
   try {
     var body = document.body, u = new URL(location.href), changed = false;
-    [["prefs", "wd_prefs", body.dataset.prefs, body.dataset.forgot], ["sched", "wd_sched", body.dataset.sched, body.dataset.forgotSched]].forEach(function (p) {
+    [["prefs", "wd_prefs", body.dataset.prefs, body.dataset.forgot || (body.dataset.prefsKnown && !body.dataset.prefs)], ["sched", "wd_sched", body.dataset.sched, body.dataset.forgotSched]].forEach(function (p) {
       var param = p[0], key = p[1], value = p[2], forgot = p[3];
       if (forgot) { localStorage.removeItem(key); }
       else if (value) { localStorage.setItem(key, value); }

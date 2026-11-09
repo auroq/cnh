@@ -76,6 +76,7 @@ type page struct {
 	EditURL     string
 	Status      string
 	Forgot      bool
+	PrefsKnown  bool
 
 	Sched         string
 	Schedule      *model.Schedule

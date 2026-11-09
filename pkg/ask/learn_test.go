@@ -20,6 +20,7 @@ func TestLearned(t *testing.T) {
 		{"I can't do stairs", mobility, "step-free", "a step-free way in"},
 		{"how do I get in without stairs", nil, "step-free", "stairs"},
 		{"I use a wheelchair, where is the ramp", nil, "step-free,wheels", "a wheelchair or scooter"},
+		{"nearest wheelchair ramp", nil, "step-free,wheels", "a wheelchair or scooter"},
 		{"scooter rental", nil, "step-free,wheels", "a wheelchair or scooter"},
 		{"nearest quiet room", nil, "quiet-matters", "a quiet room"},
 		{"I am overwhelmed", nil, "quiet-matters", "a rest"},

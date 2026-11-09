@@ -45,7 +45,9 @@ Its panels are the accessibility story in metrics: ask latency, answers by kind 
 ## What we store and why
 
 Nothing about a person.
-The profile panel "What Wide Door knows about you" holds chips that are needs, not diagnoses: step-free only, avoid crowds and noise, quiet spaces matter, all-gender restrooms, captions or ASL, I use a wheelchair or scooter, dietary needs.
+The profile panel "What Wide Door knows about you" holds chips that are needs, not diagnoses: step-free only, avoid crowds and noise, quiet spaces matter, all-gender restrooms, captions or ASL, wide doors and ramps, dietary needs.
+A chip names the barrier or the requirement, never the device or the person, so a wheelchair user, a scooter user, a parent with a stroller and a person with a walker state the same need without saying who they are.
+The chip id `wheels` is historical, from before the label was renamed in item 112, and stays so that cookies and saved links set earlier keep working.
 The chips live on the attendee's device only: in the `prefs` query parameter, in the first-party cookie `wd_prefs` (SameSite=Strict, Secure, expires when the conference ends on Thursday 2026-11-12) and in localStorage.
 The server reads them on each request to render the panel and shape the answer, then forgets them: there is no account, no session, no profile in any index, and the request log omits `prefs`.
 The only trace is the counter `widedoor.profile.chip_used` with one attribute, `chip`, so Dash0 shows how often each need is stated and never a combination that could identify someone.
