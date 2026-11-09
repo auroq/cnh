@@ -34,19 +34,8 @@ spec:
               type: RuntimeDefault
           containers:
             - name: ingest
-              image: ghcr.io/auroq/cnh/ingest:d038832bd869a67a12b39befb032bc7d9e9c5f1d
-              imagePullPolicy: IfNotPresent
-              readinessProbe:
-                exec:
-                  command: ["/app", "--health-check"]
-                periodSeconds: 10
-                timeoutSeconds: 2
-              livenessProbe:
-                exec:
-                  command: ["/app", "--health-check"]
-                initialDelaySeconds: 30
-                periodSeconds: 30
-                timeoutSeconds: 2
+              image: ghcr.io/auroq/cnh/ingest:main
+              imagePullPolicy: Always
               env:
                 - name: ES_URL
                   value: http://wide-door-es-http:9200
