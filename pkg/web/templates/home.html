@@ -7,7 +7,7 @@
 <meta name="description" content="Ask the venue where the nearest step-free route, elevator, quiet room, all-gender restroom or session is. Built for screen readers, keyboards and large text.">
 <link rel="stylesheet" href="/static/style.css">
 </head>
-<body data-prefs="{{.Prefs}}"{{if .Forgot}} data-forgot="1"{{end}}>
+<body data-prefs="{{.Prefs}}"{{if .PrefsKnown}} data-prefs-known="1"{{end}}{{if .Forgot}} data-forgot="1"{{end}}>
 <a class="skip" href="#answer">Skip to the answer</a>
 <header>
   <h1><a href="/{{if .Prefs}}?prefs={{.Prefs}}{{end}}">Wide Door</a></h1>
@@ -91,7 +91,7 @@
 (function () {
   try {
     var body = document.body, prefs = body.dataset.prefs, key = "wd_prefs";
-    if (body.dataset.forgot) { localStorage.removeItem(key); }
+    if (body.dataset.forgot || (body.dataset.prefsKnown && !prefs)) { localStorage.removeItem(key); }
     else if (prefs) { localStorage.setItem(key, prefs); }
     else {
       var saved = localStorage.getItem(key);

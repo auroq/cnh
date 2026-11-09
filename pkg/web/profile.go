@@ -122,6 +122,7 @@ func (s *Server) describeProfile(p *page, r *http.Request, prefs model.Preferenc
 	p.Chips = chips(prefs)
 	p.Count = countWords(len(prefs))
 	p.ProfileOpen = r.URL.Path == profilePath
+	p.PrefsKnown = profileKnown(r)
 	p.EditURL = editURL(r, prefs)
 	if len(prefs) > 0 {
 		p.ProfileURL = profileURL(r, prefs)
@@ -137,6 +138,28 @@ func (s *Server) describeProfile(p *page, r *http.Request, prefs model.Preferenc
 	case q.Get(removedParam) != "":
 		p.Status = "Removed " + labelOf(q.Get(removedParam)) + " from what Wide Door knows about you."
 	}
+}
+
+// profileKnown says the server rendered the profile from what the browser sent or from an edit it just made,
+// so the browser's own copy must follow the page and never restore over it.
+func profileKnown(r *http.Request) bool {
+	q := r.URL.Query()
+	if q.Has(prefsParam) {
+		return true
+	}
+	if r.URL.Path == profilePath {
+		for _, p := range []string{addedParam, keptParam, removedParam, forgotParam} {
+			if q.Has(p) {
+				return true
+			}
+		}
+	}
+	for _, name := range []string{prefsCookie, declinedCookie} {
+		if _, err := r.Cookie(name); err == nil {
+			return true
+		}
+	}
+	return false
 }
 
 func countWords(n int) string {
