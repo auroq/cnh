@@ -27,38 +27,60 @@ const (
 	Learned Source = "learned"
 )
 
-// Pick is one chip in a profile with where it came from.
+// Strength says what a chip does to an answer: Prefer ranks matching places first, Must removes the rest.
+// A learned chip is always Prefer; Must is a deliberate choice.
+type Strength string
+
+const (
+	Prefer Strength = "prefer"
+	Must   Strength = "must"
+)
+
+// Pick is one chip in a profile with where it came from and how hard it binds.
 type Pick struct {
-	Chip   string
-	Source Source
+	Chip     string
+	Source   Source
+	Strength Strength
 }
 
 // Preferences is the attendee's profile: the chips they hold, in catalogue order, each at most once.
-// Encoded as comma-separated ids, a learned chip carrying a trailing "~": "step-free,quiet-matters~".
+// Encoded as comma-separated ids, a learned chip carrying a trailing "~" and a must a trailing "!": "step-free!,quiet-matters~".
 type Preferences []Pick
 
-const learnedMark = "~"
+const (
+	learnedMark = "~"
+	mustMark    = "!"
+)
 
-// ParsePreferences reads the encoding above, dropping unknown ids and duplicates; a chosen chip outranks a learned one.
+// ParsePreferences reads the encoding above, dropping unknown ids and duplicates; a chosen chip outranks a learned one and a must outranks a prefer.
 func ParsePreferences(s string) Preferences {
-	sources := map[string]Source{}
+	picks := map[string]Pick{}
 	for _, raw := range strings.Split(s, ",") {
 		id := strings.TrimSpace(raw)
-		source := Chosen
-		if strings.HasSuffix(id, learnedMark) {
-			id, source = strings.TrimSuffix(id, learnedMark), Learned
+		pick := Pick{Source: Chosen, Strength: Prefer}
+		switch {
+		case strings.HasSuffix(id, mustMark):
+			id, pick.Strength = strings.TrimSuffix(id, mustMark), Must
+		case strings.HasSuffix(id, learnedMark):
+			id, pick.Source = strings.TrimSuffix(id, learnedMark), Learned
 		}
-		if sources[id] != Chosen {
-			sources[id] = source
-		}
+		pick.Chip = id
+		picks[id] = stronger(picks[id], pick)
 	}
 	var out Preferences
 	for _, c := range Chips {
-		if source, ok := sources[c.ID]; ok {
-			out = append(out, Pick{Chip: c.ID, Source: source})
+		if pick, ok := picks[c.ID]; ok {
+			out = append(out, pick)
 		}
 	}
 	return out
+}
+
+func stronger(have, next Pick) Pick {
+	if have.Chip == "" || have.Source == Learned && next.Source == Chosen || next.Strength == Must {
+		return next
+	}
+	return have
 }
 
 func (p Preferences) Has(id string) bool {
@@ -70,9 +92,18 @@ func (p Preferences) Has(id string) bool {
 	return false
 }
 
-// With adds id as a chosen chip, promoting it if it was only learned.
+// With adds id as a chosen chip, promoting it if it was only learned; a must stays a must.
 func (p Preferences) With(id string) Preferences {
 	return ParsePreferences(p.String() + "," + id)
+}
+
+// WithStrength sets id as a chosen chip at the given strength, replacing whatever it was.
+func (p Preferences) WithStrength(id string, strength Strength) Preferences {
+	mark := ""
+	if strength == Must {
+		mark = mustMark
+	}
+	return ParsePreferences(p.Without(id).String() + "," + id + mark)
 }
 
 // WithLearned adds id as a learned chip; a chip already held keeps its source.
@@ -88,6 +119,36 @@ func (p Preferences) IsLearned(id string) bool {
 		}
 	}
 	return false
+}
+
+// IsMust says whether id filters answers rather than ranking them.
+func (p Preferences) IsMust(id string) bool {
+	return p.StrengthOf(id) == Must
+}
+
+// StrengthOf is the strength of id, or "" when the profile does not hold it.
+func (p Preferences) StrengthOf(id string) Strength {
+	for _, pick := range p {
+		if pick.Chip == id {
+			return pick.Strength
+		}
+	}
+	return ""
+}
+
+// Musts counts the chips that filter; Prefers counts the rest.
+func (p Preferences) Musts() int {
+	n := 0
+	for _, pick := range p {
+		if pick.Strength == Must {
+			n++
+		}
+	}
+	return n
+}
+
+func (p Preferences) Prefers() int {
+	return len(p) - p.Musts()
 }
 
 func (p Preferences) Without(id string) Preferences {
@@ -112,9 +173,12 @@ func (p Preferences) IDs() []string {
 func (p Preferences) String() string {
 	parts := make([]string, 0, len(p))
 	for _, pick := range p {
-		if pick.Source == Learned {
+		switch {
+		case pick.Strength == Must:
+			parts = append(parts, pick.Chip+mustMark)
+		case pick.Source == Learned:
 			parts = append(parts, pick.Chip+learnedMark)
-		} else {
+		default:
 			parts = append(parts, pick.Chip)
 		}
 	}
@@ -123,6 +187,7 @@ func (p Preferences) String() string {
 
 // Applied says how one chip changed an answer, in words an attendee can read.
 type Applied struct {
-	Chip   string `json:"chip"`
-	Effect string `json:"effect"`
+	Chip     string   `json:"chip"`
+	Effect   string   `json:"effect"`
+	Strength Strength `json:"strength,omitempty"`
 }

@@ -62,13 +62,46 @@ func preferredKinds(ans *Answer, question, kind string, prefs Preferences) []str
 	return kinds
 }
 
+// applyMusts is the hook after ranking: a Must chip removes every place that does not meet it.
+// When nothing remains, the nearest place stays, marked with the chip it does not meet, and the summary says so.
+func applyMusts(ans *Answer, question string, prefs Preferences) {
+	kind := KindOf(question)
+	for _, e := range kindEffects {
+		if !prefs.IsMust(e.chip) || !e.when(question, kind) || len(ans.Places) == 0 {
+			continue
+		}
+		var kept []Place
+		for _, p := range ans.Places {
+			if kindIn(p.Kind, e.kinds) {
+				kept = append(kept, p)
+			}
+		}
+		if len(kept) > 0 {
+			ans.Places = kept
+			addApplied(ans, e.chip, "only "+strings.TrimSuffix(e.says, " first"))
+			continue
+		}
+		nearest := ans.Places[0]
+		nearest.DoesNotMeet = append(nearest.DoesNotMeet, e.chip)
+		ans.Places = []Place{nearest}
+		ans.Unmet = append(ans.Unmet, e.chip)
+		addApplied(ans, e.chip, "nothing met it, the nearest otherwise is shown")
+	}
+}
+
 // shapeSummary is the hook after Summarise: the sentences the profile adds, each a row above.
 func shapeSummary(ans *Answer, prefs Preferences) {
+	if len(ans.Unmet) > 0 && len(ans.Places) > 0 {
+		ans.Summary = "Nothing we know meets: " + strings.Join(ans.Unmet, ", ") + ". Nearest otherwise: " + ans.Places[0].Name + "."
+	}
 	for _, e := range summaryEffects {
-		if prefs.Has(e.chip) && e.when(*ans) && !strings.Contains(ans.Summary, e.note) {
+		if prefs.Has(e.chip) && e.when(*ans) && len(ans.Unmet) == 0 && !strings.Contains(ans.Summary, e.note) {
 			ans.Summary += " " + e.note
 			addApplied(ans, e.chip, e.says)
 		}
+	}
+	for i, a := range ans.Applied {
+		ans.Applied[i].Strength = prefs.StrengthOf(a.Chip)
 	}
 }
 
@@ -82,6 +115,15 @@ func addApplied(ans *Answer, chip, says string) {
 		}
 	}
 	ans.Applied = append(ans.Applied, model.Applied{Chip: chip, Effect: says})
+}
+
+func kindIn(kind string, kinds []string) bool {
+	for _, k := range kinds {
+		if k == kind {
+			return true
+		}
+	}
+	return false
 }
 
 func appendMissing(kinds []string, more ...string) []string {
