@@ -13,10 +13,10 @@ the issue it is for in the body (Gitar approves only PRs that cite one, ADR 0009
 a "gitar display:verbose" and "gitar auto-apply:off" comment, then GitHub auto-merge (squash).
 With --existing, only applies the comment and auto-merge to an already open PR.
 
-  --closes N         the roadmap issue this PR finishes ("Closes #N" goes in the body)
-  --refs N           the roadmap issue this PR is part of ("Refs #N" goes in the body)
+  --closes N         the roadmap issue this PR finishes ("Closes #N" opens the body)
+  --refs N           the roadmap issue this PR is part of ("Refs #N" opens the body)
   --title TEXT       PR title
-  --body-file FILE   PR body from a file (the issue line and the Claude Code footer are appended)
+  --body-file FILE   PR body from a file (the issue line goes first, the Claude Code footer last)
   --body TEXT        PR body inline (same)
   --base BRANCH      target branch (default main)
   --existing NUMBER  apply comment and auto-merge to PR NUMBER instead of opening one
@@ -54,7 +54,7 @@ if [[ -z "$existing" ]]; then
   fi
   [[ -n "$body" ]] || { echo "--body or --body-file is required" >&2; exit 2; }
   head="$(git rev-parse --abbrev-ref HEAD)"
-  url="$(gh pr create --repo "$repo" --base "$base" --head "$head" --title "$title" --body "${body}"$'\n\n'"${issue_line}${footer}")"
+  url="$(gh pr create --repo "$repo" --base "$base" --head "$head" --title "$title" --body "${issue_line}"$'\n\n'"${body}${footer}")"
   existing="${url##*/}"
   echo "$url"
 fi
