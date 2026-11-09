@@ -41,8 +41,9 @@ type Server struct {
 	tracer   trace.TracerProvider
 	meter    metric.MeterProvider
 
-	once        sync.Once
-	chipCounter metric.Int64Counter
+	once               sync.Once
+	chipCounter        metric.Int64Counter
+	chipLearnedCounter metric.Int64Counter
 }
 
 // Option adjusts a Server; nil tracing options mean the OpenTelemetry globals.
@@ -130,7 +131,6 @@ func (s *Server) home(w http.ResponseWriter, r *http.Request) {
 	from := strings.TrimSpace(r.URL.Query().Get("from"))
 	prefs := s.preferences(w, r)
 	p := page{Title: "Wide Door", Question: q, From: from, Kinds: quickKinds, Reported: reportMessage(r.URL.Query().Get("reported")), CanReport: s.reporter != nil}
-	s.describeProfile(&p, r, prefs)
 	if q == "" && from != "" {
 		ctx, cancel := context.WithTimeout(r.Context(), askTimeout)
 		defer cancel()
@@ -153,8 +153,12 @@ func (s *Server) home(w http.ResponseWriter, r *http.Request) {
 		} else {
 			p.Answer = &a
 			p.Title = a.Summary + " | Wide Door"
+			if r.URL.Path != profilePath {
+				prefs = s.learn(ctx, w, r, &p, prefs, a.Learned)
+			}
 		}
 	}
+	s.describeProfile(&p, r, prefs)
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	if err := s.tmpl.ExecuteTemplate(w, "home.html", p); err != nil {
 		s.log.ErrorContext(r.Context(), "render", "err", err.Error())

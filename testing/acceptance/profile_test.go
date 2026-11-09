@@ -19,6 +19,15 @@ const (
 
 func request(t *testing.T, method, path string, query url.Values, cookie, form string) *http.Response {
 	t.Helper()
+	cookies := map[string]string{}
+	if cookie != "" {
+		cookies[prefsCookie] = cookie
+	}
+	return requestWith(t, method, path, query, cookies, form)
+}
+
+func requestWith(t *testing.T, method, path string, query url.Values, cookies map[string]string, form string) *http.Response {
+	t.Helper()
 	u := helpers.BaseURL(t) + path
 	if len(query) > 0 {
 		u += "?" + query.Encode()
@@ -32,8 +41,8 @@ func request(t *testing.T, method, path string, query url.Values, cookie, form s
 	if form != "" {
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	}
-	if cookie != "" {
-		req.AddCookie(&http.Cookie{Name: prefsCookie, Value: cookie})
+	for name, value := range cookies {
+		req.AddCookie(&http.Cookie{Name: name, Value: value})
 	}
 	client := &http.Client{Timeout: 20 * time.Second, CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}
 	res, err := client.Do(req)

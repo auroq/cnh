@@ -75,6 +75,21 @@ func (p Preferences) With(id string) Preferences {
 	return ParsePreferences(p.String() + "," + id)
 }
 
+// WithLearned adds id as a learned chip; a chip already held keeps its source.
+func (p Preferences) WithLearned(id string) Preferences {
+	return ParsePreferences(p.String() + "," + id + learnedMark)
+}
+
+// IsLearned says whether id is in the profile because a question implied it, not because the attendee chose it.
+func (p Preferences) IsLearned(id string) bool {
+	for _, pick := range p {
+		if pick.Chip == id {
+			return pick.Source == Learned
+		}
+	}
+	return false
+}
+
 func (p Preferences) Without(id string) Preferences {
 	var out Preferences
 	for _, pick := range p {

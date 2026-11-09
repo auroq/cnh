@@ -17,3 +17,4 @@ A record is accepted or proposed; a decision that changes gets a new record that
 | [0010](0010-gitar-approval-is-advisory.md) | Gitar's approval is advisory on a single-author repository; the status checks are the gate | Accepted |
 | [0011](0011-types-live-by-kind.md) | types live by kind: `pkg/model`, private adapter shapes, `pkg/api/v1` | Accepted |
 | [0012](0012-how-we-describe-distance.md) | distance is route facts (level change, elevator, connection), never a single walk time | Accepted |
+| [0013](0013-gitar-blocks-on-important-findings.md) | Gitar requests changes on important findings and GitHub refuses the merge; approval stays advisory | Accepted |
