@@ -1,7 +1,7 @@
 # Gitar's approval as the merge gate, 2026-11-09 afternoon
 
 Evidence for roadmap item 043 and the Gitar/Sonar "Never Merge Broken" track.
-From 15:00 MT, `main` requires one approving review besides the status checks, and Gitar posts that review only when [`.gitar/config/approve.md`](../../.gitar/config/approve.md) holds ([ADR 0009](../adr/0009-gitar-approval-is-the-merge-gate.md)).
+At 15:00 MT, `main` began requiring one approving review besides the status checks, and Gitar posts that review only when [`.gitar/config/approve.md`](../../.gitar/config/approve.md) holds ([ADR 0009](../adr/0009-gitar-approval-is-the-merge-gate.md)).
 
 ## Why it was needed
 
@@ -11,7 +11,7 @@ A status check says "I reviewed", not "I agree"; the approving review is the ver
 ## Approved and merged by Gitar alone
 
 - PR 42 (roadmap bookkeeping, documentation only): Gitar `APPROVED`, auto-merge completed.
-- PR 48 (`AI_USAGE.md` brought current, documentation only): Gitar commented, then `APPROVED` ("Gitar has auto-approved this PR"), and GitHub's auto-merge merged it at 20:13:40 UTC with no human review.
+- PR 48 (`AI_USAGE.md` brought current, documentation only): Gitar commented, then `APPROVED` ("Gitar has auto-approved this PR"), and GitHub's auto-merge merged it at 20:13:40 UTC (13:13:40 MT), before the gate began at 15:00 MT; this merge is not evidence of the gate enforcing approval.
 
 ## Withheld
 
