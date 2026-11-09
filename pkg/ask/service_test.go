@@ -4,20 +4,26 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 )
 
 type fakeStore struct {
-	room     Here
-	places   []Place
-	sessions []Session
-	needs    []NeedMatch
-	byKind   map[string][]Place
-	err      error
-	located  []string
-	searched []string
-	guessed  []string
-	kinds    []string
-
+	room          Here
+	fuzzy         Here
+	alias         Here
+	session       Here
+	nearby        Here
+	places        []Place
+	sessions      []Session
+	needs         []NeedMatch
+	byKind        map[string][]Place
+	err           error
+	located       []string
+	rules         []string
+	sessionNow    time.Time
+	searched      []string
+	guessed       []string
+	kinds         []string
 	noneOfAnyKind bool
 }
 
@@ -25,7 +31,29 @@ func (f *fakeStore) Ping(context.Context) error { return f.err }
 
 func (f *fakeStore) LocateRoom(_ context.Context, asked string) (Here, error) {
 	f.located = append(f.located, asked)
+	f.rules = append(f.rules, ViaRoom)
 	return f.room, f.err
+}
+
+func (f *fakeStore) LocateRoomFuzzy(context.Context, string) (Here, error) {
+	f.rules = append(f.rules, ViaFuzzyRoom)
+	return f.fuzzy, f.err
+}
+
+func (f *fakeStore) LocateAlias(context.Context, string) (Here, error) {
+	f.rules = append(f.rules, ViaAlias)
+	return f.alias, f.err
+}
+
+func (f *fakeStore) LocateSession(_ context.Context, _ string, now time.Time) (Here, error) {
+	f.rules = append(f.rules, ViaSession)
+	f.sessionNow = now
+	return f.session, f.err
+}
+
+func (f *fakeStore) LocateNearby(context.Context, string) (Here, error) {
+	f.rules = append(f.rules, ViaNearby)
+	return f.nearby, f.err
 }
 
 func (f *fakeStore) FindPlaces(_ context.Context, question, kind string) ([]Place, error) {
@@ -210,7 +238,7 @@ func TestLocate(t *testing.T) {
 		room  Here
 		want  Here
 	}{
-		{"a known room", " Grand Ballroom J ", Here{Room: "Grand Ballroom J", Venue: "Salt Palace", Level: "Level 1"}, Here{Asked: "Grand Ballroom J", Room: "Grand Ballroom J", Venue: "Salt Palace", Level: "Level 1"}},
+		{"a known room", " Grand Ballroom J ", Here{Room: "Grand Ballroom J", Venue: "Salt Palace", Level: "Level 1"}, Here{Asked: "Grand Ballroom J", Room: "Grand Ballroom J", Venue: "Salt Palace", Level: "Level 1", Via: ViaRoom}},
 		{"an unknown room", "the moon", Here{}, Here{Asked: "the moon"}},
 		{"nothing", "   ", Here{}, Here{}},
 	}

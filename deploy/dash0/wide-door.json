@@ -1,0 +1,446 @@
+{
+  "kind": "Dashboard",
+  "metadata": {
+    "name": "wide-door",
+    "labels": {
+      "app.kubernetes.io/name": "widedoor",
+      "cnh.auroq.com/track": "dash0"
+    }
+  },
+  "spec": {
+    "display": {
+      "name": "Wide Door",
+      "description": "The accessibility story in metrics: how fast questions are answered, what kinds of place attendees ask for, what we told them that nobody has verified on the floor yet, and whether the schedule ingest is healthy. Every panel is filtered on service.name = widedoor. Source: deploy/dash0/wide-door.json in github.com/auroq/cnh, pushed by tools/dash0-dashboard.sh."
+    },
+    "duration": "6h",
+    "refreshInterval": "1m",
+    "datasources": {},
+    "variables": [],
+    "panels": {
+      "askLatency": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Ask latency, p50 and p95",
+            "description": "How long an answer takes from the question to the sentence a screen reader hears, split by whether the attendee said where they stand (has_location). Milliseconds, 5 minute windows."
+          },
+          "plugin": {
+            "kind": "TimeSeriesChart",
+            "spec": {
+              "legend": { "position": "bottom", "mode": "list" },
+              "yAxis": { "format": { "unit": "milliseconds" } }
+            }
+          },
+          "queries": [
+            {
+              "kind": "TimeSeriesQuery",
+              "spec": {
+                "plugin": {
+                  "kind": "PrometheusTimeSeriesQuery",
+                  "spec": {
+                    "query": "histogram_quantile(0.50, sum by (le, has_location) (rate(widedoor_ask_duration_milliseconds_bucket{service_name=\"widedoor\"}[5m])))",
+                    "seriesNameFormat": "p50, has_location={{has_location}}"
+                  }
+                }
+              }
+            },
+            {
+              "kind": "TimeSeriesQuery",
+              "spec": {
+                "plugin": {
+                  "kind": "PrometheusTimeSeriesQuery",
+                  "spec": {
+                    "query": "histogram_quantile(0.95, sum by (le, has_location) (rate(widedoor_ask_duration_milliseconds_bucket{service_name=\"widedoor\"}[5m])))",
+                    "seriesNameFormat": "p95, has_location={{has_location}}"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "answersByKind": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Answers by kind of place",
+            "description": "Answers per minute, stacked by the kind of the top place (quiet room, all-gender restroom, elevator, ...). What attendees ask for most."
+          },
+          "plugin": {
+            "kind": "TimeSeriesChart",
+            "spec": {
+              "legend": { "position": "right", "mode": "list" },
+              "yAxis": { "format": { "unit": "decimal", "decimalPlaces": 1 } },
+              "visual": { "display": "line", "stack": "all", "areaOpacity": 0.4 }
+            }
+          },
+          "queries": [
+            {
+              "kind": "TimeSeriesQuery",
+              "spec": {
+                "plugin": {
+                  "kind": "PrometheusTimeSeriesQuery",
+                  "spec": {
+                    "query": "sum by (kind) (rate(widedoor_ask_answers_total{service_name=\"widedoor\"}[5m])) * 60",
+                    "seriesNameFormat": "{{kind}}"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "answersByVerified": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Answers, verified or not",
+            "description": "The same answers per minute, split by whether someone has checked the top place on the floor (verified=true) or it is only what the organiser published (verified=false)."
+          },
+          "plugin": {
+            "kind": "TimeSeriesChart",
+            "spec": {
+              "legend": { "position": "bottom", "mode": "list" },
+              "yAxis": { "format": { "unit": "decimal", "decimalPlaces": 1 } },
+              "visual": { "display": "line", "stack": "all", "areaOpacity": 0.4 }
+            }
+          },
+          "queries": [
+            {
+              "kind": "TimeSeriesQuery",
+              "spec": {
+                "plugin": {
+                  "kind": "PrometheusTimeSeriesQuery",
+                  "spec": {
+                    "query": "sum by (verified) (rate(widedoor_ask_answers_total{service_name=\"widedoor\"}[5m])) * 60",
+                    "seriesNameFormat": "verified={{verified}}"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "unverifiedServed": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "What volunteers should go verify",
+            "description": "Running count of answers where the place we named has never been checked by a person, by kind. The higher the line, the more attendees we have sent somewhere on trust; this is the to-do list for the floor."
+          },
+          "plugin": {
+            "kind": "TimeSeriesChart",
+            "spec": {
+              "legend": { "position": "bottom", "mode": "list" },
+              "yAxis": { "format": { "unit": "decimal", "decimalPlaces": 0 } }
+            }
+          },
+          "queries": [
+            {
+              "kind": "TimeSeriesQuery",
+              "spec": {
+                "plugin": {
+                  "kind": "PrometheusTimeSeriesQuery",
+                  "spec": {
+                    "query": "sum by (kind) (widedoor_ask_unverified_served_total{service_name=\"widedoor\"})",
+                    "seriesNameFormat": "{{kind}}"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "unverifiedTotal": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Unverified answers served",
+            "description": "Total answers served since the pods started that named a place nobody has verified."
+          },
+          "plugin": {
+            "kind": "StatChart",
+            "spec": {
+              "calculation": "last-number",
+              "format": { "unit": "decimal", "decimalPlaces": 0 }
+            }
+          },
+          "queries": [
+            {
+              "kind": "TimeSeriesQuery",
+              "spec": {
+                "plugin": {
+                  "kind": "PrometheusTimeSeriesQuery",
+                  "spec": {
+                    "query": "sum(widedoor_ask_unverified_served_total{service_name=\"widedoor\"})"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "profileChips": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Needs we were told about, never who",
+            "description": "How often each profile chip (step-free, quiet matters, captions or ASL, ...) shaped an answer, per minute. One counter per chip and nothing else: no combinations, no identities. Empty until the profile chips ship (issue #81)."
+          },
+          "plugin": {
+            "kind": "TimeSeriesChart",
+            "spec": {
+              "legend": { "position": "right", "mode": "list" },
+              "yAxis": { "format": { "unit": "decimal", "decimalPlaces": 1 } },
+              "visual": { "display": "line", "stack": "all", "areaOpacity": 0.4 }
+            }
+          },
+          "queries": [
+            {
+              "kind": "TimeSeriesQuery",
+              "spec": {
+                "plugin": {
+                  "kind": "PrometheusTimeSeriesQuery",
+                  "spec": {
+                    "query": "sum by (chip) (rate(widedoor_profile_chip_used_total{service_name=\"widedoor\"}[5m])) * 60",
+                    "seriesNameFormat": "{{chip}}"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "requestsByRoute": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Requests by route and status class",
+            "description": "Requests per second from the otelhttp server metrics, by route, status class and the deployed commit (service.version), so each release is its own line."
+          },
+          "plugin": {
+            "kind": "TimeSeriesChart",
+            "spec": {
+              "legend": { "position": "right", "mode": "list" },
+              "yAxis": { "format": { "unit": "decimal", "decimalPlaces": 2 } },
+              "visual": { "display": "line", "stack": "all", "areaOpacity": 0.4 }
+            }
+          },
+          "queries": [
+            {
+              "kind": "TimeSeriesQuery",
+              "spec": {
+                "plugin": {
+                  "kind": "PrometheusTimeSeriesQuery",
+                  "spec": {
+                    "query": "sum by (http_route, class, service_version) (label_replace(rate(http_server_request_duration_seconds_count{service_name=\"widedoor\"}[5m]), \"class\", \"$1xx\", \"http_response_status_code\", \"(.).*\"))",
+                    "seriesNameFormat": "{{http_route}} {{class}} @{{service_version}}"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "errorsByRoute": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Server errors by route",
+            "description": "5xx responses per second by route and deployed commit. Flat at zero is the goal."
+          },
+          "plugin": {
+            "kind": "TimeSeriesChart",
+            "spec": {
+              "legend": { "position": "bottom", "mode": "list" },
+              "yAxis": { "format": { "unit": "decimal", "decimalPlaces": 2 } }
+            }
+          },
+          "queries": [
+            {
+              "kind": "TimeSeriesQuery",
+              "spec": {
+                "plugin": {
+                  "kind": "PrometheusTimeSeriesQuery",
+                  "spec": {
+                    "query": "sum by (http_route, service_version) (rate(http_server_request_duration_seconds_count{service_name=\"widedoor\", http_response_status_code=~\"5..\"}[5m]))",
+                    "seriesNameFormat": "{{http_route}} @{{service_version}}"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "httpLatencyByRoute": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "HTTP p95 by route",
+            "description": "95th percentile request duration per route and deployed commit, from the otelhttp histogram. Seconds."
+          },
+          "plugin": {
+            "kind": "TimeSeriesChart",
+            "spec": {
+              "legend": { "position": "bottom", "mode": "list" },
+              "yAxis": { "format": { "unit": "seconds" } }
+            }
+          },
+          "queries": [
+            {
+              "kind": "TimeSeriesQuery",
+              "spec": {
+                "plugin": {
+                  "kind": "PrometheusTimeSeriesQuery",
+                  "spec": {
+                    "query": "histogram_quantile(0.95, sum by (le, http_route, service_version) (rate(http_server_request_duration_seconds_bucket{service_name=\"widedoor\"}[5m])))",
+                    "seriesNameFormat": "{{http_route}} @{{service_version}}"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "ingestSessions": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Ingest: sessions indexed per run",
+            "description": "Sessions written to Elasticsearch by each ingest job (one point per run, named after the Kubernetes job). The schedule has 600 sessions, so 600 is a full run."
+          },
+          "plugin": {
+            "kind": "TimeSeriesChart",
+            "spec": {
+              "legend": { "position": "bottom", "mode": "list" },
+              "yAxis": { "format": { "unit": "decimal", "decimalPlaces": 0 } },
+              "visual": { "display": "line", "connectNulls": false, "pointRadius": 5 }
+            }
+          },
+          "queries": [
+            {
+              "kind": "TimeSeriesQuery",
+              "spec": {
+                "plugin": {
+                  "kind": "PrometheusTimeSeriesQuery",
+                  "spec": {
+                    "query": "max by (k8s_job_name) (widedoor_ingest_sessions_indexed_total{service_name=\"widedoor\"})",
+                    "seriesNameFormat": "{{k8s_job_name}}"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "ingestFailures": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Ingest: detail fetch failures per run",
+            "description": "Per-session detail pages the ingest could not fetch from Sessionize in each run. Anything above zero means some sessions were indexed with a thinner description."
+          },
+          "plugin": {
+            "kind": "TimeSeriesChart",
+            "spec": {
+              "legend": { "position": "bottom", "mode": "list" },
+              "yAxis": { "format": { "unit": "decimal", "decimalPlaces": 0 } },
+              "visual": { "display": "line", "connectNulls": false, "pointRadius": 5 }
+            }
+          },
+          "queries": [
+            {
+              "kind": "TimeSeriesQuery",
+              "spec": {
+                "plugin": {
+                  "kind": "PrometheusTimeSeriesQuery",
+                  "spec": {
+                    "query": "max by (k8s_job_name) (widedoor_ingest_detail_failures_total{service_name=\"widedoor\"})",
+                    "seriesNameFormat": "{{k8s_job_name}}"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "ingestDuration": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Ingest: run duration",
+            "description": "How long each ingest run took, in milliseconds, and whether it succeeded. The first run of a fresh cluster is slow because ELSER is still warming up."
+          },
+          "plugin": {
+            "kind": "TimeSeriesChart",
+            "spec": {
+              "legend": { "position": "bottom", "mode": "list" },
+              "yAxis": { "format": { "unit": "milliseconds" } },
+              "visual": { "display": "line", "connectNulls": false, "pointRadius": 5 }
+            }
+          },
+          "queries": [
+            {
+              "kind": "TimeSeriesQuery",
+              "spec": {
+                "plugin": {
+                  "kind": "PrometheusTimeSeriesQuery",
+                  "spec": {
+                    "query": "sum by (k8s_job_name, succeeded) (widedoor_ingest_duration_milliseconds_sum{service_name=\"widedoor\"}) / sum by (k8s_job_name, succeeded) (widedoor_ingest_duration_milliseconds_count{service_name=\"widedoor\"})",
+                    "seriesNameFormat": "{{k8s_job_name}} succeeded={{succeeded}}"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "layouts": [
+      {
+        "kind": "Grid",
+        "spec": {
+          "display": { "title": "Asking the venue", "collapse": { "open": true } },
+          "items": [
+            { "x": 0, "y": 0, "width": 12, "height": 8, "content": { "$ref": "#/spec/panels/askLatency" } },
+            { "x": 12, "y": 0, "width": 12, "height": 8, "content": { "$ref": "#/spec/panels/answersByKind" } },
+            { "x": 0, "y": 8, "width": 12, "height": 8, "content": { "$ref": "#/spec/panels/answersByVerified" } },
+            { "x": 12, "y": 8, "width": 12, "height": 8, "content": { "$ref": "#/spec/panels/profileChips" } }
+          ]
+        }
+      },
+      {
+        "kind": "Grid",
+        "spec": {
+          "display": { "title": "What volunteers should go verify", "collapse": { "open": true } },
+          "items": [
+            { "x": 0, "y": 0, "width": 18, "height": 8, "content": { "$ref": "#/spec/panels/unverifiedServed" } },
+            { "x": 18, "y": 0, "width": 6, "height": 8, "content": { "$ref": "#/spec/panels/unverifiedTotal" } }
+          ]
+        }
+      },
+      {
+        "kind": "Grid",
+        "spec": {
+          "display": { "title": "Requests and releases", "collapse": { "open": true } },
+          "items": [
+            { "x": 0, "y": 0, "width": 12, "height": 8, "content": { "$ref": "#/spec/panels/requestsByRoute" } },
+            { "x": 12, "y": 0, "width": 6, "height": 8, "content": { "$ref": "#/spec/panels/errorsByRoute" } },
+            { "x": 18, "y": 0, "width": 6, "height": 8, "content": { "$ref": "#/spec/panels/httpLatencyByRoute" } }
+          ]
+        }
+      },
+      {
+        "kind": "Grid",
+        "spec": {
+          "display": { "title": "Schedule ingest", "collapse": { "open": true } },
+          "items": [
+            { "x": 0, "y": 0, "width": 8, "height": 8, "content": { "$ref": "#/spec/panels/ingestSessions" } },
+            { "x": 8, "y": 0, "width": 8, "height": 8, "content": { "$ref": "#/spec/panels/ingestFailures" } },
+            { "x": 16, "y": 0, "width": 8, "height": 8, "content": { "$ref": "#/spec/panels/ingestDuration" } }
+          ]
+        }
+      }
+    ]
+  }
+}

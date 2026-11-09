@@ -31,7 +31,6 @@ Times are Mountain Time on 2026-11-09: coding starts at 11:00, code freezes at 1
 | [014](roadmap/014-stretch-the-transcript-source.md) | **stretch:** where transcripts come from | 013 | Aria, the transcript source |
 | [015](roadmap/015-stretch-live-mic-captions.md) | **stretch:** room-anchored large-text captions from a live mic | 014 | nobody |
 | [016](roadmap/016-stretch-search-inside-talks.md) | **stretch:** timestamped transcript search, joined to the schedule | 007, 015 | nobody |
-| [067](roadmap/067-say-where-you-are-in-your-own-words.md) | "where are you" accepts landmarks, street sides, entrances and session titles, not only room names | 063, 068 | nobody |
 | [068](roadmap/068-venue-data-entrances-exits-first-aid-landmarks.md) | entrances by street side, exits and what is outside them, first aid, landmarks and aliases, each verified or not | 008 | Aria, what is verified |
 | [072](roadmap/072-sessions-only-when-they-answer-the-question.md) | sessions listed only when the question is about them, with when and how far | 063, 075 | nobody |
 | [079](roadmap/079-routes-not-just-destinations.md) | **after the event:** routes with obstacles, as steps in words and on a map | 068, 075, 081 | Aria, the next project |

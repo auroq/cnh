@@ -10,7 +10,7 @@ import (
 func toV1(a model.Answer) v1.AskResponse {
 	out := v1.AskResponse{
 		Question: a.Question,
-		Here:     v1.Here{Asked: a.Here.Asked, Room: a.Here.Room, Venue: a.Here.Venue, Level: a.Here.Level},
+		Here:     v1.Here{Asked: a.Here.Asked, Room: a.Here.Room, Venue: a.Here.Venue, Level: a.Here.Level, Side: a.Here.Side, Via: a.Here.Via},
 		Summary:  a.Summary,
 	}
 	if a.Places != nil {
@@ -18,7 +18,7 @@ func toV1(a model.Answer) v1.AskResponse {
 		for _, p := range a.Places {
 			out.Places = append(out.Places, v1.Place{
 				ID: p.ID, Kind: p.Kind, Name: p.Name, Venue: p.Venue, Level: p.Level, Near: p.Near,
-				Notes: p.Notes, For: p.For, Route: p.Route, Verified: p.Verified, Source: p.Source,
+				Notes: p.Notes, For: p.For, Route: p.Route, Verified: p.Verified, Source: p.Source, Side: p.Side, LeadsTo: p.LeadsTo,
 			})
 		}
 	}
