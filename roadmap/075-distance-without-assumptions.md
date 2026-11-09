@@ -1,6 +1,6 @@
 # 75. Distance without assumptions: how Wide Door describes how far something is
 
-**Open. Filed 2026-11-09 by Aria (issue #75). Nobody's call: the decision follows published accessibility and wayfinding practice, recorded in ADR 0012, and the wording follows the decision.**
+**Done 2026-11-09 (PR #86, issue #75). Filed 2026-11-09 by Aria. Nobody's call: the decision follows published accessibility and wayfinding practice, recorded in ADR 0012, and the wording follows the decision.**
 
 Depends on: 008, 009, 010
 
