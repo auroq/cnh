@@ -91,3 +91,24 @@ teardown: ## Destroy platform, cluster, then the state bucket (moves bootstrap s
 	$(TF) -chdir=infra/bootstrap init -migrate-state -force-copy
 	$(OP) terraform -chdir=infra/bootstrap destroy
 	rm infra/bootstrap/zz_seed_override.tf
+
+.PHONY: test
+test: ## Go unit tests, vet and gofmt check
+	test -z "$$(gofmt -l .)"
+	go vet ./...
+	go test -race ./...
+
+.PHONY: build
+build: ## Build the Go binaries into bin/
+	mkdir -p bin
+	go build -o bin/ ./cmd/...
+
+.PHONY: ingest
+ingest: ## Run the schedule ingest against the cluster's Elasticsearch through a port-forward
+	kubectl -n wide-door port-forward svc/wide-door-es-http 19200:9200 >/dev/null 2>&1 & pf=$$!; sleep 3; \
+	ES_URL=http://localhost:19200 secret-run --env ES_PASSWORD=file:<(kubectl -n wide-door get secret wide-door-es-elastic-user -o jsonpath='{.data.elastic}' | base64 -d) -- go run ./cmd/ingest; \
+	kill $$pf
+
+.PHONY: issues
+issues: ## Mirror roadmap items to GitHub issues (ADR 0003)
+	tools/issues.sh

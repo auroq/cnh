@@ -1,0 +1,135 @@
+apiVersion: elasticsearch.k8s.elastic.co/v1
+kind: Elasticsearch
+metadata:
+  name: wide-door
+spec:
+  version: 9.5.6
+  http:
+    tls:
+      selfSignedCertificate:
+        disabled: true
+  nodeSets:
+    - name: default
+      count: 3
+      config:
+        node.store.allow_mmap: false
+        xpack.ml.max_machine_memory_percent: 40
+      podTemplate:
+        metadata:
+          labels:
+            app.kubernetes.io/name: elasticsearch
+        spec:
+          automountServiceAccountToken: false
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            fsGroup: 1000
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: elasticsearch
+              env:
+                - name: ES_JAVA_OPTS
+                  value: -Xms4g -Xmx4g
+              resources:
+                requests:
+                  cpu: "2"
+                  memory: 8Gi
+                limits:
+                  cpu: "4"
+                  memory: 8Gi
+              livenessProbe:
+                tcpSocket:
+                  port: 9200
+                initialDelaySeconds: 90
+                periodSeconds: 30
+                failureThreshold: 5
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: ["ALL"]
+      volumeClaimTemplates:
+        - metadata:
+            name: elasticsearch-data
+          spec:
+            accessModes: [ReadWriteOnce]
+            storageClassName: do-block-storage
+            resources:
+              requests:
+                storage: 20Gi
+---
+apiVersion: kibana.k8s.elastic.co/v1
+kind: Kibana
+metadata:
+  name: wide-door
+spec:
+  version: 9.5.6
+  count: 2
+  elasticsearchRef:
+    name: wide-door
+  http:
+    tls:
+      selfSignedCertificate:
+        disabled: true
+  config:
+    server.publicBaseUrl: https://kibana.cnh.auroq.com
+  podTemplate:
+    metadata:
+      labels:
+        app.kubernetes.io/name: kibana
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: kibana
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              cpu: "2"
+              memory: 2Gi
+          livenessProbe:
+            httpGet:
+              path: /api/status
+              port: 5601
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            failureThreshold: 5
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: kibana
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: kibana
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: kibana
+spec:
+  parentRefs:
+    - name: public
+      namespace: gateway
+      sectionName: https
+  hostnames:
+    - kibana.cnh.auroq.com
+  rules:
+    - backendRefs:
+        - name: wide-door-kb-http
+          port: 5601
