@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/auroq/cnh/pkg/sessionize"
+	"github.com/auroq/cnh/pkg/schedule"
 	"github.com/auroq/cnh/pkg/venue"
 )
 
@@ -12,11 +12,11 @@ func TestSessionDoc(t *testing.T) {
 	now := time.Date(2026, 11, 9, 18, 0, 0, 0, time.UTC)
 	cases := []struct {
 		name    string
-		session sessionize.Session
+		session schedule.Session
 		content string
 	}{
-		{"a described session", sessionize.Session{ID: "1", Title: "Sign Language Crash Course", Description: "Learn ten signs."}, "Sign Language Crash Course\n\nLearn ten signs."},
-		{"a session without a description", sessionize.Session{ID: "2", Title: "Coat + Bag Check"}, "Coat + Bag Check"},
+		{"a described session", schedule.Session{ID: "1", Title: "Sign Language Crash Course", Description: "Learn ten signs."}, "Sign Language Crash Course\n\nLearn ten signs."},
+		{"a session without a description", schedule.Session{ID: "2", Title: "Coat + Bag Check"}, "Coat + Bag Check"},
 	}
 	for _, c := range cases {
 		t.Run("when indexing "+c.name, func(t *testing.T) {

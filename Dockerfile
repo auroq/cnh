@@ -1,5 +1,5 @@
 FROM golang:1.27-bookworm AS build
-ARG CMD
+ARG CMD=widedoor
 WORKDIR /src
 COPY go.mod go.sum ./
 RUN go mod download
