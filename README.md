@@ -1,43 +1,66 @@
-# cnh
+# Wide Door
 
-My Cloud Native Hackathon entry (WeMakeDevs, KubeCon NA 2026, Salt Lake City).
+Ask the venue where the nearest step-free route, elevator, quiet room, all-gender restroom or captioned session is, and get an answer that works with a screen reader, a keyboard and large text.
 
-## Before vs during the hackathon
+Team **Curb Cut** (one person, [auroq](https://github.com/auroq)) at the WeMakeDevs [Cloud Native Hackathon](https://www.wemakedevs.org/hackathons/cnh), Salt Lake City, 2026-11-09, alongside KubeCon + CloudNativeCon North America.
+The name comes from the curb-cut effect: access built for disabled people ends up used by everyone.
 
-Everything up to the git tag **`pre-kickoff`** is setup done before the event, which rules 1 and 2 allow:
-the cluster and cluster-wide operators in `infra/`. It is the "venue", not the project.
-All project code and design starts after kickoff (10:00 MT, 2026-11-09), in commits after that tag.
-`git log pre-kickoff..` shows exactly the hackathon work.
+- Plan and status: [`ROADMAP.md`](ROADMAP.md), with one file per item in [`roadmap/`](roadmap/) and one GitHub issue per item.
+- Decisions: [`docs/adr/`](docs/adr/).
+- AI disclosure: [`AI_USAGE.md`](AI_USAGE.md).
+
+## Before and during the hackathon
+
+Everything up to the git tag [`pre-kickoff`](https://github.com/auroq/cnh/releases/tag/pre-kickoff) is setup done before the event, which rules 1 and 2 allow: the cluster and the cluster-wide operators in [`infra/`](infra/).
+It is the venue, not the project.
+Project code and design start after kickoff (10:00 MT, 2026-11-09) in the commits after that tag, so `git log pre-kickoff..` is exactly the hackathon work.
+[`docs/transitions/pre-kickoff-platform.md`](docs/transitions/pre-kickoff-platform.md) lists what was installed before.
+
+## Architecture
+
+To be filled in as the rings land.
+The shape is fixed by the ADRs:
+
+- **Language:** Go for the API and the ingest, with server-rendered HTML and almost no JavaScript, because plain HTML is the most accessible UI there is.
+- **Store:** one Elasticsearch cluster (ECK) holding venue, room, access-feature and session documents, searched with BM25 plus `semantic_text` ([ADR 0004](docs/adr/0004-elasticsearch-is-the-store.md)).
+- **Schedule:** the public KubeCon NA 2026 schedule from Sessionize, indexed with room and level.
+- **Deploy:** Argo CD syncs [`deploy/`](deploy/) into the `wide-door` namespace; every workload is an Argo Rollouts `Rollout` written to pass Radar's checks ([ADR 0005](docs/adr/0005-radar-clean-manifests-via-argo.md)).
+- **Telemetry:** OpenTelemetry traces, metrics and logs to Dash0 through the Dash0 operator.
+- **Review:** every PR after the first commit is reviewed by Gitar against [`.gitar/review/`](.gitar/review/).
+- **Secrets:** Sealed Secrets only ([ADR 0006](docs/adr/0006-sealed-secrets.md)).
+
+## Tracks
+
+| track | what Wide Door does for it |
+| --- | --- |
+| Merge Forward, Conferences for Everyone | the whole point: venue access answers for attendees with limited mobility, hearing or vision |
+| Elasticsearch, Find the Right Talk | hybrid search over sessions and venue facts, including captioned and accessible sessions |
+| Dash0, Stop Flying Blind | traces, metrics and logs from the API and the ingest, plus custom accessibility metrics |
+| Radar, AI SRE | a namespace with zero findings from the first commit, and a canary to investigate |
+| Gitar / Sonar, Never Merge Broken | review rules for manifests, Go and accessibility, with auto-apply fixing what it can |
+
+## Run it
+
+```bash
+make help
+```
+
+Infrastructure targets are described in [`infra/`](infra/); the app targets are added as the rings land.
+The Makefile pins `KUBECONFIG` to `./.kube/config`, so its targets only ever talk to this cluster.
 
 ## Infrastructure (`infra/`)
 
-AI use: this repo was written with Claude Code (Anthropic) pairing with me.
-
-## What it creates
-
 | Root | State | Creates |
-|---|---|---|
+| --- | --- | --- |
 | `infra/bootstrap/` | Spaces `cnh-tfstate` (seeded locally, then migrated) | DO project `cnh`, Spaces key (saved to 1Password), versioned state bucket |
-| `infra/cluster/` | Spaces | VPC, DOKS in `sfo3` (3–5 × `g-8vcpu-32gb`), DO DNS zone `cnh.auroq.com` |
-| `infra/platform/` | Spaces | Envoy Gateway + wildcard TLS (cert-manager, DNS-01) with a wildcard DNS record, ECK operator, Argo CD, Dash0 operator, Radar Cloud agent |
+| `infra/cluster/` | Spaces | VPC, DOKS in `sfo3` (3 to 5 × `g-8vcpu-32gb`), DO DNS zone `cnh.auroq.com` |
+| `infra/platform/` | Spaces | Envoy Gateway + wildcard TLS (cert-manager, DNS-01) with a wildcard DNS record, ECK operator, Argo CD, Argo Rollouts, Dash0 operator, Radar Cloud agent, metrics-server, Sealed Secrets |
 
-`infra/sandbox/` holds learning-only manifests: the OpenTelemetry demo as an Argo CD app, a single-node ECK Elasticsearch + Kibana, and a local docker compose for Elasticsearch.
+`infra/sandbox/` holds learning-only manifests used before the event and removed from the cluster before kickoff.
 
-## Secrets
+### Secrets
 
 Nothing secret is in this repo or on a command line.
 Terraform reads tokens from a dedicated 1Password vault (`CNH`) through the `1Password/onepassword` provider.
 The service-account token for that vault lives gpg-encrypted in `pass` and reaches processes only through `secret-run`.
-Expected vault items: `Digital Ocean API CNH`, `Dash0 API Token CNH`, `Radar Cluster Connect CNH` (API Credential, field `credential`); `cnh-tfstate` is created by `bootstrap/`.
-
-## Use
-
-```bash
-make help
-make bootstrap-seed      # once
-make up                  # cluster, kubeconfig, platform
-make use-cnh             # make cnh the default kubectl context for the day
-make teardown            # after the event
-```
-
-The Makefile pins `KUBECONFIG` to `./.kube/config`, so its targets only ever talk to this cluster.
+In the cluster, application secrets are `SealedSecret` resources; the controller's key is backed up in the same vault.
