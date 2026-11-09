@@ -38,9 +38,9 @@ func get(t *testing.T, a Asker, target string) (*http.Response, string) {
 
 func TestServer(t *testing.T) {
 	answered := fakeAsker{answer: ask.Answer{
-		Summary: "Quiet room 260A: Salt Palace, Level 2. Same building, you are on Level 1 and it is on Level 2. Published by the organiser.",
+		Summary: "Quiet room 260A: Salt Palace, Level 2. Same building, one level up, by elevator or stairs. Published by the organiser.",
 		Here:    ask.Here{Asked: "Grand Ballroom J", Room: "Grand Ballroom J", Venue: "Salt Palace", Level: "Level 1"},
-		Places:  []ask.Place{{Name: "Quiet room 260A", Venue: "Salt Palace", Level: "Level 2", Verified: true}},
+		Places:  []ask.Place{{Name: "Quiet room 260A", Venue: "Salt Palace", Level: "Level 2", Verified: true, Route: []string{"Staff at registration will point you to the nearest elevator."}}},
 	}}
 	down := fakeAsker{err: errors.New("no elasticsearch")}
 
@@ -59,6 +59,11 @@ func TestServer(t *testing.T) {
 		t.Run("it should put the summary in the live region", func(t *testing.T) {
 			if !strings.Contains(body, `<p class="summary">`+answered.answer.Summary+"</p>") {
 				t.Fatalf("summary missing in %s", body)
+			}
+		})
+		t.Run("it should list each route fact under the place", func(t *testing.T) {
+			if !strings.Contains(body, `<span class="notes route">Staff at registration will point you to the nearest elevator.</span>`) {
+				t.Fatalf("route fact missing in %s", body)
 			}
 		})
 	})

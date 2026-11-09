@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -189,9 +190,12 @@ func Summarise(a Answer) string {
 	case p.Venue == a.Here.Venue && p.Level == a.Here.Level:
 		sentence += " Same level as you, no stairs or elevator."
 	case p.Venue == a.Here.Venue:
-		sentence += fmt.Sprintf(" Same building, you are on %s and it is on %s.", a.Here.Level, orUnknown(p.Level))
+		sentence += " " + levelChange(a.Here.Level, p.Level)
 	default:
 		sentence += fmt.Sprintf(" It is in the %s, you are in the %s.", p.Venue, a.Here.Venue)
+	}
+	for _, fact := range p.Route {
+		sentence += " " + fact
 	}
 	if p.Verified {
 		sentence += " Published by the organiser."
@@ -215,9 +219,33 @@ func looksLikeSessionQuestion(q string) bool {
 	return false
 }
 
-func orUnknown(s string) string {
-	if s == "" {
-		return "an unlisted level"
+// levelChange is the route fact the app can state from the data alone: how many levels, which way, and that it means an elevator or stairs.
+// It never estimates a time, because a time assumes a pace and a body (ADR 0012).
+func levelChange(from, to string) string {
+	if to == "" {
+		return "Same building, we do not know which level it is on."
 	}
-	return s
+	f, okFrom := levelNumber(from)
+	t, okTo := levelNumber(to)
+	if !okFrom || !okTo {
+		return fmt.Sprintf("Same building, you are on %s and it is on %s.", from, to)
+	}
+	n, direction := t-f, "up"
+	if n < 0 {
+		n, direction = -n, "down"
+	}
+	return fmt.Sprintf("Same building, %s %s, by elevator or stairs.", levels(n), direction)
+}
+
+func levelNumber(level string) (int, bool) {
+	n, err := strconv.Atoi(strings.TrimPrefix(level, "Level "))
+	return n, err == nil
+}
+
+func levels(n int) string {
+	words := []string{"", "one level", "two levels", "three levels", "four levels", "five levels"}
+	if n < len(words) {
+		return words[n]
+	}
+	return fmt.Sprintf("%d levels", n)
 }
