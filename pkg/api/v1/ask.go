@@ -11,6 +11,17 @@ type AskResponse struct {
 	Summary  string    `json:"summary"`
 	Places   []Place   `json:"places"`
 	Sessions []Session `json:"sessions"`
+	Profile  *Profile  `json:"profile,omitempty"`
+}
+
+// Profile is present only when the question carried prefs; it says which chips changed the answer and how.
+type Profile struct {
+	Applied []Applied `json:"applied"`
+}
+
+type Applied struct {
+	Chip   string `json:"chip"`
+	Effect string `json:"effect"`
 }
 
 type Here struct {

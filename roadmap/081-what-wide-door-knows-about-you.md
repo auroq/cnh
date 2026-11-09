@@ -1,6 +1,6 @@
 # 81. What Wide Door knows about you: an anonymous profile of chips, on your device, shaping every answer
 
-**Open. Filed 2026-11-09 by Aria, p1, from a judge's suggestion; worker issue-81 in progress. Aria's call: the chip list and the wording; the server stays stateless about people.**
+**Done 2026-11-09 (PR #93, issue #81). Filed 2026-11-09 by Aria, p1, from a judge's suggestion. Aria's call: the chip list and the wording; the server stays stateless about people. Left for a follow-up: the QR code on Save my profile, and the learned chips of item 085, whose source the encoding already carries.**
 
 Depends on: 063
 

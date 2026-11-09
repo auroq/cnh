@@ -19,6 +19,12 @@ type answer struct {
 	Sessions []struct {
 		Title string `json:"title"`
 	} `json:"sessions"`
+	Profile struct {
+		Applied []struct {
+			Chip   string `json:"chip"`
+			Effect string `json:"effect"`
+		} `json:"applied"`
+	} `json:"profile"`
 }
 
 type here struct {
