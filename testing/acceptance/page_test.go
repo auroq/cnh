@@ -93,8 +93,8 @@ func TestAPIShape(t *testing.T) {
 		t.Parallel()
 		var a map[string]json.RawMessage
 		helpers.GetJSON(t, "/api/ask", helpers.Query("q", "nearest all-gender restroom", "from", "255 BC"), &a)
-		t.Run("it should have question, here, summary, places and sessions", func(t *testing.T) {
-			want := []string{"here", "places", "question", "sessions", "summary"}
+		t.Run("it should have question, here, summary, places, sessions and why sessions are shown", func(t *testing.T) {
+			want := []string{"here", "places", "question", "sessions", "sessions_shown_because", "summary"}
 			if got := keysOf(t, mustRaw(t, a)); strings.Join(got, ",") != strings.Join(want, ",") {
 				t.Fatalf("keys = %v", got)
 			}
@@ -110,9 +110,15 @@ func TestAPIShape(t *testing.T) {
 				t.Fatalf("place keys = %v", got)
 			}
 		})
+	})
+
+	t.Run("when I ask the JSON API about sign language", func(t *testing.T) {
+		t.Parallel()
+		var a map[string]json.RawMessage
+		helpers.GetJSON(t, "/api/ask", helpers.Query("q", "sign language"), &a)
 		t.Run("it should describe a session with the documented fields", func(t *testing.T) {
 			got := keysOf(t, firstOf(t, a["sessions"]))
-			if !within(got, []string{"id", "title", "url", "speakers", "start", "end", "location", "venue", "level", "room"}) {
+			if !within(got, []string{"id", "title", "url", "speakers", "start", "end", "location", "venue", "level", "room", "state", "starts_in_minutes", "distance"}) {
 				t.Fatalf("session keys = %v", got)
 			}
 		})

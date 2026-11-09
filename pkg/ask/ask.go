@@ -50,6 +50,7 @@ type (
 )
 
 // Service answers questions. Needs is the vocabulary that turns what people say into kinds of place.
+// Now is the clock sessions and doors are timed against; nil means time.Now, tests fix it.
 type Service struct {
 	Store  Store
 	Needs  []Need
@@ -155,8 +156,7 @@ func (s *Service) answer(ctx context.Context, question, from string, prefs Prefe
 		ans.Places = ans.Places[:maxPlaces]
 	}
 
-	ans.Sessions, err = step(ctx, s.tracer(), "ask.FindSessions", func(ctx context.Context) ([]Session, error) { return s.Store.FindSessions(ctx, question) })
-	if err != nil {
+	if err := s.sessionsFor(ctx, &ans, question); err != nil {
 		return ans, err
 	}
 	ans.Summary = Summarise(ans)

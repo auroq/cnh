@@ -91,7 +91,7 @@ const (
 func New(a Asker, log *slog.Logger, opts ...Option) *Server {
 	s := &Server{
 		ask:    a,
-		tmpl:   template.Must(template.New("").Funcs(template.FuncMap{"clock": clock, "location": readableLocation}).ParseFS(assets, "templates/*.html")),
+		tmpl:   template.Must(template.New("").Funcs(template.FuncMap{"clock": clock, "location": readableLocation, "when": when, "distance": distance}).ParseFS(assets, "templates/*.html")),
 		log:    log,
 		tracer: otel.GetTracerProvider(),
 	}
@@ -204,8 +204,14 @@ func routeOf(pattern string) string {
 	return pattern
 }
 
+var mountain = time.FixedZone("MST", -7*3600)
+
 func clock(t time.Time) string {
-	return t.In(time.FixedZone("MST", -7*3600)).Format("Mon 3:04 pm")
+	return t.In(mountain).Format("Mon 3:04 pm")
+}
+
+func hour(t time.Time) string {
+	return t.In(mountain).Format("3:04 pm")
 }
 
 func readableLocation(location string) string {
