@@ -1,6 +1,6 @@
 # 112. Chips name needs, not people: "I use a wheelchair or scooter" becomes "Wide doors and ramps"
 
-**Done 2026-11-09 (PR #NN, issue #112). Aria's call: chips name needs, not people.**
+**Done 2026-11-09 (PR #117, issue #112). Aria's call: chips name needs, not people.**
 
 Depends on: 085, 103
 
