@@ -31,11 +31,8 @@ Times are Mountain Time on 2026-11-09: coding starts at 11:00, code freezes at 1
 | [014](roadmap/014-stretch-the-transcript-source.md) | **stretch:** where transcripts come from | 013 | Aria, the transcript source |
 | [015](roadmap/015-stretch-live-mic-captions.md) | **stretch:** room-anchored large-text captions from a live mic | 014 | nobody |
 | [016](roadmap/016-stretch-search-inside-talks.md) | **stretch:** timestamped transcript search, joined to the schedule | 007, 015 | nobody |
-| [050](roadmap/050-split-config.md) | split `pkg/config` by area for readability | 032 | Aria, whether at all |
 | [068](roadmap/068-venue-data-entrances-exits-first-aid-landmarks.md) | entrances by street side, exits and what is outside them, first aid, landmarks and aliases, each verified or not | 008 | Aria, what is verified |
-| [072](roadmap/072-sessions-only-when-they-answer-the-question.md) | sessions listed only when the question is about them, with when and how far | 063, 075 | nobody |
 | [079](roadmap/079-routes-not-just-destinations.md) | **after the event:** routes with obstacles, as steps in words and on a map | 068, 075, 081 | Aria, the next project |
-| [081](roadmap/081-what-wide-door-knows-about-you.md) | an anonymous profile of need chips, stored on the device, shown on every page, shaping every answer | 063 | Aria, the chips and the wording |
 | [083](roadmap/083-bring-your-schedule.md) | paste your Sched export or session titles, kept on your device, so answers know where you are going next | 081 | nobody |
 | [085](roadmap/085-chips-learned-from-what-you-ask.md) | a profile chip is added when a question implies it, said in the open, removable | 063, 066, 081 | nobody |
 | [096](roadmap/096-attendee-reports.md) | attendees verify, dispute and annotate places; shown at once, trusted after a second person agrees | 063 | Aria, the trust rules |

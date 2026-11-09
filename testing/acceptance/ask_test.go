@@ -18,7 +18,16 @@ type answer struct {
 	} `json:"places"`
 	Sessions []struct {
 		Title string `json:"title"`
+		State string `json:"state"`
+		Start string `json:"start"`
 	} `json:"sessions"`
+	Profile struct {
+		Applied []struct {
+			Chip   string `json:"chip"`
+			Effect string `json:"effect"`
+		} `json:"applied"`
+	} `json:"profile"`
+	SessionsShownBecause string `json:"sessions_shown_because"`
 }
 
 type here struct {
@@ -141,13 +150,47 @@ func TestAsk(t *testing.T) {
 	t.Run("when I ask about sign language", func(t *testing.T) {
 		t.Parallel()
 		a := ask(t, "sign language", "")
-		t.Run("it should list the Sign Language Crash Course among sessions", func(t *testing.T) {
-			for _, s := range a.Sessions {
-				if s.Title == "Sign Language Crash Course" {
-					return
-				}
+		var course *struct {
+			Title string `json:"title"`
+			State string `json:"state"`
+			Start string `json:"start"`
+		}
+		for i := range a.Sessions {
+			if a.Sessions[i].Title == "Sign Language Crash Course" {
+				course = &a.Sessions[i]
 			}
-			t.Fatalf("sessions = %+v", a.Sessions)
+		}
+		t.Run("it should list the Sign Language Crash Course among sessions", func(t *testing.T) {
+			if course == nil {
+				t.Fatalf("sessions = %+v", a.Sessions)
+			}
+		})
+		t.Run("it should say the sessions are shown because the question is about sessions", func(t *testing.T) {
+			if a.SessionsShownBecause != "question_about_sessions" {
+				t.Fatalf("sessions_shown_because = %q", a.SessionsShownBecause)
+			}
+		})
+		t.Run("it should say whether the course is upcoming, running or ended", func(t *testing.T) {
+			if course == nil || course.State == "" {
+				t.Fatalf("sessions = %+v", a.Sessions)
+			}
+		})
+		t.Run("it should say when the course starts", func(t *testing.T) {
+			if course == nil || course.Start == "" {
+				t.Fatalf("sessions = %+v", a.Sessions)
+			}
 		})
 	})
+
+	for _, c := range []struct{ ask, from string }{{"quiet room", "255 BC"}, {"nearest all-gender restroom", "255 BC"}} {
+		t.Run("when I ask for "+c.ask+" "+whereIAm(c.from), func(t *testing.T) {
+			t.Parallel()
+			a := ask(t, c.ask, c.from)
+			t.Run("it should not hand me sessions", func(t *testing.T) {
+				if len(a.Sessions) != 0 || a.SessionsShownBecause != "none" {
+					t.Fatalf("sessions_shown_because = %q, sessions = %+v", a.SessionsShownBecause, a.Sessions)
+				}
+			})
+		})
+	}
 }

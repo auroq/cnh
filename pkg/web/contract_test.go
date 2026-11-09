@@ -44,6 +44,7 @@ func TestContractV1(t *testing.T) {
 				{ID: "step-free-200-south", Kind: "step-free-entrance", Name: "Step-free entrance, 200 South", Venue: "Salt Palace", Side: "200 South", LeadsTo: "200 South", Source: "floor plan"},
 			},
 		}, lines[2]},
+		{"an answer shaped by a profile", model.Answer{Question: "nearest entrance", Summary: "Step-free entrance, 200 South: Salt Palace, Level 1. No stairs.", Applied: []model.Applied{{Chip: "step-free", Effect: "elevators and step-free entrances first"}}}, lines[3]},
 		{"an answer with attendee reports", model.Answer{
 			Question: "nearest elevator",
 			Summary:  "x",
@@ -52,7 +53,7 @@ func TestContractV1(t *testing.T) {
 					Attendee: &model.AttendeeStatus{Status: "problem", Count: 1, LatestNote: "out of order", LatestAt: time.Date(2026, 11, 9, 21, 52, 0, 0, time.UTC)}},
 				{ID: "elevators-salt-palace", Kind: "elevator", Name: "Elevators", Venue: "Salt Palace", Source: "floor plan"},
 			},
-		}, lines[3]},
+		}, lines[4]},
 	}
 	for _, c := range cases {
 		t.Run("when "+c.name+" is encoded for /api/ask", func(t *testing.T) {
@@ -60,7 +61,7 @@ func TestContractV1(t *testing.T) {
 			if err := json.NewEncoder(&buf).Encode(toV1(c.answer)); err != nil {
 				t.Fatal(err)
 			}
-			t.Run("it should match the response recorded before the types moved, byte for byte", func(t *testing.T) {
+			t.Run("it should match the recorded response, byte for byte", func(t *testing.T) {
 				if got := strings.TrimRight(buf.String(), "\n"); got != c.want {
 					t.Fatalf("\n got %s\nwant %s", got, c.want)
 				}

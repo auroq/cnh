@@ -214,9 +214,9 @@ func TestReportOnThePage(t *testing.T) {
 	})
 
 	t.Run("when the reported code is not one we know", func(t *testing.T) {
-		body := withForm(t, "/ask?q=nearest+elevator&reported=%3Cscript%3E")
+		body := withForm(t, "/ask?q=nearest+elevator&reported=bogus-code-xyz")
 		t.Run("it should fall back to the generic message and never echo the code", func(t *testing.T) {
-			if strings.Contains(body, "<script>") || !strings.Contains(body, "The report could not be saved right now.") {
+			if strings.Contains(body, "bogus-code-xyz") || !strings.Contains(body, "The report could not be saved right now.") {
 				t.Fatalf("body %s", body)
 			}
 		})

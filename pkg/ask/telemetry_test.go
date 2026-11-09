@@ -3,6 +3,7 @@ package ask
 import (
 	"context"
 	"testing"
+	"time"
 
 	"go.opentelemetry.io/otel/attribute"
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
@@ -32,7 +33,7 @@ func observe(t *testing.T) observed {
 }
 
 func (o observed) service(store Store) *Service {
-	return &Service{Store: store, Tracer: o.tracer, Meter: o.meter}
+	return &Service{Store: store, Tracer: o.tracer, Meter: o.meter, Now: func() time.Time { return noon }}
 }
 
 func (o observed) collect(t *testing.T) map[string]metricdata.Metrics {
@@ -129,7 +130,7 @@ func TestAskMetrics(t *testing.T) {
 		},
 		{
 			"only sessions match",
-			&fakeStore{sessions: []Session{{ID: "1", Title: "Sign Language Crash Course"}}}, "sign language talk", "",
+			&fakeStore{sessions: []Session{{ID: "1", Title: "Sign Language Crash Course", Start: noon.Add(time.Hour), End: noon.Add(2 * time.Hour)}}}, "sign language talk", "",
 			attribute.NewSet(attrHasLocation.Bool(false), attrAnswered.Bool(true)),
 			attribute.NewSet(attrKind.String("session"), attrVerified.Bool(true)),
 			0,
@@ -184,6 +185,20 @@ func TestAskMetrics(t *testing.T) {
 func TestAskSpans(t *testing.T) {
 	ctx := context.Background()
 
+	t.Run("when an attendee asks about talks", func(t *testing.T) {
+		o := observe(t)
+		if _, err := o.service(&fakeStore{}).Ask(ctx, "talks about accessibility", ""); err != nil {
+			t.Fatal(err)
+		}
+		spans := o.spans()
+		t.Run("it should record ask.FindSessions as a child of the ask span", func(t *testing.T) {
+			root, ok := spans["ask.Ask"]
+			if s, found := spans["ask.FindSessions"]; !ok || !found || s.Parent().SpanID() != root.SpanContext().SpanID() {
+				t.Fatalf("ask.FindSessions missing or not a child of ask.Ask in %v", names(o.recorder.Ended()))
+			}
+		})
+	})
+
 	t.Run("when an attendee in 255 BC asks for the nearest elevator", func(t *testing.T) {
 		o := observe(t)
 		if _, err := o.service(&fakeStore{room: in255, places: []Place{unverifiedElevator}}).Ask(ctx, "nearest elevator", "255 BC"); err != nil {
@@ -194,13 +209,18 @@ func TestAskSpans(t *testing.T) {
 		if !ok {
 			t.Fatalf("spans %v", names(o.recorder.Ended()))
 		}
-		for _, child := range []string{"ask.LocateRoom", "ask.FindPlaces", "ask.FindSessions"} {
+		for _, child := range []string{"ask.LocateRoom", "ask.FindPlaces"} {
 			t.Run("it should record "+child+" as a child of the ask span", func(t *testing.T) {
 				if s, ok := spans[child]; !ok || s.Parent().SpanID() != root.SpanContext().SpanID() {
 					t.Fatalf("%s missing or not a child of ask.Ask in %v", child, names(o.recorder.Ended()))
 				}
 			})
 		}
+		t.Run("it should not search sessions for a kind of place", func(t *testing.T) {
+			if _, ok := spans["ask.FindSessions"]; ok {
+				t.Fatalf("searched sessions in %v", names(o.recorder.Ended()))
+			}
+		})
 		want := []attribute.KeyValue{
 			attrQuestionLength.Int(len("nearest elevator")),
 			attrHereVenue.String("Salt Palace"),

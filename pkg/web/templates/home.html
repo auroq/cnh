@@ -7,10 +7,10 @@
 <meta name="description" content="Ask the venue where the nearest step-free route, elevator, quiet room, all-gender restroom or session is. Built for screen readers, keyboards and large text.">
 <link rel="stylesheet" href="/static/style.css">
 </head>
-<body>
+<body data-prefs="{{.Prefs}}"{{if .Forgot}} data-forgot="1"{{end}}>
 <a class="skip" href="#answer">Skip to the answer</a>
 <header>
-  <h1><a href="/">Wide Door</a></h1>
+  <h1><a href="/{{if .Prefs}}?prefs={{.Prefs}}{{end}}">Wide Door</a></h1>
   <p class="lede">Ask where things are at KubeCon. Answers say the building, the level, and whether anyone has checked them.</p>
 </header>
 <main id="main">
@@ -25,10 +25,11 @@
       <label for="from">Where are you? <span class="opt">(optional: a room, a landmark, or the talk you just left)</span></label>
       <input id="from" name="from" type="text" value="{{.From}}" autocomplete="off" placeholder="Grand Ballroom J, or where I registered">
     </div>
+    {{if .Prefs}}<input type="hidden" name="prefs" value="{{.Prefs}}">{{end}}
     <button type="submit">Ask</button>
     <fieldset class="quick">
       <legend>Or pick one</legend>
-      {{range .Kinds}}<a class="chip" href="/ask?q={{.Query}}&amp;from={{$.From}}">{{.Label}}</a>
+      {{range .Kinds}}<a class="chip" href="/ask?q={{.Query}}&amp;from={{$.From}}{{if $.Prefs}}&amp;prefs={{$.Prefs}}{{end}}">{{.Label}}</a>
       {{end}}
     </fieldset>
   </form>
@@ -43,6 +44,7 @@
       <p class="summary">{{.Answer.Summary}}</p>
       {{if .Answer.Here.Room}}<p class="here">You said you are at <strong>{{.Answer.Here.Asked}}</strong>{{if ne .Answer.Here.Room .Answer.Here.Asked}}, that is {{.Answer.Here.Room}}{{end}}, {{.Answer.Here.Venue}}{{if .Answer.Here.Level}}, {{.Answer.Here.Level}}{{end}}{{if .Answer.Here.Side}}, {{.Answer.Here.Side}} side{{end}}.</p>
       {{else if .Answer.Here.Asked}}<p class="here">We could not find a place called "{{.Answer.Here.Asked}}", so distances are not shown. Try a room, a landmark, or the talk you just left.</p>{{end}}
+      {{if .Answer.Applied}}<ul class="applied">{{range .Answer.Applied}}<li>Because you said {{.Chip}}: {{.Effect}}.</li>{{end}}</ul>{{end}}
 
       {{if .Answer.Places}}
       <h3>Places</h3>
@@ -63,22 +65,70 @@
       {{end}}
 
       {{if .Answer.Sessions}}
-      <h3>Sessions</h3>
+      <h3>Sessions matching your question</h3>
       <ol class="results">
         {{range .Answer.Sessions}}
         <li>
           <strong><a href="{{.URL}}" rel="noopener">{{.Title}}</a></strong>
+          <span class="when">{{when .}}</span>
           <span class="where">{{clock .Start}} to {{clock .End}}, {{location .Location}}</span>
+          {{with distance .Distance}}<span class="distance">{{.}}</span>{{end}}
           {{if .Speakers}}<span class="notes">{{range $i, $s := .Speakers}}{{if $i}}, {{end}}{{$s}}{{end}}</span>{{end}}
         </li>
         {{end}}
       </ol>
       {{end}}
     {{end}}
+    {{if .Status}}<p class="status" role="status">{{.Status}}</p>{{end}}
   </section>
+
+  <details class="profile"{{if .ProfileOpen}} open{{end}}>
+    <summary><h2>What Wide Door knows about you: {{.Count}}</h2><span class="edit" aria-hidden="true">Edit</span></summary>
+    <form action="/profile" method="post">
+      <input type="hidden" name="q" value="{{.Question}}">
+      <input type="hidden" name="from" value="{{.From}}">
+      <input type="hidden" name="prefs" value="{{.Prefs}}">
+      <p class="how">Needs, not diagnoses. Pick what applies and answers put it first.</p>
+      <ul class="chips">
+        {{range .Chips}}<li><button type="submit" class="chip{{if .On}} on{{end}}" name="{{if .On}}remove{{else}}add{{end}}" value="{{.ID}}"><span class="vh">{{if .On}}Remove {{else}}Add {{end}}</span>{{if .On}}<span aria-hidden="true">&#10003; </span>{{end}}{{.Label}}</button></li>
+        {{end}}
+      </ul>
+      <p class="privacy">Stored on this device until Thursday, sent with every page, never kept by the server. We never ask what you have, only what you need.</p>
+      {{if .Prefs}}
+      <button type="submit" name="forget" value="1" class="secondary">Forget me</button>
+      <details class="save">
+        <summary>Save my profile</summary>
+        <p>Open this link on another device to carry the same chips. It contains only the chips, nothing else.</p>
+        <p class="link"><a href="{{.ProfileURL}}">{{.ProfileURL}}</a> <button type="button" class="secondary copy" hidden data-copy="{{.ProfileURL}}">Copy link</button></p>
+      </details>
+      {{end}}
+    </form>
+  </details>
 </main>
 <footer>
   <p>Wide Door is a hackathon project by team Curb Cut. Organiser-published facts come from the <a href="https://events.linuxfoundation.org/kubecon-cloudnativecon-north-america/attend/inclusion-accessibility/">KubeCon inclusion and accessibility page</a>; anything marked unverified has not been checked on the floor. <a href="https://github.com/auroq/cnh">Source and data</a>.</p>
 </footer>
+<script>
+(function () {
+  try {
+    var body = document.body, prefs = body.dataset.prefs, key = "wd_prefs";
+    if (body.dataset.forgot) { localStorage.removeItem(key); }
+    else if (prefs) { localStorage.setItem(key, prefs); }
+    else {
+      var saved = localStorage.getItem(key);
+      if (saved && !new URLSearchParams(location.search).has("prefs")) {
+        var u = new URL(location.href); u.searchParams.set("prefs", saved); location.replace(u);
+      }
+    }
+    var copy = document.querySelector("[data-copy]");
+    if (copy && navigator.clipboard) {
+      copy.hidden = false;
+      copy.addEventListener("click", function () {
+        navigator.clipboard.writeText(copy.dataset.copy).then(function () { copy.textContent = "Copied"; });
+      });
+    }
+  } catch (e) {}
+})();
+</script>
 </body>
 </html>
