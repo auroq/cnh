@@ -38,7 +38,7 @@ variable "enable_radar" {
 variable "radar_cluster_id" {
   type        = string
   default     = ""
-  description = "cl_... ID from Radar Cloud's Connect a cluster flow"
+  description = "Cluster ID from Radar Cloud (infra/scripts/radar-create-cluster.sh prints it)"
 }
 
 variable "versions" {

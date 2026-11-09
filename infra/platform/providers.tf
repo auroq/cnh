@@ -18,7 +18,7 @@ data "onepassword_item" "dash0" {
 data "onepassword_item" "radar" {
   count = var.enable_radar ? 1 : 0
   vault = data.onepassword_vault.cnh.uuid
-  title = "Radar API CNH"
+  title = "Radar Cluster Connect CNH"
 }
 
 provider "digitalocean" {
