@@ -2,6 +2,8 @@
 
 Evidence for roadmap item 043 and the Gitar/Sonar "Never Merge Broken" track.
 At 13:40 MT, `main` began requiring one approving review besides the status checks, and Gitar posts that review only when [`.gitar/config/approve.md`](../../.gitar/config/approve.md) holds ([ADR 0009](../adr/0009-gitar-approval-is-the-merge-gate.md)).
+At 13:47 MT the requirement was removed again ([ADR 0010](../adr/0010-gitar-approval-is-advisory.md)): every PR here is authored by the same GitHub login, which cannot approve its own PR, and Gitar cannot read PR bodies on this account, so four green PRs were blocked with no path through.
+What follows is what the seven minutes, and the hours of advisory approvals around them, showed.
 
 ## Why it was needed
 
@@ -20,4 +22,4 @@ A status check says "I reviewed", not "I agree"; the approving review is the ver
 
 ## What a person does when Gitar says no
 
-Answer the findings (`gitar fix this`, or a push), cite the issue, or, as the fallback, approve by hand; Aria is an admin and `enforce_admins` is off.
+Answer the findings (`gitar fix this`, or a push) or read the verdict and merge anyway, knowing what it said; with one GitHub author there is no second person to approve, which is why the approval is advisory.

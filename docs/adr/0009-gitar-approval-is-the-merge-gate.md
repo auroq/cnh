@@ -1,6 +1,6 @@
 # 0009. Gitar's approving review is the merge gate
 
-Status: Accepted, 2026-11-09. Aria's call, roadmap item 043.
+Status: Superseded by [ADR 0010](0010-gitar-approval-is-advisory.md) at 13:47 MT the same day. Aria's call, roadmap item 043.
 
 ## Context
 
