@@ -26,18 +26,23 @@ type Store interface {
 	FindPlaces(ctx context.Context, question string) ([]Place, error)
 	// FindSessions returns schedule sessions matching the question, best first.
 	FindSessions(ctx context.Context, question string) ([]Session, error)
+	// FindNeeds returns the needs whose phrases the question means, best first, with the score the use case thresholds on.
+	FindNeeds(ctx context.Context, question string) ([]NeedMatch, error)
 }
 
 // The domain types live in pkg/model; these names stay so callers read naturally.
 type (
 	Place   = model.Place
+	Need    = model.Need
 	Session = model.Session
 	Here    = model.Here
 	Answer  = model.Answer
 )
 
+// Service answers questions. Needs is the vocabulary that turns what people say into kinds of place.
 type Service struct {
 	Store  Store
+	Needs  []Need
 	Tracer trace.TracerProvider
 	Meter  metric.MeterProvider
 

@@ -11,10 +11,13 @@ data:
       username: elastic
       sessions_index: sessions
       places_index: places
+      needs_index: needs
     ingest:
       places_file: /data/venue/places.yaml
       concurrency: 8
       es_timeout: 5m
+    venue:
+      needs_file: /data/venue/needs.yaml
     telemetry:
       service_name: widedoor
       otlp_endpoint: http://dash0-operator-opentelemetry-collector-service.dash0-system.svc.cluster.local:4317

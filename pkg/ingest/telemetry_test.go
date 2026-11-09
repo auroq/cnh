@@ -30,7 +30,8 @@ func TestRunTelemetry(t *testing.T) {
 			{ID: "3", Title: "Coat check", Location: "Salt Palace | Level 2 | East Registration"},
 		}
 		curated := []venue.Place{{ID: "quiet-260a", Kind: "quiet-room", Name: "260A", Venue: "Salt Palace", Source: "organiser"}}
-		runner := &Runner{Source: &fakeSource{sessions: sessions}, Places: fakePlaces{places: curated}, Indexer: &fakeIndexer{}, Log: quiet, Tracer: tp, Meter: mp}
+		needs := []venue.Need{{ID: "rest", Name: "somewhere to rest", Phrases: []string{"overwhelmed"}, Kinds: []string{"quiet-room"}}}
+		runner := &Runner{Source: &fakeSource{sessions: sessions}, Places: fakePlaces{places: curated}, Needs: fakeNeeds{needs: needs}, Indexer: &fakeIndexer{}, Log: quiet, Tracer: tp, Meter: mp}
 		if _, err := runner.Run(context.Background()); err != nil {
 			t.Fatal(err)
 		}
@@ -76,14 +77,14 @@ func TestRunTelemetry(t *testing.T) {
 		if !ok {
 			t.Fatalf("no run span in %v", spanNames(recorder.Ended()))
 		}
-		for _, step := range []string{"ingest.fetch-index", "ingest.describe", "ingest.index-sessions", "ingest.index-places"} {
+		for _, step := range []string{"ingest.fetch-index", "ingest.describe", "ingest.index-sessions", "ingest.index-places", "ingest.index-needs"} {
 			t.Run("it should record "+step+" as a child of the run span", func(t *testing.T) {
 				if s, ok := spans[step]; !ok || s.Parent().SpanID() != root.SpanContext().SpanID() {
 					t.Fatalf("%s missing or not a child of ingest.Run in %v", step, spanNames(recorder.Ended()))
 				}
 			})
 		}
-		want := []attribute.KeyValue{attrSessionsIndexed.Int(3), attrPlacesIndexed.Int(3), attrDescribeFailures.Int(1)}
+		want := []attribute.KeyValue{attrSessionsIndexed.Int(3), attrPlacesIndexed.Int(3), attrNeedsIndexed.Int(1), attrDescribeFailures.Int(1)}
 		for _, kv := range want {
 			t.Run("it should put "+string(kv.Key)+" on the run span", func(t *testing.T) {
 				if !has(root.Attributes(), kv) {

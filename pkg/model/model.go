@@ -47,11 +47,23 @@ type Here struct {
 	Level string `json:"level,omitempty"`
 }
 
+// Need is what an attendee said they need, in their words, mapped to the kinds of place that can meet it.
+// Kinds are in the order to offer them; Note is said when the place offered is a stand-in for what was asked.
+type Need struct {
+	ID      string   `json:"id"`
+	Name    string   `json:"name"`
+	Phrases []string `json:"phrases"`
+	Kinds   []string `json:"kinds"`
+	Note    string   `json:"note,omitempty"`
+}
+
 // Answer is what the attendee gets back: a sentence first, then the places and sessions behind it.
+// Need is set when the question was understood as a need rather than a kind of place.
 type Answer struct {
 	Question string    `json:"question"`
 	Here     Here      `json:"here"`
 	Summary  string    `json:"summary"`
+	Need     *Need     `json:"need,omitempty"`
 	Places   []Place   `json:"places"`
 	Sessions []Session `json:"sessions"`
 }

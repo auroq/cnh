@@ -10,6 +10,7 @@ type fakeStore struct {
 	room     Here
 	places   []Place
 	sessions []Session
+	needs    []NeedMatch
 	err      error
 	located  []string
 	searched []string
@@ -150,4 +151,8 @@ func TestLocate(t *testing.T) {
 			})
 		})
 	}
+}
+
+func (f *fakeStore) FindNeeds(_ context.Context, question string) ([]NeedMatch, error) {
+	return f.needs, f.err
 }
