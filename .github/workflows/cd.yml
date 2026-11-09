@@ -71,6 +71,7 @@ jobs:
       - uses: docker/build-push-action@v6
         with:
           context: .
+          build-args: VERSION=${{ needs.plan.outputs.sha }}
           push: true
           tags: |
             ${{ env.IMAGE }}:main
