@@ -343,3 +343,18 @@ resource "helm_release" "sealed_secrets" {
     resources        = local.res_small
   })]
 }
+
+resource "kubernetes_secret_v1" "eck_trial_license" {
+  metadata {
+    name      = "eck-trial-license"
+    namespace = kubernetes_namespace_v1.ns["elastic-system"].metadata[0].name
+    labels = {
+      "license.k8s.elastic.co/type" = "enterprise_trial"
+    }
+    annotations = {
+      "elastic.co/eula" = "accepted"
+    }
+  }
+
+  depends_on = [helm_release.eck_operator]
+}

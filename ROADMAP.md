@@ -28,7 +28,6 @@ Times are Mountain Time on 2026-11-09: coding starts at 11:00, code freezes at 1
 | item | what it wants | depends on | whose call |
 | --- | --- | --- | --- |
 | [004](roadmap/004-gitar-reviews-every-pr.md) | Gitar review rules in `.gitar/`, every change through a PR, CI fixed by auto-apply | 001 | nobody |
-| [006](roadmap/006-an-elasticsearch-cluster-for-the-app.md) | the app's own Elasticsearch through ECK, with `semantic_text` working | 005 | nobody |
 | [007](roadmap/007-the-schedule-is-indexed.md) | the KubeCon schedule from Sessionize indexed with room and level | 006 | nobody |
 | [008](roadmap/008-the-venue-access-data-model.md) | venue, room and access documents, each fact marked verified or unverified | 006 | Aria, which attributes seed as unverified |
 | [009](roadmap/009-the-ask-api.md) | an API answering "nearest X from here" and free-text questions with hybrid search | 007, 008 | nobody |

@@ -12,10 +12,18 @@ This file is the disclosure the hackathon rules ask for, and [ADR 0007](docs/adr
 
 ## What the human did
 
-- Chose the problem, the option to build, the app and team names, the tracking method, and every decision marked "Aria's call" in a roadmap item.
-- Reviewed and approved every Terraform plan before it was applied, and every PR before it merged.
-- Created the sponsor accounts, the GitHub repositories and the 1Password vault, and ran the commands the agent is not allowed to run.
-- Judged what was good enough to ship at each ring.
+- Chose the problem, the option to build, the app and team names, the tracking method, the merge policy below, and every decision marked "Aria's call" in a roadmap item.
+- Reviewed and approved every Terraform plan before it was applied.
+- Created the sponsor accounts, the GitHub repositories and the 1Password vault, installed the Gitar app, and ran the commands the agent is not allowed to run.
+- Judged what was good enough to ship at each ring, and what to demo.
+
+## Merge policy
+
+After the first commit, every change goes through a pull request.
+`main` is protected: a PR merges only when the `docs` and `manifests` CI jobs pass and Gitar's review check passes.
+The agent opens the PR and arms GitHub auto-merge, so a PR merges without a human reading it, on the strength of those checks.
+Aria chose this on 2026-11-09 so that one person could spend the day building rather than clicking merge, and accepted that Gitar's review and the CI checks are the gate.
+Gitar's auto-apply may also push fixes to a PR branch; those commits are Gitar's and are visible as such.
 
 ## How to see it
 

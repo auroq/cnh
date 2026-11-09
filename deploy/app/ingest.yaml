@@ -1,0 +1,60 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ingest
+automountServiceAccountToken: false
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: ingest
+spec:
+  schedule: "17 * * * *"
+  timeZone: America/Denver
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 900
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: ingest
+        spec:
+          restartPolicy: Never
+          serviceAccountName: ingest
+          automountServiceAccountToken: false
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65532
+            runAsGroup: 65532
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: ingest
+              image: ghcr.io/auroq/cnh/ingest:main
+              imagePullPolicy: Always
+              env:
+                - name: ES_URL
+                  value: http://wide-door-es-http:9200
+                - name: ES_USERNAME
+                  value: elastic
+                - name: ES_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: wide-door-es-elastic-user
+                      key: elastic
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 64Mi
+                limits:
+                  cpu: "1"
+                  memory: 256Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop: ["ALL"]

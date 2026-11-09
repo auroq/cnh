@@ -7,3 +7,5 @@ labels:
     includeSelectors: false
 resources:
   - web.yaml
+  - elasticsearch.yaml
+  - ingest.yaml

@@ -1,6 +1,6 @@
 # 6. An Elasticsearch cluster for the app
 
-**Open. Filed 2026-11-09, from the kickoff plan. Nobody's call: ADR 0004 chose Elasticsearch as the one store.**
+**Done 2026-11-09 (issue #6; 3-node ECK cluster `wide-door` green, trial license active, `semantic_text` smoke-tested with ELSER, Kibana at https://kibana.cnh.auroq.com). Filed 2026-11-09, from the kickoff plan. Nobody's call: ADR 0004 chose Elasticsearch as the one store.**
 
 Depends on: 005
 
@@ -24,3 +24,8 @@ Elasticsearch "Find the Right Talk" judges hybrid search, and every later ring r
 ## Touches
 
 `deploy/elasticsearch/`.
+
+## Notes from landing it
+
+The ECK trial license is a data-less Secret in `elastic-system` created by `infra/platform`, which starts an Enterprise trial for every cluster the operator manages.
+Elasticsearch and Kibana run without `readOnlyRootFilesystem`, because both write under their install directory; every other check (non-root, no privilege escalation, dropped capabilities, resources, probes, no token automount, 3 and 2 replicas with PDBs) is met.
