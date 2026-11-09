@@ -1,3 +1,5 @@
+Auto-apply is off by default since 2026-11-09 11:50 MT: PRs do not carry the gitar-managed label and each gets a "gitar auto-apply:off" comment; a fix is applied only when a person asks for it on the PR with "gitar fix this".
+When it is asked to apply something, the rules below hold.
 Auto-apply may fix bugs, missing edge-case handling and missing tests in Go code, and missing fields in Kubernetes manifests under deploy/ (resources, probes, container securityContext, PodDisruptionBudget) that are not listed as accepted exceptions in .gitar/review/k8s.md.
 Auto-apply may fix accessibility issues in templates: missing labels, alt text, lang, title, aria-live.
 Every test auto-apply writes follows .gitar/review/testing.md: nested t.Run named "when ..., and ..., it should ...", one assertion per leaf, tables for data-only differences.

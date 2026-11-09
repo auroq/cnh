@@ -23,7 +23,9 @@ After the first commit, every change goes through a pull request.
 `main` is protected: a PR merges only when the `docs` and `manifests` CI jobs pass and Gitar's review check passes.
 The agent opens the PR and arms GitHub auto-merge, so a PR merges without a human reading it, on the strength of those checks.
 Aria chose this on 2026-11-09 so that one person could spend the day building rather than clicking merge, and accepted that Gitar's review and the CI checks are the gate.
-Gitar's auto-apply may also push fixes to a PR branch; those commits are Gitar's and are visible as such.
+Gitar's auto-apply pushed fixes to PR branches until 11:50 MT; those commits are Gitar's and are visible as such.
+Two of them reversed decisions this repo had written down, so Aria turned auto-apply off: every PR now gets a `gitar auto-apply:off` comment, and Gitar changes code only when a person asks it to on the PR.
+The reasoning is public in the comments on PR 18 and PR 19.
 
 ## How to see it
 
