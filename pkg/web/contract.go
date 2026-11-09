@@ -16,10 +16,15 @@ func toV1(a model.Answer) v1.AskResponse {
 	if a.Places != nil {
 		out.Places = make([]v1.Place, 0, len(a.Places))
 		for _, p := range a.Places {
-			out.Places = append(out.Places, v1.Place{
+			place := v1.Place{
 				ID: p.ID, Kind: p.Kind, Name: p.Name, Venue: p.Venue, Level: p.Level, Near: p.Near,
 				Notes: p.Notes, For: p.For, Route: p.Route, Verified: p.Verified, Source: p.Source, Side: p.Side, LeadsTo: p.LeadsTo,
-			})
+			}
+			if st := p.Attendee; st != nil {
+				at := st.LatestAt
+				place.AttendeeStatus, place.ReportCount, place.LatestNote, place.LatestAt = st.Status, st.Count, st.LatestNote, &at
+			}
+			out.Places = append(out.Places, place)
 		}
 	}
 	if a.Sessions != nil {

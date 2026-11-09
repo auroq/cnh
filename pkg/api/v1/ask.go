@@ -36,6 +36,11 @@ type Place struct {
 	Source   string   `json:"source"`
 	Side     string   `json:"side,omitempty"`
 	LeadsTo  string   `json:"leads_to,omitempty"`
+
+	AttendeeStatus string     `json:"attendee_status,omitempty"`
+	ReportCount    int        `json:"report_count,omitempty"`
+	LatestNote     string     `json:"latest_note,omitempty"`
+	LatestAt       *time.Time `json:"latest_at,omitempty"`
 }
 
 type Session struct {

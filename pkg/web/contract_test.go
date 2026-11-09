@@ -44,6 +44,15 @@ func TestContractV1(t *testing.T) {
 				{ID: "step-free-200-south", Kind: "step-free-entrance", Name: "Step-free entrance, 200 South", Venue: "Salt Palace", Side: "200 South", LeadsTo: "200 South", Source: "floor plan"},
 			},
 		}, lines[2]},
+		{"an answer with attendee reports", model.Answer{
+			Question: "nearest elevator",
+			Summary:  "x",
+			Places: []model.Place{
+				{ID: "elevators-hyatt", Kind: "elevator", Name: "Elevators", Venue: "Hyatt Regency", Source: "floor plan",
+					Attendee: &model.AttendeeStatus{Status: "problem", Count: 1, LatestNote: "out of order", LatestAt: time.Date(2026, 11, 9, 21, 52, 0, 0, time.UTC)}},
+				{ID: "elevators-salt-palace", Kind: "elevator", Name: "Elevators", Venue: "Salt Palace", Source: "floor plan"},
+			},
+		}, lines[3]},
 	}
 	for _, c := range cases {
 		t.Run("when "+c.name+" is encoded for /api/ask", func(t *testing.T) {
