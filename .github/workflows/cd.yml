@@ -120,7 +120,7 @@ jobs:
         id: wait
         if: steps.bump.outputs.pr != ''
         run: |
-          merge=$(tools/wait-pr.sh "${{ steps.bump.outputs.pr }}" --timeout 1200)
+          merge=$(tools/wait-pr.sh "${{ steps.bump.outputs.pr }}" --timeout 1200 | tail -1)
           echo "merge=$merge" >> "$GITHUB_OUTPUT"
 
   gate:
