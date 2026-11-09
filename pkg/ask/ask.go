@@ -1,17 +1,23 @@
-// Package ask answers "where is the nearest X from here" and free-text questions from the places and sessions indexes.
+// Package ask answers "where is the nearest X from here" and free-text questions.
+// It speaks in places, sessions and rooms; how they are searched is the Store's business.
 package ask
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"sort"
 	"strings"
 	"time"
 )
 
-type Searcher interface {
-	Search(ctx context.Context, index string, body any) (json.RawMessage, error)
+// Store is what ask needs from a search backend, in the app's own terms.
+type Store interface {
+	// LocateRoom resolves what an attendee typed as their location to a known room, or returns an empty Here.
+	LocateRoom(ctx context.Context, asked string) (Here, error)
+	// FindPlaces returns access features matching the question, best first, never rooms.
+	FindPlaces(ctx context.Context, question string) ([]Place, error)
+	// FindSessions returns schedule sessions matching the question, best first.
+	FindSessions(ctx context.Context, question string) ([]Session, error)
 }
 
 type Place struct {
@@ -25,7 +31,6 @@ type Place struct {
 	For      []string `json:"for,omitempty"`
 	Verified bool     `json:"verified"`
 	Source   string   `json:"source"`
-	Score    float64  `json:"-"`
 }
 
 type Session struct {
@@ -58,54 +63,23 @@ type Answer struct {
 }
 
 type Service struct {
-	ES            Searcher
-	PlacesIndex   string
-	SessionsIndex string
+	Store Store
 }
 
-func (s *Service) places() string {
-	if s.PlacesIndex == "" {
-		return "places"
-	}
-	return s.PlacesIndex
-}
-
-func (s *Service) sessions() string {
-	if s.SessionsIndex == "" {
-		return "sessions"
-	}
-	return s.SessionsIndex
-}
+const maxPlaces = 5
 
 // Locate resolves what the attendee typed as their location to a known room.
 func (s *Service) Locate(ctx context.Context, asked string) (Here, error) {
-	here := Here{Asked: strings.TrimSpace(asked)}
-	if here.Asked == "" {
-		return here, nil
+	asked = strings.TrimSpace(asked)
+	if asked == "" {
+		return Here{}, nil
 	}
-	body := map[string]any{
-		"size": 1,
-		"query": map[string]any{
-			"bool": map[string]any{
-				"filter": []any{map[string]any{"term": map[string]any{"kind": "room"}}},
-				"should": []any{
-					map[string]any{"match_phrase": map[string]any{"name": map[string]any{"query": here.Asked, "boost": 3}}},
-					map[string]any{"match": map[string]any{"name": map[string]any{"query": here.Asked, "fuzziness": "AUTO", "operator": "and"}}},
-					map[string]any{"match": map[string]any{"near": here.Asked}},
-				},
-				"minimum_should_match": 1,
-			},
-		},
-	}
-	hits, err := s.searchPlaces(ctx, body)
-	if err != nil || len(hits) == 0 {
-		return here, err
-	}
-	here.Room, here.Venue, here.Level = hits[0].Name, hits[0].Venue, hits[0].Level
-	return here, nil
+	here, err := s.Store.LocateRoom(ctx, asked)
+	here.Asked = asked
+	return here, err
 }
 
-// Ask runs the hybrid search over places and sessions and ranks places by nearness to here.
+// Ask finds places and sessions for the question and ranks places by nearness to here.
 func (s *Service) Ask(ctx context.Context, question, from string) (Answer, error) {
 	question = strings.TrimSpace(question)
 	here, err := s.Locate(ctx, from)
@@ -118,81 +92,21 @@ func (s *Service) Ask(ctx context.Context, question, from string) (Answer, error
 		return ans, nil
 	}
 
-	places, err := s.searchPlaces(ctx, hybrid(question, []string{"name^3", "near^2", "notes", "kind"}, 10, map[string]any{"term": map[string]any{"kind": "room"}}))
+	places, err := s.Store.FindPlaces(ctx, question)
 	if err != nil {
 		return ans, err
 	}
 	ans.Places = RankByNearness(places, here)
-	if len(ans.Places) > 5 {
-		ans.Places = ans.Places[:5]
+	if len(ans.Places) > maxPlaces {
+		ans.Places = ans.Places[:maxPlaces]
 	}
 
-	raw, err := s.ES.Search(ctx, s.sessions(), hybrid(question, []string{"title^3", "description", "room.text", "speakers"}, 5, nil))
+	ans.Sessions, err = s.Store.FindSessions(ctx, question)
 	if err != nil {
 		return ans, err
-	}
-	var sr struct {
-		Hits struct {
-			Hits []struct {
-				Source Session `json:"_source"`
-			} `json:"hits"`
-		} `json:"hits"`
-	}
-	if err := json.Unmarshal(raw, &sr); err != nil {
-		return ans, err
-	}
-	for _, h := range sr.Hits.Hits {
-		ans.Sessions = append(ans.Sessions, h.Source)
 	}
 	ans.Summary = Summarise(ans)
 	return ans, nil
-}
-
-func hybrid(q string, fields []string, size int, mustNot any) map[string]any {
-	lexical := map[string]any{"multi_match": map[string]any{"query": q, "fields": fields, "fuzziness": "AUTO"}}
-	semantic := map[string]any{"semantic": map[string]any{"field": "content", "query": q}}
-	if mustNot != nil {
-		lexical = map[string]any{"bool": map[string]any{"must": lexical, "must_not": mustNot}}
-		semantic = map[string]any{"bool": map[string]any{"must": semantic, "must_not": mustNot}}
-	}
-	return map[string]any{
-		"size": size,
-		"retriever": map[string]any{
-			"rrf": map[string]any{
-				"rank_window_size": 20,
-				"retrievers": []any{
-					map[string]any{"standard": map[string]any{"query": lexical}},
-					map[string]any{"standard": map[string]any{"query": semantic}},
-				},
-			},
-		},
-	}
-}
-
-func (s *Service) searchPlaces(ctx context.Context, body any) ([]Place, error) {
-	raw, err := s.ES.Search(ctx, s.places(), body)
-	if err != nil {
-		return nil, err
-	}
-	var pr struct {
-		Hits struct {
-			Hits []struct {
-				Score  float64 `json:"_score"`
-				Rank   int     `json:"_rank"`
-				Source Place   `json:"_source"`
-			} `json:"hits"`
-		} `json:"hits"`
-	}
-	if err := json.Unmarshal(raw, &pr); err != nil {
-		return nil, err
-	}
-	out := make([]Place, 0, len(pr.Hits.Hits))
-	for i, h := range pr.Hits.Hits {
-		p := h.Source
-		p.Score = float64(len(pr.Hits.Hits) - i)
-		out = append(out, p)
-	}
-	return out, nil
 }
 
 // RankByNearness keeps the search order but moves places on the attendee's level, then venue, to the front.

@@ -20,8 +20,9 @@ func main() {
 	fs.Usage = func() {
 		fmt.Fprintf(fs.Output(), `usage: ingest [flags]
 
-Fetches the KubeCon schedule from Sessionize and indexes it into Elasticsearch.
-Safe to re-run: documents are keyed by session id and overwritten.
+Fetches the KubeCon schedule from Sessionize and indexes it into Elasticsearch,
+then indexes the curated venue places and the rooms the schedule names.
+Safe to re-run: documents are keyed by id and overwritten.
 
 Environment:
   ES_URL          Elasticsearch base URL (default http://localhost:9200)
@@ -44,24 +45,27 @@ Flags:
 	ctx, cancel := context.WithTimeout(context.Background(), *timeout)
 	defer cancel()
 
-	es := &esindex.Client{
-		URL:      env("ES_URL", "http://localhost:9200"),
-		Username: env("ES_USERNAME", "elastic"),
-		Password: os.Getenv("ES_PASSWORD"),
-		HTTP:     &http.Client{Timeout: 60 * time.Second},
+	indexer := &esindex.Indexer{
+		Client: &esindex.Client{
+			URL:      env("ES_URL", "http://localhost:9200"),
+			Username: env("ES_USERNAME", "elastic"),
+			Password: os.Getenv("ES_PASSWORD"),
+			HTTP:     &http.Client{Timeout: 60 * time.Second},
+		},
+		SessionsIndex: env("ES_INDEX", esindex.DefaultSessionsIndex),
+		PlacesIndex:   env("PLACES_INDEX", esindex.DefaultPlacesIndex),
+		Batch:         50,
 	}
-	index := env("ES_INDEX", "sessions")
 	src := &sessionize.Client{HTTP: &http.Client{Timeout: 30 * time.Second}, IndexURL: os.Getenv("SESSIONIZE_URL")}
 
-	if err := es.EnsureIndex(ctx, index, sessionsMapping); err != nil {
-		fatal(log, "ensure index", err)
+	if err := indexer.EnsureIndexes(ctx); err != nil {
+		fatal(log, "ensure indexes", err)
 	}
 	sessions, err := src.Index(ctx)
 	if err != nil {
 		fatal(log, "fetch index", err)
 	}
 	log.Info("fetched index", "sessions", len(sessions))
-
 	if !*skipDetails {
 		failed := src.Describe(ctx, sessions, func(id string, err error) {
 			if err != nil {
@@ -71,122 +75,43 @@ Flags:
 		log.Info("fetched details", "failed", failed)
 	}
 
-	docs := make([]esindex.Doc, 0, len(sessions))
-	for _, s := range sessions {
-		docs = append(docs, esindex.Doc{ID: s.ID, Body: toDoc(s)})
-	}
-	failed, err := es.Bulk(ctx, index, docs, 50)
+	sessionsResult, err := indexer.IndexSessions(ctx, sessions)
 	if err != nil {
-		fatal(log, "bulk index", err)
+		fatal(log, "index sessions", err)
 	}
-	count, _ := es.Count(ctx, index)
-	log.Info("indexed", "index", index, "sent", len(docs), "failed", failed, "count", count)
+	log.Info("indexed", "index", indexer.SessionsIndex, "sent", sessionsResult.Sent, "failed", sessionsResult.Failed, "count", sessionsResult.Count)
 
-	pfailed, err := indexPlaces(ctx, es, log, sessions)
+	places, err := loadPlaces(env("PLACES_FILE", "data/venue/places.yaml"))
+	if err != nil {
+		fatal(log, "load places", err)
+	}
+	rooms := venue.RoomsFromLocations(locations(sessions))
+	placesResult, err := indexer.IndexPlaces(ctx, append(places, rooms...))
 	if err != nil {
 		fatal(log, "index places", err)
 	}
-	if failed+pfailed > 0 {
+	log.Info("indexed", "index", indexer.PlacesIndex, "curated", len(places), "rooms", len(rooms), "failed", placesResult.Failed, "count", placesResult.Count)
+
+	if sessionsResult.Failed+placesResult.Failed > 0 {
 		os.Exit(2)
 	}
 }
 
-func indexPlaces(ctx context.Context, es *esindex.Client, log *slog.Logger, sessions []sessionize.Session) (int, error) {
-	index := env("PLACES_INDEX", "places")
-	if err := es.EnsureIndex(ctx, index, placesMapping); err != nil {
-		return 0, err
-	}
-	f, err := os.Open(env("PLACES_FILE", "data/venue/places.yaml"))
+func loadPlaces(path string) ([]venue.Place, error) {
+	f, err := os.Open(path)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 	defer f.Close()
-	places, err := venue.Load(f)
-	if err != nil {
-		return 0, err
-	}
-	locs := make([]string, 0, len(sessions))
+	return venue.Load(f)
+}
+
+func locations(sessions []sessionize.Session) []string {
+	out := make([]string, 0, len(sessions))
 	for _, s := range sessions {
-		locs = append(locs, s.Location)
+		out = append(out, s.Location)
 	}
-	rooms := venue.RoomsFromLocations(locs)
-	all := append(places, rooms...)
-	docs := make([]esindex.Doc, 0, len(all))
-	for _, p := range all {
-		docs = append(docs, esindex.Doc{ID: p.ID, Body: map[string]any{
-			"id": p.ID, "kind": p.Kind, "name": p.Name, "venue": p.Venue, "level": p.Level,
-			"near": p.Near, "notes": p.Notes, "for": p.For, "verified": p.Verified, "source": p.Source,
-			"content": p.Content(), "ingested_at": time.Now().UTC(),
-		}})
-	}
-	failed, err := es.Bulk(ctx, index, docs, 50)
-	if err != nil {
-		return failed, err
-	}
-	count, _ := es.Count(ctx, index)
-	log.Info("indexed", "index", index, "curated", len(places), "rooms", len(rooms), "failed", failed, "count", count)
-	return failed, nil
-}
-
-var placesMapping = map[string]any{
-	"mappings": map[string]any{
-		"properties": map[string]any{
-			"id":          map[string]any{"type": "keyword"},
-			"kind":        map[string]any{"type": "keyword"},
-			"name":        map[string]any{"type": "text", "fields": map[string]any{"keyword": map[string]any{"type": "keyword"}}},
-			"venue":       map[string]any{"type": "keyword"},
-			"level":       map[string]any{"type": "keyword"},
-			"near":        map[string]any{"type": "text"},
-			"notes":       map[string]any{"type": "text"},
-			"for":         map[string]any{"type": "keyword"},
-			"verified":    map[string]any{"type": "boolean"},
-			"source":      map[string]any{"type": "keyword", "index": false},
-			"content":     map[string]any{"type": "semantic_text"},
-			"ingested_at": map[string]any{"type": "date"},
-		},
-	},
-}
-
-func toDoc(s sessionize.Session) map[string]any {
-	content := s.Title
-	if s.Description != "" {
-		content += "\n\n" + s.Description
-	}
-	return map[string]any{
-		"id":          s.ID,
-		"title":       s.Title,
-		"url":         s.URL,
-		"speakers":    s.Speakers,
-		"start":       s.Start,
-		"end":         s.End,
-		"location":    s.Location,
-		"venue":       s.Venue,
-		"level":       s.Level,
-		"room":        s.Room,
-		"description": s.Description,
-		"content":     content,
-		"ingested_at": time.Now().UTC(),
-	}
-}
-
-var sessionsMapping = map[string]any{
-	"mappings": map[string]any{
-		"properties": map[string]any{
-			"id":          map[string]any{"type": "keyword"},
-			"title":       map[string]any{"type": "text", "fields": map[string]any{"keyword": map[string]any{"type": "keyword"}}},
-			"url":         map[string]any{"type": "keyword", "index": false},
-			"speakers":    map[string]any{"type": "keyword"},
-			"start":       map[string]any{"type": "date"},
-			"end":         map[string]any{"type": "date"},
-			"location":    map[string]any{"type": "keyword"},
-			"venue":       map[string]any{"type": "keyword"},
-			"level":       map[string]any{"type": "keyword"},
-			"room":        map[string]any{"type": "keyword", "fields": map[string]any{"text": map[string]any{"type": "text"}}},
-			"description": map[string]any{"type": "text"},
-			"content":     map[string]any{"type": "semantic_text"},
-			"ingested_at": map[string]any{"type": "date"},
-		},
-	},
+	return out
 }
 
 func env(k, def string) string {

@@ -1,0 +1,145 @@
+// Package web serves the Wide Door page and JSON API. It is the controller; ask is the use case.
+package web
+
+import (
+	"context"
+	"embed"
+	"encoding/json"
+	"fmt"
+	"html/template"
+	"log/slog"
+	"net/http"
+	"strings"
+	"time"
+
+	"github.com/auroq/cnh/pkg/ask"
+)
+
+//go:embed templates/*.html static/*
+var assets embed.FS
+
+// Asker is what the web layer needs from the use case.
+type Asker interface {
+	Ask(ctx context.Context, question, from string) (ask.Answer, error)
+	Locate(ctx context.Context, asked string) (ask.Here, error)
+}
+
+type Server struct {
+	ask  Asker
+	tmpl *template.Template
+	log  *slog.Logger
+}
+
+type page struct {
+	Title    string
+	Question string
+	From     string
+	Answer   *ask.Answer
+	Error    string
+	Kinds    []kind
+}
+
+type kind struct{ Query, Label string }
+
+var quickKinds = []kind{
+	{"nearest all-gender restroom", "All-gender restroom"},
+	{"nearest quiet room", "Quiet room"},
+	{"nearest elevator", "Elevator"},
+	{"step-free entrance", "Step-free entrance"},
+	{"prayer room", "Prayer room"},
+	{"nursing room", "Nursing room"},
+	{"coat and bag check", "Coat check"},
+	{"registration and help desk", "Help desk"},
+}
+
+const (
+	askTimeout   = 10 * time.Second
+	readyTimeout = 3 * time.Second
+	readyRoom    = "Grand Ballroom J"
+	searchDown   = "The search is not answering right now. Ask staff at registration, and try again in a minute."
+)
+
+func New(a Asker, log *slog.Logger) *Server {
+	return &Server{
+		ask:  a,
+		tmpl: template.Must(template.New("").Funcs(template.FuncMap{"clock": clock, "location": readableLocation}).ParseFS(assets, "templates/*.html")),
+		log:  log,
+	}
+}
+
+func (s *Server) Handler() http.Handler {
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /{$}", s.home)
+	mux.HandleFunc("GET /ask", s.home)
+	mux.HandleFunc("GET /api/ask", s.apiAsk)
+	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, _ *http.Request) { fmt.Fprintln(w, "ok") })
+	mux.HandleFunc("GET /readyz", s.ready)
+	mux.Handle("GET /static/", http.FileServerFS(assets))
+	return s.logged(mux)
+}
+
+func (s *Server) home(w http.ResponseWriter, r *http.Request) {
+	q := strings.TrimSpace(r.URL.Query().Get("q"))
+	from := strings.TrimSpace(r.URL.Query().Get("from"))
+	p := page{Title: "Wide Door", Question: q, From: from, Kinds: quickKinds}
+	if q != "" {
+		ctx, cancel := context.WithTimeout(r.Context(), askTimeout)
+		defer cancel()
+		a, err := s.ask.Ask(ctx, q, from)
+		if err != nil {
+			s.log.Error("ask", "err", err.Error())
+			p.Error = searchDown
+			p.Title = "Search not answering | Wide Door"
+		} else {
+			p.Answer = &a
+			p.Title = a.Summary + " | Wide Door"
+		}
+	}
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	if err := s.tmpl.ExecuteTemplate(w, "home.html", p); err != nil {
+		s.log.Error("render", "err", err.Error())
+	}
+}
+
+func (s *Server) apiAsk(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), askTimeout)
+	defer cancel()
+	a, err := s.ask.Ask(ctx, r.URL.Query().Get("q"), r.URL.Query().Get("from"))
+	w.Header().Set("Content-Type", "application/json")
+	if err != nil {
+		s.log.Error("api ask", "err", err.Error())
+		w.WriteHeader(http.StatusBadGateway)
+		_ = json.NewEncoder(w).Encode(map[string]string{"error": "search unavailable"})
+		return
+	}
+	_ = json.NewEncoder(w).Encode(a)
+}
+
+func (s *Server) ready(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), readyTimeout)
+	defer cancel()
+	if _, err := s.ask.Locate(ctx, readyRoom); err != nil {
+		http.Error(w, "search unavailable", http.StatusServiceUnavailable)
+		return
+	}
+	fmt.Fprintln(w, "ready")
+}
+
+func (s *Server) logged(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+		next.ServeHTTP(w, r)
+		if r.URL.Path == "/healthz" || r.URL.Path == "/readyz" {
+			return
+		}
+		s.log.Info("request", "method", r.Method, "path", r.URL.Path, "q", r.URL.Query().Get("q"), "ms", time.Since(start).Milliseconds())
+	})
+}
+
+func clock(t time.Time) string {
+	return t.In(time.FixedZone("MST", -7*3600)).Format("Mon 3:04 pm")
+}
+
+func readableLocation(location string) string {
+	return strings.ReplaceAll(location, " | ", ", ")
+}
