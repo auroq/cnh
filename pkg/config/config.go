@@ -41,6 +41,8 @@ const (
 
 	KeyTelemetryOTLPEndpoint = "telemetry.otlp_endpoint"
 	KeyTelemetryServiceName  = "telemetry.service_name"
+
+	KeyQRBaseURL = "qr.base_url"
 )
 
 // Defaults is every setting's value when nothing else sets it; one place, read by --help too.
@@ -62,6 +64,7 @@ var Defaults = map[string]any{
 	KeyIngestESTimeout:            5 * time.Minute,
 	KeyTelemetryOTLPEndpoint:      "",
 	KeyTelemetryServiceName:       "widedoor",
+	KeyQRBaseURL:                  "https://widedoor.cnh.auroq.com",
 }
 
 // secret keys never become flags and are never printed.
@@ -100,6 +103,11 @@ type Telemetry interface {
 	ServiceName() string
 }
 
+// QR is what the code renderer needs: the public address the codes open.
+type QR interface {
+	BaseURL() string
+}
+
 // Configuration hands each layer the slice it needs.
 type Configuration struct {
 	v *viper.Viper
@@ -109,6 +117,7 @@ func (c *Configuration) Server() Server               { return server{c.v} }
 func (c *Configuration) Elasticsearch() Elasticsearch { return elasticsearch{c.v} }
 func (c *Configuration) Ingest() Ingest               { return ingest{c.v} }
 func (c *Configuration) Telemetry() Telemetry         { return telemetry{c.v} }
+func (c *Configuration) QR() QR                       { return qr{c.v} }
 
 // New prepares a viper with defaults, the environment and the config file search path, reading nothing yet.
 func New() *viper.Viper {
@@ -220,3 +229,7 @@ type telemetry struct{ v *viper.Viper }
 
 func (t telemetry) OTLPEndpoint() string { return t.v.GetString(KeyTelemetryOTLPEndpoint) }
 func (t telemetry) ServiceName() string  { return t.v.GetString(KeyTelemetryServiceName) }
+
+type qr struct{ v *viper.Viper }
+
+func (q qr) BaseURL() string { return q.v.GetString(KeyQRBaseURL) }

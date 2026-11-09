@@ -22,11 +22,13 @@ Project code and design start after kickoff (10:00 MT, 2026-11-09) in the commit
 The shape is fixed by the ADRs:
 
 - **Language:** Go for the API and the ingest, with server-rendered HTML and almost no JavaScript, because plain HTML is the most accessible UI there is.
-- **Store:** one Elasticsearch cluster (ECK) holding venue, room, access-feature and session documents, searched with BM25 plus `semantic_text` ([ADR 0004](docs/adr/0004-elasticsearch-is-the-store.md)).
+- **Store:** one Elasticsearch cluster (ECK) holding venue, room, access-feature and session documents, searched with BM25 plus `semantic_text` ([ADR 0004](docs/adr/0004-elasticsearch-as-the-single-store.md)).
 - **Schedule:** the public KubeCon NA 2026 schedule from Sessionize, indexed with room and level.
 - **Deploy:** Argo CD syncs [`deploy/`](deploy/) into the `wide-door` namespace; every workload is an Argo Rollouts `Rollout` written to pass Radar's checks ([ADR 0005](docs/adr/0005-radar-clean-manifests-via-argo.md)).
 - **Telemetry:** OpenTelemetry traces, metrics and logs to Dash0 through the Dash0 operator.
-- **Review:** every PR after the first commit is reviewed by Gitar against [`.gitar/review/`](.gitar/review/).
+- **Review:** every PR after the first commit is reviewed by Gitar against [`.gitar/review/`](.gitar/review/); its approval is advisory and the CI checks are the gate ([ADR 0010](docs/adr/0010-gitar-approval-is-advisory.md)).
+- **Release:** CI and CD are separate workflows; CD builds the image, opens the bump PR, waits for the canary, tests the live site and reverts by PR on failure ([ADR 0008](docs/adr/0008-ci-cd-separation-and-rollback-by-revert.md)).
+- **Types:** `pkg/model` is what the business means, adapter shapes stay private, `pkg/api/v1` is what clients were promised ([ADR 0011](docs/adr/0011-types-live-by-kind.md)).
 - **Secrets:** Sealed Secrets only ([ADR 0006](docs/adr/0006-sealed-secrets.md)).
 
 ### Observability
@@ -36,6 +38,12 @@ Traces: every request is a span named for its route (`GET /api/ask`), with an `a
 Metrics: `widedoor.ask.duration`, `widedoor.ask.answers` by the kind of the top place and whether it was verified, and `widedoor.ask.unverified_served`, which counts how many times we told an attendee something nobody had checked on the floor yet; the ingest job reports `widedoor.ingest.sessions_indexed`, `widedoor.ingest.detail_failures` and `widedoor.ingest.duration`.
 Logs: `slog` goes through the `otelslog` bridge, so every request log reaches Dash0 as a log record with the trace and span id it belongs to.
 `widedoor.ask.unverified_served` is the accessibility metric: it is the list of what to go and verify next.
+
+## Evidence from the day
+
+- [`docs/demo/2026-11-09-rollout-abort.md`](docs/demo/2026-11-09-rollout-abort.md): a real canary aborted by Argo Rollouts at two minutes, diagnosed by Radar with the change that caused it.
+- [`docs/demo/2026-11-09-gitar-merge-gate.md`](docs/demo/2026-11-09-gitar-merge-gate.md): Gitar approving PRs on its own, withholding approval from a PR that deleted a test, and why the required review became advisory.
+- The pull requests themselves: every change after Ring 0, bumps and reverts included, with Gitar's review on each.
 
 ## Tracks
 
@@ -55,6 +63,17 @@ make help
 
 Infrastructure targets are described in [`infra/`](infra/); the app targets are added as the rings land.
 The Makefile pins `KUBECONFIG` to `./.kube/config`, so its targets only ever talk to this cluster.
+
+### Print the door codes
+
+```bash
+go run ./cmd/widedoor qr --out qr --sheet
+```
+
+This writes one `<place id>.svg` and `<place id>.png` per room, entrance, landmark, quiet room, prayer room, nursing room, first-aid point, info desk and coat check, each encoding `https://widedoor.cnh.auroq.com/?from=<place id>`, and `sheet.html` with one printable page per place.
+Open `qr/sheet.html` in a browser and print it; each page has the place name at 48pt, the building and level, the code and the URL in text, so a volunteer can tape it beside the door sign.
+Scanning a code opens Wide Door with the location filled in and the cursor in the question field.
+Pass `--rooms=false` to skip fetching the schedule and render only the curated places, and `--qr-base-url` to encode another address.
 
 ## Infrastructure (`infra/`)
 
