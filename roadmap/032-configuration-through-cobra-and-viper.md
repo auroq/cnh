@@ -1,6 +1,6 @@
 # 32. Configuration through cobra and viper, one binary, every layer replaceable
 
-**Open. Filed 2026-11-09, during Ring 3, by Aria. Aria's call: the shape mirrors her cellar and botropolis repos.**
+**Done 2026-11-09 (PR #34, issue #32). Filed 2026-11-09, during Ring 3, by Aria. Aria's call: the shape mirrors her cellar and botropolis repos.**
 
 Depends on: 025, 031
 
