@@ -1,10 +1,11 @@
 FROM golang:1.27-bookworm AS build
 ARG CMD=widedoor
+ARG VERSION=dev
 WORKDIR /src
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
-RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/app ./cmd/${CMD}
+RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w -X github.com/auroq/cnh/pkg/telemetry.Version=${VERSION}" -o /out/app ./cmd/${CMD}
 
 FROM gcr.io/distroless/static-debian12:nonroot
 COPY --from=build /out/app /app

@@ -28,7 +28,7 @@ layer_of() {
   case "$1" in
     pkg/venue|pkg/schedule|pkg/config) echo model ;;
     pkg/ask|pkg/ingest) echo usecase ;;
-    pkg/esindex|pkg/sessionize) echo adapter ;;
+    pkg/esindex|pkg/sessionize|pkg/telemetry) echo adapter ;;
     pkg/web) echo web ;;
     pkg/cli|pkg/app|cmd/*) echo wiring ;;
     *) echo unknown ;;

@@ -16,8 +16,11 @@ import (
 	"github.com/auroq/cnh/pkg/ask"
 	"github.com/auroq/cnh/pkg/config"
 	"github.com/auroq/cnh/pkg/esindex"
+	"github.com/auroq/cnh/pkg/telemetry"
 	"github.com/auroq/cnh/pkg/web"
 )
+
+const flushTimeout = 10 * time.Second
 
 // NewServe builds the serve command: the web app and JSON API in front of the search store.
 func NewServe(v *viper.Viper, log *slog.Logger) *cobra.Command {
@@ -30,6 +33,11 @@ func NewServe(v *viper.Viper, log *slog.Logger) *cobra.Command {
 			if err != nil {
 				return err
 			}
+			log, flush, err := observe(cmd.Context(), cfg.Telemetry(), log)
+			if err != nil {
+				return err
+			}
+			defer flush()
 			store := newStore(cfg.Elasticsearch())
 			handler := web.New(&ask.Service{Store: store}, log).Handler()
 			return serve(cmd.Context(), cfg.Server(), handler, log)
@@ -37,12 +45,35 @@ func NewServe(v *viper.Viper, log *slog.Logger) *cobra.Command {
 	}
 }
 
+// observe installs the OpenTelemetry providers for cfg and returns the logger that reaches them,
+// with a flush to call before the process exits.
+func observe(ctx context.Context, cfg config.Telemetry, log *slog.Logger) (*slog.Logger, func(), error) {
+	providers, err := telemetry.Setup(ctx, cfg)
+	if err != nil {
+		return nil, nil, err
+	}
+	log = slog.New(telemetry.Handler(log.Handler()))
+	endpoint := cfg.OTLPEndpoint()
+	if endpoint == "" {
+		endpoint = "disabled"
+	}
+	log.Info("telemetry", "otlp_endpoint", endpoint, "service_name", cfg.ServiceName(), "service_version", telemetry.Version)
+	flush := func() {
+		ctx, cancel := context.WithTimeout(context.Background(), flushTimeout)
+		defer cancel()
+		if err := providers.Shutdown(ctx); err != nil {
+			log.Error("telemetry shutdown", "err", err.Error())
+		}
+	}
+	return log, flush, nil
+}
+
 func newClient(es config.Elasticsearch) *esindex.Client {
 	return &esindex.Client{
 		URL:      es.URL(),
 		Username: es.Username(),
 		Password: es.Password(),
-		HTTP:     &http.Client{Timeout: es.Timeout()},
+		HTTP:     &http.Client{Timeout: es.Timeout(), Transport: telemetry.Transport("elasticsearch", http.DefaultTransport)},
 	}
 }
 

@@ -12,6 +12,10 @@ import (
 	"strings"
 	"time"
 
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
+
 	"github.com/auroq/cnh/pkg/ask"
 )
 
@@ -67,6 +71,8 @@ func New(a Asker, log *slog.Logger) *Server {
 	}
 }
 
+// Handler is the mux behind one span per request, named for the route pattern that matched;
+// the probes are served without a span so they do not drown the real requests.
 func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /{$}", s.home)
@@ -75,7 +81,11 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, _ *http.Request) { fmt.Fprintln(w, "ok") })
 	mux.HandleFunc("GET /readyz", s.ready)
 	mux.Handle("GET /static/", http.FileServerFS(assets))
-	return s.logged(mux)
+	return otelhttp.NewHandler(s.logged(mux), "widedoor", otelhttp.WithFilter(notProbe))
+}
+
+func notProbe(r *http.Request) bool {
+	return r.URL.Path != "/healthz" && r.URL.Path != "/readyz"
 }
 
 func (s *Server) home(w http.ResponseWriter, r *http.Request) {
@@ -87,7 +97,7 @@ func (s *Server) home(w http.ResponseWriter, r *http.Request) {
 		defer cancel()
 		a, err := s.ask.Ask(ctx, q, from)
 		if err != nil {
-			s.log.Error("ask", "err", err.Error())
+			s.log.ErrorContext(ctx, "ask", "err", err.Error())
 			p.Error = searchDown
 			p.Title = "Search not answering | Wide Door"
 		} else {
@@ -97,7 +107,7 @@ func (s *Server) home(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	if err := s.tmpl.ExecuteTemplate(w, "home.html", p); err != nil {
-		s.log.Error("render", "err", err.Error())
+		s.log.ErrorContext(r.Context(), "render", "err", err.Error())
 	}
 }
 
@@ -107,7 +117,7 @@ func (s *Server) apiAsk(w http.ResponseWriter, r *http.Request) {
 	a, err := s.ask.Ask(ctx, r.URL.Query().Get("q"), r.URL.Query().Get("from"))
 	w.Header().Set("Content-Type", "application/json")
 	if err != nil {
-		s.log.Error("api ask", "err", err.Error())
+		s.log.ErrorContext(ctx, "api ask", "err", err.Error())
 		w.WriteHeader(http.StatusBadGateway)
 		_ = json.NewEncoder(w).Encode(map[string]string{"error": "search unavailable"})
 		return
@@ -129,11 +139,20 @@ func (s *Server) logged(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 		next.ServeHTTP(w, r)
-		if r.URL.Path == "/healthz" || r.URL.Path == "/readyz" {
+		if !notProbe(r) {
 			return
 		}
-		s.log.Info("request", "method", r.Method, "path", r.URL.Path, "q", r.URL.Query().Get("q"), "ms", time.Since(start).Milliseconds())
+		route := routeOf(r.Pattern)
+		trace.SpanFromContext(r.Context()).SetAttributes(attribute.String("http.route", route))
+		s.log.InfoContext(r.Context(), "request", "method", r.Method, "route", route, "path", r.URL.Path, "q", r.URL.Query().Get("q"), "ms", time.Since(start).Milliseconds())
 	})
+}
+
+func routeOf(pattern string) string {
+	if i := strings.IndexByte(pattern, '/'); i >= 0 {
+		return pattern[i:]
+	}
+	return pattern
 }
 
 func clock(t time.Time) string {

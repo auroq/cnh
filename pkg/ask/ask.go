@@ -8,6 +8,10 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/metric"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // Store is what ask needs from a search backend, in the app's own terms.
@@ -74,14 +78,47 @@ func (s *Service) Locate(ctx context.Context, asked string) (Here, error) {
 	if asked == "" {
 		return Here{}, nil
 	}
-	here, err := s.Store.LocateRoom(ctx, asked)
+	here, err := step(ctx, "ask.LocateRoom", func(ctx context.Context) (Here, error) { return s.Store.LocateRoom(ctx, asked) })
 	here.Asked = asked
 	return here, err
 }
 
 // Ask finds places and sessions for the question and ranks places by nearness to here.
+// It is also where the question is observed: one span with the question's shape and the answer's,
+// and the metrics that say how often attendees are told something nobody has verified.
 func (s *Service) Ask(ctx context.Context, question, from string) (Answer, error) {
+	start := time.Now()
 	question = strings.TrimSpace(question)
+	ctx, span := tracer.Start(ctx, "ask.Ask", trace.WithAttributes(attrQuestionLength.Int(len(question))))
+	defer span.End()
+
+	ans, err := s.answer(ctx, question, from)
+	kind, verified := topKind(ans)
+	span.SetAttributes(
+		attrHereVenue.String(ans.Here.Venue),
+		attrHereLevel.String(ans.Here.Level),
+		attrPlacesCount.Int(len(ans.Places)),
+		attrSessionsCount.Int(len(ans.Sessions)),
+		attrAnswerVerified.Bool(verified),
+	)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+	}
+	if question != "" {
+		elapsed := float64(time.Since(start)) / float64(time.Millisecond)
+		askDuration.Record(ctx, elapsed, metric.WithAttributes(attrHasLocation.Bool(ans.Here.Venue != ""), attrAnswered.Bool(err == nil && kind != "none")))
+		if err == nil {
+			askAnswers.Add(ctx, 1, metric.WithAttributes(attrKind.String(kind), attrVerified.Bool(verified)))
+			if len(ans.Places) > 0 && !verified {
+				unverifiedServed.Add(ctx, 1, metric.WithAttributes(attrKind.String(kind)))
+			}
+		}
+	}
+	return ans, err
+}
+
+func (s *Service) answer(ctx context.Context, question, from string) (Answer, error) {
 	here, err := s.Locate(ctx, from)
 	if err != nil {
 		return Answer{}, err
@@ -92,7 +129,7 @@ func (s *Service) Ask(ctx context.Context, question, from string) (Answer, error
 		return ans, nil
 	}
 
-	places, err := s.Store.FindPlaces(ctx, question)
+	places, err := step(ctx, "ask.FindPlaces", func(ctx context.Context) ([]Place, error) { return s.Store.FindPlaces(ctx, question) })
 	if err != nil {
 		return ans, err
 	}
@@ -101,12 +138,23 @@ func (s *Service) Ask(ctx context.Context, question, from string) (Answer, error
 		ans.Places = ans.Places[:maxPlaces]
 	}
 
-	ans.Sessions, err = s.Store.FindSessions(ctx, question)
+	ans.Sessions, err = step(ctx, "ask.FindSessions", func(ctx context.Context) ([]Session, error) { return s.Store.FindSessions(ctx, question) })
 	if err != nil {
 		return ans, err
 	}
 	ans.Summary = Summarise(ans)
 	return ans, nil
+}
+
+func step[T any](ctx context.Context, name string, fn func(context.Context) (T, error)) (T, error) {
+	ctx, span := tracer.Start(ctx, name)
+	defer span.End()
+	out, err := fn(ctx)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+	}
+	return out, err
 }
 
 // RankByNearness keeps the search order but moves places on the attendee's level, then venue, to the front.

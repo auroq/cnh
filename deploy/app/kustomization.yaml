@@ -10,6 +10,7 @@ resources:
   - elasticsearch.yaml
   - ingest.yaml
   - config.yaml
+  - dash0.yaml
 images:
   - name: ghcr.io/auroq/cnh/widedoor
     newTag: f71eb2b795716b0c2ea0ae140794211f128fdac2

@@ -20,6 +20,8 @@ flowchart LR
     cli -.constructs.-> esstore
     cli -.constructs.-> ingest
     cli -->|reads| config[pkg/config<br/>flags, env, file, defaults]
+    cli -.constructs.-> tel[pkg/telemetry<br/>adapter]
+    tel -->|OTLP gRPC: traces, metrics, logs| dash0([Dash0 operator collector<br/>dash0-system])
 ```
 
 ## Packages, one line each
@@ -33,6 +35,7 @@ flowchart LR
 | `pkg/config` | model | every setting named once: `Key*` constants, defaults, flag binding, and the typed `Server`, `Elasticsearch`, `Ingest` and `Telemetry` interfaces each layer takes |
 | `pkg/esindex` | adapter | everything Elasticsearch: the HTTP client, `Store` (the hybrid BM25 plus `semantic_text` query fused with RRF, the room lookup, hit parsing) and `Indexer` (both index mappings, document shapes, bulk writes) |
 | `pkg/sessionize` | adapter | fetches and parses the public KubeCon schedule from Sessionize's markdown view |
+| `pkg/telemetry` | adapter | everything OpenTelemetry: `Setup` builds the SDK providers and OTLP gRPC exporters (noops when no endpoint is set), `Handler` is the slog handler that sends every log line to Dash0 with its trace id, `Transport` makes each Elasticsearch call a child span |
 | `pkg/web` | controller | the HTML page, the JSON API, the probes, the templates and the CSS |
 | `pkg/cli` | wiring | the `widedoor` command and its `serve` and `ingest` subcommands: load config, construct adapters, hand them to the use cases |
 | `pkg/app` | wiring | `Main()`: builds the command line and turns its result into an exit code |
@@ -73,6 +76,7 @@ Settings come from flags, then `WIDEDOOR_*` environment variables, then `/etc/wi
 | the curated places or how "nearest" knows levels | `data/venue/places.yaml`, `pkg/venue` |
 | the page, the form, the live region, the CSS | `pkg/web` |
 | what runs in the cluster, probes, resources, routes | `deploy/app` (synced by Argo CD, pinned by image SHA, bumped by `tools/bump-image.sh`) |
+| which spans, metrics and logs leave the app, and where they go | `pkg/telemetry` (providers, exporters, the slog bridge), `pkg/ask/telemetry.go` and `pkg/ingest/telemetry.go` (the instruments and attribute names), `telemetry.otlp_endpoint` in `deploy/app/config.yaml` (the Dash0 operator's collector) |
 | the platform under it (gateway, ECK, Argo, Dash0, Radar) | `infra/platform` (Terraform, built before kickoff) |
 
 ## The rule, and the check
