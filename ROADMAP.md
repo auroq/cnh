@@ -35,5 +35,4 @@ Times are Mountain Time on 2026-11-09: coding starts at 11:00, code freezes at 1
 | [014](roadmap/014-stretch-the-transcript-source.md) | **stretch:** where transcripts come from | 013 | Aria, the transcript source |
 | [015](roadmap/015-stretch-live-mic-captions.md) | **stretch:** room-anchored large-text captions from a live mic | 014 | nobody |
 | [016](roadmap/016-stretch-search-inside-talks.md) | **stretch:** timestamped transcript search, joined to the schedule | 007, 015 | nobody |
-| [043](roadmap/043-gitar-approval-is-the-merge-gate.md) | Gitar approves against `.gitar/config/approve.md` and `main` requires that approval | 004, 036 | Aria, approve-by-hand as the fallback |
 | [036](roadmap/036-ci-and-cd-are-separate-stages.md) | CI and CD as separate stages with integration tests, a post-deploy gate against the live site, and rollback by reverting the bump | 032 | Aria, bot commit or bump PR |
