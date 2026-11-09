@@ -5,21 +5,22 @@ import "time"
 
 // Place is somewhere an attendee may need: an access feature, or a room named by the schedule.
 type Place struct {
-	ID       string          `json:"id"`
-	Kind     string          `json:"kind"`
-	Name     string          `json:"name"`
-	Venue    string          `json:"venue"`
-	Level    string          `json:"level"`
-	Near     string          `json:"near"`
-	Notes    string          `json:"notes,omitempty"`
-	For      []string        `json:"for,omitempty"`
-	Route    []string        `json:"route,omitempty"`
-	Verified bool            `json:"verified"`
-	Source   string          `json:"source"`
-	Aliases  []string        `json:"aliases,omitempty"`
-	Side     string          `json:"side,omitempty"`
-	LeadsTo  string          `json:"leads_to,omitempty"`
-	Attendee *AttendeeStatus `json:"attendee,omitempty"`
+	ID          string          `json:"id"`
+	Kind        string          `json:"kind"`
+	Name        string          `json:"name"`
+	Venue       string          `json:"venue"`
+	Level       string          `json:"level"`
+	Near        string          `json:"near"`
+	Notes       string          `json:"notes,omitempty"`
+	For         []string        `json:"for,omitempty"`
+	Route       []string        `json:"route,omitempty"`
+	Verified    bool            `json:"verified"`
+	Source      string          `json:"source"`
+	Aliases     []string        `json:"aliases,omitempty"`
+	Side        string          `json:"side,omitempty"`
+	LeadsTo     string          `json:"leads_to,omitempty"`
+	Attendee    *AttendeeStatus `json:"attendee,omitempty"`
+	DoesNotMeet []string        `json:"does_not_meet,omitempty"`
 }
 
 // Room is a location the schedule names, split into its parts.
@@ -82,6 +83,7 @@ type Answer struct {
 	Applied              []Applied `json:"applied,omitempty"`
 	SessionsShownBecause string    `json:"sessions_shown_because,omitempty"`
 	Learned              []Lesson  `json:"learned,omitempty"`
+	Unmet                []string  `json:"unmet,omitempty"`
 	Schedule             *Schedule `json:"schedule,omitempty"`
 }
 

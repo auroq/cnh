@@ -10,7 +10,7 @@
 <body data-prefs="{{.Prefs}}"{{if .PrefsKnown}} data-prefs-known="1"{{end}}{{if .Forgot}} data-forgot="1"{{end}} data-sched="{{.Sched}}"{{if .ForgotSched}} data-forgot-sched="1"{{end}}>
 <a class="skip" href="#answer">Skip to the answer</a>
 <header>
-  <h1>{{if and .Prefs .Sched}}<a href="/?prefs={{.Prefs}}&amp;sched={{.Sched}}">{{else if .Prefs}}<a href="/?prefs={{.Prefs}}">{{else if .Sched}}<a href="/?sched={{.Sched}}">{{else}}<a href="/">{{end}}Wide Door</a></h1>
+  <h1><svg class="mark" aria-hidden="true" focusable="false" viewBox="0 0 32 32"><rect x="3" y="2" width="26" height="28" rx="2" fill="none" stroke="currentColor" stroke-width="2.5"/><rect x="9" y="7" width="15" height="23" rx="1" fill="currentColor"/><circle cx="20.5" cy="19" r="1.75" fill="var(--band)"/></svg>{{if and .Prefs .Sched}}<a href="/?prefs={{.Prefs}}&amp;sched={{.Sched}}">{{else if .Prefs}}<a href="/?prefs={{.Prefs}}">{{else if .Sched}}<a href="/?sched={{.Sched}}">{{else}}<a href="/">{{end}}Wide Door</a></h1>
   <p class="lede">Ask where things are at KubeCon. Answers say the building, the level, and whether anyone has checked them.</p>
 </header>
 {{if .ProfileOpen}}{{template "profile_aside" .}}{{else}}<p class="profile-bar">What Wide Door knows about you: {{.Count}}. <a class="edit wide" href="#profile">Edit<span class="vh"> your profile</span></a><a class="edit narrow" href="{{.EditURL}}">Edit<span class="vh"> your profile</span></a></p>{{end}}
@@ -22,7 +22,7 @@
     {{if .Schedule.JustLeft}}<p class="agenda-line">You just left: <strong>{{.Schedule.JustLeft.Title}}</strong>.</p>{{end}}
     {{if .Schedule.BackToBack}}<p class="agenda-line">You have three sessions in a row.{{if .QuietRoom}} If you want a break, the nearest quiet room is {{.QuietRoom}}.{{else}} If you want a break, <a href="/ask?q=nearest+quiet+room&amp;from={{.From}}{{if .Prefs}}&amp;prefs={{.Prefs}}{{end}}&amp;sched={{.Sched}}">find the nearest quiet room</a>.{{end}}</p>{{end}}
   </div>{{end}}
-  <form action="/ask" method="get" role="search" aria-describedby="how">
+  <form class="ask" action="/ask" method="get" role="search" aria-describedby="how">
     <p id="how" class="how">Two boxes. The first is what you need. The second is where you are: a room, a landmark, or the talk you just left, so the answer can say whether you need stairs or an elevator.</p>
     <div class="field">
       <label for="q">What do you need?</label>

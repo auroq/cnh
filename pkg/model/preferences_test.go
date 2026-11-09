@@ -18,6 +18,10 @@ func TestParsePreferences(t *testing.T) {
 		{"a learned chip", "quiet-matters~", "quiet-matters~"},
 		{"a chip both learned and chosen", "quiet-matters~,quiet-matters", "quiet-matters"},
 		{"a chosen and a learned chip", "wheels,step-free~", "step-free~,wheels"},
+		{"a must chip", "step-free!", "step-free!"},
+		{"a chip both preferred and must", "step-free,step-free!", "step-free!"},
+		{"a chip both learned and must", "step-free~,step-free!", "step-free!"},
+		{"a must and a learned chip", "quiet-matters~,step-free!", "step-free!,quiet-matters~"},
 	}
 	for _, c := range cases {
 		t.Run("when prefs say "+c.name, func(t *testing.T) {
@@ -99,4 +103,64 @@ func quoted(s string) string {
 		return "nothing"
 	}
 	return `"` + s + `"`
+}
+
+func TestStrength(t *testing.T) {
+	prefs := ParsePreferences("step-free!,quiet-matters,all-gender~")
+
+	cases := []struct {
+		chip string
+		want Strength
+	}{
+		{"step-free", Must},
+		{"quiet-matters", Prefer},
+		{"all-gender", Prefer},
+		{"dietary", ""},
+	}
+	for _, c := range cases {
+		t.Run("when the profile holds "+c.chip+" as "+quoted(string(c.want)), func(t *testing.T) {
+			t.Run("it should report that strength", func(t *testing.T) {
+				if got := prefs.StrengthOf(c.chip); got != c.want {
+					t.Fatalf("got %q, want %q", got, c.want)
+				}
+			})
+		})
+	}
+
+	t.Run("when a learned chip is kept", func(t *testing.T) {
+		t.Run("it should become a prefer, never a must", func(t *testing.T) {
+			if got := prefs.With("all-gender").StrengthOf("all-gender"); got != Prefer {
+				t.Fatalf("got %q", got)
+			}
+		})
+	})
+
+	t.Run("when a prefer is set to must", func(t *testing.T) {
+		t.Run("it should encode with a bang", func(t *testing.T) {
+			if got := prefs.WithStrength("quiet-matters", Must).String(); got != "step-free!,quiet-matters!,all-gender~" {
+				t.Fatalf("got %q", got)
+			}
+		})
+	})
+
+	t.Run("when a must is set back to prefer", func(t *testing.T) {
+		t.Run("it should drop the bang", func(t *testing.T) {
+			if got := prefs.WithStrength("step-free", Prefer).String(); got != "step-free,quiet-matters,all-gender~" {
+				t.Fatalf("got %q", got)
+			}
+		})
+	})
+
+	t.Run("when counting", func(t *testing.T) {
+		t.Run("it should count one must", func(t *testing.T) {
+			if prefs.Musts() != 1 {
+				t.Fatalf("musts %d", prefs.Musts())
+			}
+		})
+		t.Run("it should count two preferences", func(t *testing.T) {
+			if prefs.Prefers() != 2 {
+				t.Fatalf("prefers %d", prefs.Prefers())
+			}
+		})
+	})
 }
