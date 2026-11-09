@@ -1,6 +1,6 @@
 # 11. Telemetry reaches Dash0
 
-**Open. Filed 2026-11-09, from the kickoff plan. Nobody's call: the operator is already installed.**
+**Done 2026-11-09 (PR #44, issue #11). Filed 2026-11-09, from the kickoff plan. Nobody's call: the operator is already installed. Built with the SDK, not auto-instrumentation: Go is not a runtime the operator instruments. Evidence: queried through the Dash0 API against the deployed image after the merge; the counts are a comment on PR #44.**
 
 Depends on: 009
 
