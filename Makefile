@@ -12,6 +12,11 @@ TF  := $(OP) secret-run --env AWS_ACCESS_KEY_ID=$(STATE_USER) --env AWS_SECRET_A
 
 export KUBECONFIG := $(CURDIR)/.kube/config
 
+ES_PASSWORD  ?= widedoor-dev
+ES_PORT      ?= 19200
+WIDEDOOR_URL ?= https://widedoor.cnh.auroq.com
+export ES_PASSWORD ES_PORT
+
 .PHONY: help
 help: ## Show this help
 	@grep -hE '^[a-zA-Z0-9_%-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-22s %s\n", $$1, $$2}'
@@ -97,6 +102,26 @@ test: ## Go unit tests, vet and gofmt check
 	test -z "$$(gofmt -l .)"
 	go vet ./...
 	go test -race ./...
+
+.PHONY: es-up
+es-up: ## Start a local Elasticsearch (trial licence, ML on) with docker compose and wait until it and ELSER are ready
+	docker compose up -d --wait es
+	ES_URL=http://127.0.0.1:$(ES_PORT) tools/es-warm.sh
+
+.PHONY: es-down
+es-down: ## Stop the local Elasticsearch and delete its data
+	docker compose down -v
+
+.PHONY: test-integration
+test-integration: es-up ## Integration tests against the local docker compose Elasticsearch
+	ES_URL=http://127.0.0.1:$(ES_PORT) ES_USERNAME=elastic go test -race -count=1 ./testing/integration/...
+
+.PHONY: test-acceptance
+test-acceptance: ## Acceptance tests over HTTP against WIDEDOOR_URL (default: the deployed app)
+	WIDEDOOR_URL=$(WIDEDOOR_URL) go test -race -count=1 ./testing/acceptance/...
+
+.PHONY: test-all
+test-all: test test-integration test-acceptance ## Unit, integration and acceptance tests
 
 .PHONY: build
 build: ## Build the Go binaries into bin/
