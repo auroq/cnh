@@ -131,7 +131,7 @@ build: ## Build the Go binaries into bin/
 .PHONY: ingest
 ingest: ## Run the schedule ingest against the cluster's Elasticsearch through a port-forward
 	kubectl -n wide-door port-forward svc/wide-door-es-http 19200:9200 >/dev/null 2>&1 & pf=$$!; sleep 3; \
-	ES_URL=http://localhost:19200 secret-run --env ES_PASSWORD=file:<(kubectl -n wide-door get secret wide-door-es-elastic-user -o jsonpath='{.data.elastic}' | base64 -d) -- go run ./cmd/ingest; \
+	secret-run --env WIDEDOOR_ELASTICSEARCH_PASSWORD=file:<(kubectl -n wide-door get secret wide-door-es-elastic-user -o jsonpath='{.data.elastic}' | base64 -d) -- WIDEDOOR_ELASTICSEARCH_URL=http://localhost:19200 go run ./cmd/widedoor ingest; \
 	kill $$pf
 
 .PHONY: issues
