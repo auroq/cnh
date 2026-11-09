@@ -1,6 +1,6 @@
 # 12. Radar shows no findings
 
-**Open. Filed 2026-11-09, from the kickoff plan. Nobody's call: Radar's checks are the spec.**
+**Done 2026-11-09 (PRs #27, #29, #40; the real aborted canary of 12:37 MT in docs/demo; the four remaining Radar findings accepted here and dismissed in Radar by Aria; issue #12). Filed 2026-11-09, from the kickoff plan. Nobody's call: Radar's checks are the spec.**
 
 Depends on: 005, 009
 
