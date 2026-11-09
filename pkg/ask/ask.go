@@ -161,6 +161,7 @@ func (s *Service) answer(ctx context.Context, question, from string, prefs Prefe
 	}
 	ans.Summary = Summarise(ans)
 	shapeSummary(&ans, prefs)
+	ans.Learned = Learned(question, ans.Need)
 	return ans, nil
 }
 

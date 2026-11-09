@@ -115,6 +115,9 @@ footer { margin-top: 3rem; color: var(--muted); font-size: 0.9rem; border-top: 1
 .chips { list-style: none; padding: 0; margin: 0.5rem 0; display: flex; flex-wrap: wrap; gap: 0.5rem; }
 .chips .chip { margin: 0; min-width: 44px; min-height: 44px; background: var(--bg); color: var(--accent); font-weight: 600; }
 .chips .chip.on { background: var(--accent); color: var(--accent-fg); }
+.chips .chip.learned { border-style: dashed; }
+.chips .chip .from { font-weight: 400; }
+.chips .chip.keep { font-weight: 400; }
 .privacy { color: var(--muted); font-size: 0.95rem; }
 .secondary { background: var(--bg); color: var(--accent); }
 .save { margin-top: 1rem; }
