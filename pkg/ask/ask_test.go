@@ -56,7 +56,7 @@ func TestSummarise(t *testing.T) {
 			"Elevators: Salt Palace. Unverified: read off a plan, nobody has checked it yet."},
 		{"nothing", Answer{}, "Nothing matched. Try other words, or ask staff at registration."},
 		{"a question about talks", Answer{Question: "talks about accessibility", Places: []Place{restroom}, Sessions: []Session{{Title: "Sign Language Crash Course", Start: time.Date(2026, 11, 11, 20, 30, 0, 0, time.UTC), Location: "Salt Palace | Level 1 | Grand Ballroom J"}}},
-			"1 sessions match. First: Sign Language Crash Course, Wednesday 1:30 pm, Salt Palace | Level 1 | Grand Ballroom J."},
+			"1 sessions match. First: Sign Language Crash Course, Wednesday 1:30 pm, Salt Palace, Level 1, Grand Ballroom J."},
 	}
 	for _, c := range cases {
 		t.Run("when the answer is "+c.name, func(t *testing.T) {

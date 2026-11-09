@@ -90,8 +90,7 @@ func (s *Service) Locate(ctx context.Context, asked string) (Here, error) {
 				"filter": []any{map[string]any{"term": map[string]any{"kind": "room"}}},
 				"should": []any{
 					map[string]any{"match_phrase": map[string]any{"name": map[string]any{"query": here.Asked, "boost": 3}}},
-					map[string]any{"match": map[string]any{"name": map[string]any{"query": here.Asked, "fuzziness": "AUTO"}}},
-					map[string]any{"match": map[string]any{"near": here.Asked}},
+					map[string]any{"match": map[string]any{"name": map[string]any{"query": here.Asked, "fuzziness": "AUTO", "operator": "and"}}},
 				},
 				"minimum_should_match": 1,
 			},
@@ -226,7 +225,7 @@ func Summarise(a Answer) string {
 	}
 	if len(a.Sessions) > 0 && (looksLikeSessionQuestion(a.Question) || len(a.Places) == 0) {
 		s := a.Sessions[0]
-		return fmt.Sprintf("%d sessions match. First: %s, %s, %s.", len(a.Sessions), s.Title, s.Start.In(mst).Format("Monday 3:04 pm"), s.Location)
+		return fmt.Sprintf("%d sessions match. First: %s, %s, %s.", len(a.Sessions), s.Title, s.Start.In(mst).Format("Monday 3:04 pm"), strings.ReplaceAll(s.Location, " | ", ", "))
 	}
 	p := a.Places[0]
 	where := p.Venue

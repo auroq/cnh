@@ -62,7 +62,7 @@
         {{range .Answer.Sessions}}
         <li>
           <strong><a href="{{.URL}}" rel="noopener">{{.Title}}</a></strong>
-          <span class="where">{{clock .Start}} to {{clock .End}}, {{.Location}}</span>
+          <span class="where">{{clock .Start}} to {{clock .End}}, {{location .Location}}</span>
           {{if .Speakers}}<span class="notes">{{range $i, $s := .Speakers}}{{if $i}}, {{end}}{{$s}}{{end}}</span>{{end}}
         </li>
         {{end}}

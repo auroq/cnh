@@ -81,7 +81,7 @@ Flags:
 	}
 	s := &server{
 		ask:  &ask.Service{ES: es, PlacesIndex: env("PLACES_INDEX", "places"), SessionsIndex: env("ES_INDEX", "sessions")},
-		tmpl: template.Must(template.New("").Funcs(template.FuncMap{"clock": clock}).ParseFS(assets, "templates/*.html")),
+		tmpl: template.Must(template.New("").Funcs(template.FuncMap{"clock": clock, "location": readableLocation}).ParseFS(assets, "templates/*.html")),
 		log:  log,
 	}
 
@@ -124,6 +124,7 @@ func (s *server) home(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			s.log.Error("ask", "err", err.Error())
 			p.Error = "The search is not answering right now. Ask staff at registration, and try again in a minute."
+			p.Title = "Search not answering | Wide Door"
 		} else {
 			p.Answer = &a
 			p.Title = a.Summary + " | Wide Door"
@@ -172,6 +173,10 @@ func (s *server) logged(next http.Handler) http.Handler {
 
 func clock(t time.Time) string {
 	return t.In(time.FixedZone("MST", -7*3600)).Format("Mon 3:04 pm")
+}
+
+func readableLocation(location string) string {
+	return strings.ReplaceAll(location, " | ", ", ")
 }
 
 func env(k, def string) string {
