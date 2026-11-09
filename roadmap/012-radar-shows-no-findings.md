@@ -32,4 +32,5 @@ Images are pinned by commit SHA in `deploy/app/kustomization.yaml`, so the stage
 3. After two minutes Argo Rollouts aborts the canary; `kubectl argo rollouts get rollout widedoor -n wide-door` shows Degraded with the stable ReplicaSet still at full weight, and the site keeps answering.
 4. `tools/bump-image.sh` with no flags pins back to the latest good build, and the Rollout recovers.
 
-Radar's remaining findings on the namespace after items 006 and 012 are the two accepted `readOnlyRootFilesystem` ones on Elasticsearch and Kibana, and two ECK-generated `*-certs-public` Secrets that Radar calls orphaned because no pod mounts them; the operator owns them and they stay.
+Radar's remaining findings on the namespace after items 006 and 012 are the two accepted `readOnlyRootFilesystem` ones on Elasticsearch and Kibana, and two ECK-generated `*-certs-public` Secrets that Radar calls unused because no pod mounts them (HTTP TLS is off inside the cluster and terminated at the Gateway); the operator owns them and they stay.
+Aria dismissed all four in Radar with those reasons written in, so Radar's view and this repository say the same thing.
