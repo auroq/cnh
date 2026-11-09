@@ -1,6 +1,6 @@
 # 50. Split config
 
-**Open. Filed 2026-11-09 by Aria, without a roadmap item at the time; filed here in the roadmap sync. Aria's call: whether to do it at all, p3.**
+**Done 2026-11-09 (PR #91, issue #50). Filed 2026-11-09 by Aria, without a roadmap item at the time; filed here in the roadmap sync. Aria's call: whether to do it at all, p3.**
 
 Depends on: 032
 
