@@ -4,7 +4,7 @@ name: cd
 #   2. CI runs again on main; when it succeeds this workflow starts
 #   3. build: the image is built and pushed, tagged with the commit SHA
 #   4. bump: a PR pins that SHA in deploy/app/kustomization.yaml and auto-merges once CI passes
-#   5. gate: wait for Argo CD and the Rollout's canary, then run the acceptance checks against the live site
+#   5. gate: wait for Argo CD and the Rollout's canary, then run the browser accessibility tests and the acceptance checks against the live site
 #   6. rollback: if the gate fails, a PR reverts the bump and auto-merges; git stays the source of truth
 on:
   workflow_run:
@@ -150,6 +150,29 @@ jobs:
             image=$(kubectl kustomize deploy/app | grep -m1 -oE "${IMAGE}:[0-9a-f]{40}")
           fi
           tools/wait-rollout.sh --image "$image" --timeout 900 | tee -a "$GITHUB_STEP_SUMMARY"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: testing/e2e/package-lock.json
+      - name: Browser accessibility tests against the live site
+        working-directory: testing/e2e
+        env:
+          WIDEDOOR_URL: https://widedoor.cnh.auroq.com
+          PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/testing/e2e/.cache/ms-playwright
+        run: |
+          npm ci --no-fund --no-audit
+          npx playwright install --with-deps chromium
+          npx playwright test 2>&1 | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Axe reports and Playwright traces
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-accessibility
+          path: |
+            testing/e2e/test-results
+            testing/e2e/playwright-report
+          if-no-files-found: ignore
       - name: Acceptance against the live site
         run: |
           if [[ -d testing/acceptance ]]; then
