@@ -356,5 +356,9 @@ resource "kubernetes_secret_v1" "eck_trial_license" {
     }
   }
 
+  lifecycle {
+    ignore_changes = [metadata[0].labels, metadata[0].annotations]
+  }
+
   depends_on = [helm_release.eck_operator]
 }

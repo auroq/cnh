@@ -12,3 +12,4 @@ A record is accepted or proposed; a decision that changes gets a new record that
 | [0005](0005-radar-clean-manifests-via-argo.md) | manifests pass Radar from the first commit; deploy with Argo CD and Argo Rollouts | Accepted |
 | [0006](0006-sealed-secrets.md) | secrets as SealedSecrets only | Accepted |
 | [0007](0007-ai-disclosure.md) | AI use disclosed in `AI_USAGE.md` and in commit trailers | Accepted |
+| [0008](0008-ci-cd-separation-and-rollback-by-revert.md) | CI and CD are separate stages; a post-deploy gate tests the live site; rollback is a revert PR | Accepted |

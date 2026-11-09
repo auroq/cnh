@@ -1,0 +1,185 @@
+name: cd
+# How a change reaches production (ADR 0008):
+#   1. a PR merges to main when CI and Gitar pass
+#   2. CI runs again on main; when it succeeds this workflow starts
+#   3. build: the image is built and pushed, tagged with the commit SHA
+#   4. bump: a PR pins that SHA in deploy/app/kustomization.yaml and auto-merges once CI passes
+#   5. gate: wait for Argo CD and the Rollout's canary, then run the acceptance checks against the live site
+#   6. rollback: if the gate fails, a PR reverts the bump and auto-merges; git stays the source of truth
+on:
+  workflow_run:
+    workflows: [ci]
+    types: [completed]
+    branches: [main]
+permissions:
+  contents: read
+  packages: write
+concurrency:
+  group: cd-main
+  cancel-in-progress: false
+env:
+  IMAGE: ghcr.io/auroq/cnh/widedoor
+jobs:
+  plan:
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push'
+    runs-on: ubuntu-latest
+    outputs:
+      sha: ${{ steps.plan.outputs.sha }}
+      build: ${{ steps.plan.outputs.build }}
+      release: ${{ steps.plan.outputs.release }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 2
+      - id: plan
+        name: Decide what this commit needs
+        run: |
+          sha="${{ github.event.workflow_run.head_sha }}"
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+          subject=$(git log -1 --format=%s "$sha")
+          if [[ "$subject" == deploy:\ images\ at* || "$subject" == deploy:\ revert\ images\ at* ]]; then
+            echo "this is a bump or a revert; the gate alone runs"
+            echo "build=false" >> "$GITHUB_OUTPUT"
+            echo "release=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if git diff --name-only "$sha~1" "$sha" | grep -qE '^(cmd/|pkg/|data/|go\.mod|go\.sum|Dockerfile)'; then
+            echo "code changed; build and release"
+            echo "build=true" >> "$GITHUB_OUTPUT"
+            echo "release=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "no code change; the gate checks the live site"
+            echo "build=false" >> "$GITHUB_OUTPUT"
+            echo "release=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  build:
+    needs: plan
+    if: needs.plan.outputs.build == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ needs.plan.outputs.sha }}
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:main
+            ${{ env.IMAGE }}:${{ needs.plan.outputs.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  bump:
+    needs: [plan, build]
+    if: needs.plan.outputs.release == 'true'
+    runs-on: ubuntu-latest
+    outputs:
+      pr: ${{ steps.bump.outputs.pr }}
+      merge: ${{ steps.wait.outputs.merge }}
+    env:
+      GH_TOKEN: ${{ secrets.CD_GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+          token: ${{ secrets.CD_GITHUB_TOKEN }}
+          fetch-depth: 0
+      - name: Open the bump PR
+        id: bump
+        run: |
+          git config user.name "wide-door-cd"
+          git config user.email "cd@cnh.auroq.com"
+          url=$(tools/bump-image.sh --sha "${{ needs.plan.outputs.sha }}" | grep -m1 'https://github.com/.*/pull/')
+          echo "pr=${url##*/}" >> "$GITHUB_OUTPUT"
+          echo "bump PR: $url" >> "$GITHUB_STEP_SUMMARY"
+      - name: Wait for it to merge
+        id: wait
+        run: |
+          merge=$(tools/wait-pr.sh "${{ steps.bump.outputs.pr }}" --timeout 1200)
+          echo "merge=$merge" >> "$GITHUB_OUTPUT"
+
+  gate:
+    needs: [plan, build, bump]
+    if: always() && needs.plan.result == 'success' && needs.build.result != 'failure' && needs.bump.result != 'failure'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+      - uses: azure/setup-kubectl@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: Kubeconfig for the cd-gate ServiceAccount
+        run: |
+          install -m 600 /dev/null "$RUNNER_TEMP/kubeconfig"
+          printf '%s' "$CD_KUBECONFIG" > "$RUNNER_TEMP/kubeconfig"
+          echo "KUBECONFIG=$RUNNER_TEMP/kubeconfig" >> "$GITHUB_ENV"
+        env:
+          CD_KUBECONFIG: ${{ secrets.CD_KUBECONFIG }}
+      - name: Wait for the Rollout to be Healthy on the released image
+        run: |
+          if [[ "${{ needs.plan.outputs.release }}" == "true" ]]; then
+            image="${IMAGE}:${{ needs.plan.outputs.sha }}"
+          else
+            image=$(kubectl kustomize deploy/app | grep -m1 -oE "${IMAGE}:[0-9a-f]{40}")
+          fi
+          tools/wait-rollout.sh --image "$image" --timeout 900 | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Acceptance against the live site
+        run: |
+          if [[ -d testing/acceptance ]]; then
+            WIDEDOOR_URL=https://widedoor.cnh.auroq.com go test ./testing/acceptance/... 2>&1 | tee -a "$GITHUB_STEP_SUMMARY"
+          else
+            tools/smoke.sh https://widedoor.cnh.auroq.com 2>&1 | tee -a "$GITHUB_STEP_SUMMARY"
+          fi
+
+  rollback:
+    needs: [plan, bump, gate]
+    if: always() && needs.plan.outputs.release == 'true' && needs.bump.result == 'success' && needs.gate.result == 'failure'
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.CD_GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+          token: ${{ secrets.CD_GITHUB_TOKEN }}
+          fetch-depth: 0
+      - uses: azure/setup-kubectl@v4
+      - name: Revert the bump through a PR
+        run: |
+          git config user.name "wide-door-cd"
+          git config user.email "cd@cnh.auroq.com"
+          short="${{ needs.plan.outputs.sha }}"; short="${short:0:7}"
+          git checkout -b "deploy/revert-$short"
+          git revert --no-edit "${{ needs.bump.outputs.merge }}"
+          git commit --amend -q -m "deploy: revert images at $short" -m "The post-deploy gate failed on this release (run ${{ github.run_id }}); the previous image is pinned again."
+          git push -u origin "deploy/revert-$short"
+          url=$(tools/pr.sh --title "deploy: revert images at $short" --body "The post-deploy gate failed for ${{ needs.plan.outputs.sha }} (workflow run ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}). This pins the previous image again; Argo CD's self-heal rolls the cluster back. Reverts #${{ needs.bump.outputs.pr }}." | grep -m1 'https://github.com/.*/pull/')
+          echo "revert PR: $url" >> "$GITHUB_STEP_SUMMARY"
+          tools/wait-pr.sh "${url##*/}" --timeout 1200
+      - name: Confirm the previous image is Healthy again
+        run: |
+          install -m 600 /dev/null "$RUNNER_TEMP/kubeconfig"
+          printf '%s' "$CD_KUBECONFIG" > "$RUNNER_TEMP/kubeconfig"
+          export KUBECONFIG="$RUNNER_TEMP/kubeconfig"
+          image=$(kubectl kustomize deploy/app | grep -m1 -oE "${IMAGE}:[0-9a-f]{40}")
+          tools/wait-rollout.sh --image "$image" --timeout 900 | tee -a "$GITHUB_STEP_SUMMARY"
+        env:
+          CD_KUBECONFIG: ${{ secrets.CD_KUBECONFIG }}
+      - name: Say so on the bump PR
+        run: |
+          gh pr comment "${{ needs.bump.outputs.pr }}" --body "The post-deploy gate failed for this release and it was reverted: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+      - name: Fail loudly
+        run: |
+          echo "::error::release ${{ needs.plan.outputs.sha }} failed the post-deploy gate and was reverted"
+          exit 1

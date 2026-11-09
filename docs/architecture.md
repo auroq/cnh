@@ -72,8 +72,29 @@ Settings come from flags, then `WIDEDOOR_*` environment variables, then `/etc/wi
 | a setting's name, default or where it is read from | `pkg/config/config.go`; in the cluster, `deploy/app/config.yaml` |
 | the curated places or how "nearest" knows levels | `data/venue/places.yaml`, `pkg/venue` |
 | the page, the form, the live region, the CSS | `pkg/web` |
-| what runs in the cluster, probes, resources, routes | `deploy/app` (synced by Argo CD, pinned by image SHA, bumped by `tools/bump-image.sh`) |
+| what runs in the cluster, probes, resources, routes | `deploy/app` (synced by Argo CD, pinned by image SHA, bumped by `tools/bump-image.sh` or by `cd.yml`) |
+| how a release is built, pinned, checked and rolled back | `.github/workflows/cd.yml`, `tools/wait-pr.sh`, `tools/wait-rollout.sh`, `tools/smoke.sh`, ADR 0008 |
 | the platform under it (gateway, ECK, Argo, Dash0, Radar) | `infra/platform` (Terraform, built before kickoff) |
+
+## How a change reaches production
+
+```mermaid
+flowchart LR
+    pr[pull request] -->|CI: go, manifests, docs, architecture, integration<br/>and Gitar's review| merge[merged to main]
+    merge -->|CI on main succeeds| build[cd.yml build:<br/>image tagged with the commit SHA]
+    build --> bump[bump PR pins the SHA in<br/>deploy/app/kustomization.yaml<br/>auto-merges when CI passes]
+    bump --> argo[Argo CD syncs deploy/app]
+    argo --> canary[Argo Rollouts canary 50%<br/>aborts after 2 min if not ready]
+    canary --> gate{gate: Rollout Healthy on the SHA<br/>acceptance against widedoor.cnh.auroq.com}
+    gate -->|pass| done([released])
+    gate -->|fail| revert[revert PR pins the previous SHA<br/>auto-merges; Argo heals the cluster]
+    revert --> failed([CD run fails, comment on the bump PR])
+```
+
+Two workflows, by design ([ADR 0008](adr/0008-ci-cd-separation-and-rollback-by-revert.md)): `ci.yml` is what the required checks run, on every PR and on `main`; `cd.yml` starts only when CI on `main` succeeds and never on a PR.
+Every change to `main`, bumps and reverts included, arrives through a pull request, so `git log main` is the release history.
+The gate runs as the `cd-gate` ServiceAccount, which can read rollouts, replicasets and pods in `wide-door` and nothing else; its kubeconfig is built by `infra/platform` and stored as a repository secret.
+Radar watches the cluster the whole time and lists a stalled Rollout as a live issue, correlated to the change that caused it; [`docs/demo/2026-11-09-rollout-abort.md`](demo/2026-11-09-rollout-abort.md) is one such event, captured live.
 
 ## The rule, and the check
 
