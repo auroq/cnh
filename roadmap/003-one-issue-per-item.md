@@ -1,6 +1,6 @@
 # 3. One issue per roadmap item
 
-**Open. Filed 2026-11-09, from the kickoff plan. Nobody's call: ADR 0003 is accepted, GitHub Issues first and the markdown fills the gaps.**
+**Done 2026-11-09 (issues #1 to #16 by `tools/issues.sh`, issue #3). Filed 2026-11-09, from the kickoff plan. Nobody's call: ADR 0003 is accepted, GitHub Issues first and the markdown fills the gaps.**
 
 Depends on: 001
 
