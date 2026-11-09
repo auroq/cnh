@@ -1,4 +1,4 @@
-{{define "attendee_status"}}{{if .Attendee}}{{with attendee .}}<span class="badge {{attendeeBadge $}}">{{.}}</span>{{end}}{{end}}{{end}}
+{{define "attendee_status"}}{{if .Attendee}}{{$b := attendeeBadge .}}{{with attendee .}}<span class="badge callout {{$b}}"><span class="vh">{{if eq $b "problem"}}Problem reported: {{else if eq $b "warn"}}Warning: {{else if eq $b "ok"}}Verified: {{else}}Note: {{end}}</span>{{.}}</span>{{end}}{{end}}{{end}}
 
 {{define "report_form"}}
 <details class="report">

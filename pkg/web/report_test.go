@@ -168,7 +168,7 @@ func TestReportOnThePage(t *testing.T) {
 	t.Run("when a place has a problem report", func(t *testing.T) {
 		body := withForm(t, "/ask?q=nearest+elevator")
 		t.Run("it should show the report on the place as a badge", func(t *testing.T) {
-			if !strings.Contains(body, `<span class="badge problem">Reported 2:52 pm by one attendee: out of order.</span>`) {
+			if !strings.Contains(body, `<span class="badge callout problem"><span class="vh">Problem reported: </span>Reported 2:52 pm by one attendee: out of order.</span>`) {
 				t.Fatalf("badge missing in %s", body)
 			}
 		})
@@ -198,7 +198,7 @@ func TestReportOnThePage(t *testing.T) {
 	t.Run("when the attendee comes back from posting a report", func(t *testing.T) {
 		body := withForm(t, "/ask?q=nearest+elevator&reported=ok")
 		t.Run("it should announce the result inside the live region", func(t *testing.T) {
-			if !strings.Contains(body, `<p class="reported" role="status">Thank you. Your report is live and other attendees can see it now.</p>`) {
+			if !strings.Contains(body, `<p class="reported callout success" role="status"><span class="vh">Done: </span>Thank you. Your report is live and other attendees can see it now.</p>`) {
 				t.Fatalf("message missing in %s", body)
 			}
 		})

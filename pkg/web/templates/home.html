@@ -36,13 +36,13 @@
   </form>
 
   <section id="answer" aria-live="polite" aria-atomic="true" tabindex="-1">
-    {{if .Reported}}<p class="reported" role="status">{{.Reported}}</p>{{end}}
+    {{if .Reported}}<p class="reported callout success" role="status"><span class="vh">Done: </span>{{.Reported}}</p>{{end}}
     {{if .Error}}
       <h2>Something went wrong</h2>
-      <p role="alert">{{.Error}}</p>
+      <p role="alert" class="callout problem"><span class="vh">Error: </span>{{.Error}}</p>
     {{else if .Answer}}
       <h2>Answer</h2>
-      <p class="summary">{{.Answer.Summary}}</p>
+      <p class="summary t-answer">{{.Answer.Summary}}</p>
       {{if .Answer.Here.Room}}<p class="here">You said you are at <strong>{{.Answer.Here.Asked}}</strong>{{if ne .Answer.Here.Room .Answer.Here.Asked}}, that is {{.Answer.Here.Room}}{{end}}, {{.Answer.Here.Venue}}{{if .Answer.Here.Level}}, {{.Answer.Here.Level}}{{end}}{{if .Answer.Here.Side}}, {{.Answer.Here.Side}} side{{end}}.</p>
       {{else if .Answer.Here.Asked}}<p class="here">We could not find a place called "{{.Answer.Here.Asked}}", so distances are not shown. Try a room, a landmark, or the talk you just left.</p>{{end}}
       {{if .Answer.Applied}}<ul class="applied">{{range .Answer.Applied}}<li>Because you said {{.Chip}}: {{.Effect}}.</li>{{end}}</ul>{{end}}
@@ -57,7 +57,7 @@
           {{if .LeadsTo}}<span class="notes">Outside this door: {{.LeadsTo}}.</span>{{end}}
           {{if .Notes}}<span class="notes">{{.Notes}}</span>{{end}}
           {{range .Route}}<span class="notes route">{{.}}</span>{{end}}
-          {{if .Verified}}<span class="badge ok">Published by the organiser</span>{{else}}<span class="badge warn">Unverified</span>{{end}}
+          {{if .Verified}}<span class="callout info">Published by the organiser</span>{{else}}<span class="callout warning">Unverified</span>{{end}}
           {{template "attendee_status" .}}
           {{if $.CanReport}}{{template "report_form" (report $ .)}}{{end}}
         </li>
