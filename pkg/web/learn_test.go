@@ -29,6 +29,14 @@ func (c client) getWith(target string, cookies map[string]string) (*http.Respons
 	return c.do(req)
 }
 
+func valueOf(c *http.Cookie) string {
+	if c == nil {
+		return ""
+	}
+	got, _ := url.QueryUnescape(c.Value)
+	return got
+}
+
 func cookieOf(res *http.Response, name string) *http.Cookie {
 	for _, c := range res.Cookies() {
 		if c.Name == name {
@@ -88,9 +96,8 @@ func TestLearnedChips(t *testing.T) {
 			})
 		}
 		t.Run("it should remember the chip as learned in the cookie", func(t *testing.T) {
-			c := cookieOf(res, prefsCookie)
-			if got, _ := url.QueryUnescape(c.Value); c == nil || got != "step-free~" {
-				t.Fatalf("cookie %+v", c)
+			if got := valueOf(cookieOf(res, prefsCookie)); got != "step-free~" {
+				t.Fatalf("cookie value %q", got)
 			}
 		})
 		t.Run("it should set the profile cookie once", func(t *testing.T) {
@@ -118,8 +125,8 @@ func TestLearnedChips(t *testing.T) {
 			}
 		})
 		t.Run("it should leave the cookie chosen", func(t *testing.T) {
-			if got, _ := url.QueryUnescape(cookieOf(res, prefsCookie).Value); got != "step-free" {
-				t.Fatalf("cookie %q", got)
+			if got := valueOf(cookieOf(res, prefsCookie)); got != "step-free" {
+				t.Fatalf("cookie value %q", got)
 			}
 		})
 	})
@@ -204,15 +211,13 @@ func TestLearnedChipForm(t *testing.T) {
 			})
 			t.Run("it should leave the profile cookie as "+quoted(c.cookie), func(t *testing.T) {
 				cookie := cookieOf(res, prefsCookie)
-				got, _ := url.QueryUnescape(cookie.Value)
-				if cookie == nil || got != c.cookie || (c.cookie == "" && cookie.MaxAge >= 0) {
+				if cookie == nil || valueOf(cookie) != c.cookie || (c.cookie == "" && cookie.MaxAge >= 0) {
 					t.Fatalf("cookie %+v", cookie)
 				}
 			})
 			t.Run("it should leave the do-not-re-add cookie as "+quoted(c.noCookie), func(t *testing.T) {
 				cookie := cookieOf(res, declinedCookie)
-				got, _ := url.QueryUnescape(cookie.Value)
-				if cookie == nil || got != c.noCookie || (c.noCookie == "" && cookie.MaxAge >= 0) {
+				if cookie == nil || valueOf(cookie) != c.noCookie || (c.noCookie == "" && cookie.MaxAge >= 0) {
 					t.Fatalf("cookie %+v", cookie)
 				}
 			})

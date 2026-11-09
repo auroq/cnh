@@ -15,6 +15,14 @@ const (
 	learnedSentence = "Added Step-free only to what Wide Door knows about you, because you asked for an elevator. Remove it if that is wrong."
 )
 
+func valueOf(c *http.Cookie) string {
+	if c == nil {
+		return ""
+	}
+	got, _ := url.QueryUnescape(c.Value)
+	return got
+}
+
 func cookieNamed(res *http.Response, name string) *http.Cookie {
 	for _, c := range res.Cookies() {
 		if c.Name == name {
@@ -42,18 +50,16 @@ func TestLearnedChips(t *testing.T) {
 			}
 		})
 		t.Run("it should remember the chip as learned", func(t *testing.T) {
-			c := cookieNamed(res, prefsCookie)
-			if got, _ := url.QueryUnescape(c.Value); c == nil || got != "step-free~" {
-				t.Fatalf("cookie %+v", c)
+			if got := valueOf(cookieNamed(res, prefsCookie)); got != "step-free~" {
+				t.Fatalf("cookie value %q", got)
 			}
 		})
 
 		t.Run("and I remove it through the form without JavaScript", func(t *testing.T) {
 			removed := request(t, http.MethodPost, "/profile", nil, "", url.Values{"prefs": {"step-free~"}, "remove": {"step-free"}, "q": {"nearest elevator"}}.Encode())
-			no := cookieNamed(removed, declinedCookie)
 			t.Run("it should remember not to add it again", func(t *testing.T) {
-				if got, _ := url.QueryUnescape(no.Value); no == nil || got != "step-free" {
-					t.Fatalf("cookie %+v", no)
+				if got := valueOf(cookieNamed(removed, declinedCookie)); got != "step-free" {
+					t.Fatalf("cookie value %q", got)
 				}
 			})
 			t.Run("and I ask the same question again", func(t *testing.T) {

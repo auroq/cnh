@@ -35,8 +35,15 @@ func TestLearned(t *testing.T) {
 		{"I am hard of hearing, is there an interpreter", nil, "captions-asl", "captions or sign language"},
 		{"vegan lunch", nil, "dietary", "dietary needs"},
 		{"gluten free food", nil, "dietary", "dietary needs"},
+		{"I cannot do stairs", nil, "step-free", "stairs"},
+		{"avoid the stairs please", nil, "step-free", "stairs"},
 		{"nearest restroom", nil, "", ""},
 		{"coat check", nil, "", ""},
+		{"where are the stairs", nil, "", ""},
+		{"nearest stairs to Hall B", nil, "", ""},
+		{"how many steps to the keynote", nil, "", ""},
+		{"is there a break between talks", nil, "", ""},
+		{"the loud speaker in the keynote", nil, "", ""},
 		{"", nil, "", ""},
 	}
 	for _, c := range cases {
