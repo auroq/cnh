@@ -143,3 +143,19 @@ func (c *Client) Count(ctx context.Context, index string) (int, error) {
 	}
 	return res.Count, json.Unmarshal(out, &res)
 }
+
+// Search runs a search body against an index and returns the raw response.
+func (c *Client) Search(ctx context.Context, index string, body any) (json.RawMessage, error) {
+	b, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	out, code, err := c.do(ctx, http.MethodPost, "/"+index+"/_search", bytes.NewReader(b), "application/json")
+	if err != nil {
+		return nil, err
+	}
+	if code != http.StatusOK {
+		return nil, fmt.Errorf("search %s: %d %s", index, code, out)
+	}
+	return out, nil
+}

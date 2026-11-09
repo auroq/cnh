@@ -41,6 +41,8 @@ spec:
                   value: http://wide-door-es-http:9200
                 - name: ES_USERNAME
                   value: elastic
+                - name: PLACES_FILE
+                  value: /data/venue/places.yaml
                 - name: ES_PASSWORD
                   valueFrom:
                     secretKeyRef:

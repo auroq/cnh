@@ -7,6 +7,8 @@ import (
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/auroq/cnh/pkg/venue"
 )
 
 type Session struct {
@@ -105,16 +107,8 @@ func parseMeta(s *Session, meta string, day time.Time) error {
 	if s.End, err = atTime(day, m[2]); err != nil {
 		return err
 	}
-	loc := strings.Split(s.Location, " | ")
-	for i := range loc {
-		loc[i] = strings.TrimSpace(loc[i])
-	}
-	s.Venue = loc[0]
-	switch len(loc) {
-	case 3:
-		s.Level, s.Room = loc[1], loc[2]
-	case 2:
-		s.Room = loc[1]
+	if r, ok := venue.SplitLocation(s.Location); ok {
+		s.Venue, s.Level, s.Room = r.Venue, r.Level, r.Room
 	}
 	return nil
 }
