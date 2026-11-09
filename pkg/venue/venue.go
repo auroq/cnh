@@ -30,10 +30,13 @@ type placeYAML struct {
 	Route    []string `yaml:"route"`
 	Verified bool     `yaml:"verified"`
 	Source   string   `yaml:"source"`
+	Aliases  []string `yaml:"aliases"`
+	Side     string   `yaml:"side"`
+	LeadsTo  string   `yaml:"leads_to"`
 }
 
 func (p placeYAML) model() model.Place {
-	return model.Place{ID: p.ID, Kind: p.Kind, Name: p.Name, Venue: p.Venue, Level: p.Level, Near: p.Near, Notes: p.Notes, For: p.For, Route: p.Route, Verified: p.Verified, Source: p.Source}
+	return model.Place{ID: p.ID, Kind: p.Kind, Name: p.Name, Venue: p.Venue, Level: p.Level, Near: p.Near, Notes: p.Notes, For: p.For, Route: p.Route, Verified: p.Verified, Source: p.Source, Aliases: p.Aliases, Side: p.Side, LeadsTo: p.LeadsTo}
 }
 
 type file struct {

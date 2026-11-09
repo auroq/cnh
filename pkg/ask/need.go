@@ -38,6 +38,9 @@ func (s *Service) placesFor(ctx context.Context, ans *Answer, question string) (
 	if kind := KindOf(question); kind != "" {
 		return s.firstOf(ctx, question, kind)
 	}
+	if ans.Here.Side != "" && mentionsMobility(question) {
+		return s.firstOf(ctx, question, stepFreeEntrance)
+	}
 	need, ok := NeedOf(question, s.Needs)
 	if !ok {
 		matches, err := step(ctx, s.tracer(), "ask.FindNeeds", func(ctx context.Context) ([]NeedMatch, error) { return s.Store.FindNeeds(ctx, question) })

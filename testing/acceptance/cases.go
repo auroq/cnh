@@ -113,4 +113,21 @@ var cases = []question{
 		{From: "Park City", Place: "registration-200-south", Distance: otherBuilding, Verified: true},
 		{From: "", Place: "registration-200-south", Distance: noDistance, Verified: true},
 	}},
+	{"how do I get in without stairs", []expectation{
+		{From: "the 100 S side", Place: "step-free-200-south", Distance: noDistance, Verified: false},
+	}},
+}
+
+type said struct {
+	From string
+	Here here
+}
+
+var inMyWords = []said{
+	{"where I registered", here{Room: "Registration and badge pick-up", Venue: "Salt Palace", Via: "alias"}},
+	{"the sponsor booths", here{Room: "Solutions Showcase", Venue: "Salt Palace", Level: "Level 1", Via: "alias"}},
+	{"the 100 S side", here{Room: "100 South entrance", Venue: "Salt Palace", Side: "100 South", Via: "alias"}},
+	{"I just got out of Sign Language Crash Course", here{Room: "Grand Ballroom J", Venue: "Salt Palace", Level: "Level 1", Via: "session"}},
+	{"Grand Ballroom J", here{Room: "Grand Ballroom J", Venue: "Salt Palace", Level: "Level 1", Via: "room"}},
+	{"Grand Balroom J", here{Room: "Grand Ballroom J", Venue: "Salt Palace", Level: "Level 1", Via: "fuzzy-room"}},
 }

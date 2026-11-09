@@ -16,14 +16,14 @@
 <main id="main">
   {{if .Scanned}}<p class="here scanned">You scanned the code at <strong>{{.Scanned.Room}}</strong>, {{.Scanned.Venue}}{{if .Scanned.Level}} {{.Scanned.Level}}{{end}}. <a href="#from">Change where you are</a></p>{{end}}
   <form action="/ask" method="get" role="search" aria-describedby="how">
-    <p id="how" class="how">Two boxes. The first is what you need. The second is the room you are in or near, so the answer can say whether you need stairs or an elevator.</p>
+    <p id="how" class="how">Two boxes. The first is what you need. The second is where you are: a room, a landmark, or the talk you just left, so the answer can say whether you need stairs or an elevator.</p>
     <div class="field">
       <label for="q">What do you need?</label>
       <input id="q" name="q" type="search" value="{{.Question}}" autocomplete="off" enterkeyhint="search"{{if .Scanned}} autofocus{{end}} placeholder="nearest all-gender restroom" required>
     </div>
     <div class="field">
-      <label for="from">Where are you? <span class="opt">(optional, a room name)</span></label>
-      <input id="from" name="from" type="text" value="{{.From}}" autocomplete="off" placeholder="Grand Ballroom J">
+      <label for="from">Where are you? <span class="opt">(optional: a room, a landmark, or the talk you just left)</span></label>
+      <input id="from" name="from" type="text" value="{{.From}}" autocomplete="off" placeholder="Grand Ballroom J, or where I registered">
     </div>
     <button type="submit">Ask</button>
     <fieldset class="quick">
@@ -40,8 +40,8 @@
     {{else if .Answer}}
       <h2>Answer</h2>
       <p class="summary">{{.Answer.Summary}}</p>
-      {{if .Answer.Here.Room}}<p class="here">You said you are at <strong>{{.Answer.Here.Room}}</strong>, {{.Answer.Here.Venue}}{{if .Answer.Here.Level}}, {{.Answer.Here.Level}}{{end}}.</p>
-      {{else if .Answer.Here.Asked}}<p class="here">We could not find a room called "{{.Answer.Here.Asked}}", so distances are not shown.</p>{{end}}
+      {{if .Answer.Here.Room}}<p class="here">You said you are at <strong>{{.Answer.Here.Asked}}</strong>{{if ne .Answer.Here.Room .Answer.Here.Asked}}, that is {{.Answer.Here.Room}}{{end}}, {{.Answer.Here.Venue}}{{if .Answer.Here.Level}}, {{.Answer.Here.Level}}{{end}}{{if .Answer.Here.Side}}, {{.Answer.Here.Side}} side{{end}}.</p>
+      {{else if .Answer.Here.Asked}}<p class="here">We could not find a place called "{{.Answer.Here.Asked}}", so distances are not shown. Try a room, a landmark, or the talk you just left.</p>{{end}}
 
       {{if .Answer.Places}}
       <h3>Places</h3>
@@ -49,7 +49,8 @@
         {{range .Answer.Places}}
         <li>
           <strong>{{.Name}}</strong>
-          <span class="where">{{.Venue}}{{if .Level}}, {{.Level}}{{end}}{{if .Near}}, {{.Near}}{{end}}</span>
+          <span class="where">{{.Venue}}{{if .Level}}, {{.Level}}{{end}}{{if .Side}}, {{.Side}} side{{end}}{{if .Near}}, {{.Near}}{{end}}</span>
+          {{if .LeadsTo}}<span class="notes">Outside this door: {{.LeadsTo}}.</span>{{end}}
           {{if .Notes}}<span class="notes">{{.Notes}}</span>{{end}}
           {{range .Route}}<span class="notes route">{{.}}</span>{{end}}
           {{if .Verified}}<span class="badge ok">Published by the organiser</span>{{else}}<span class="badge warn">Unverified</span>{{end}}

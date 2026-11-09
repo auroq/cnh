@@ -1,6 +1,6 @@
 # 67. Say where you are in your own words: landmarks, street sides and session names resolve to a place
 
-**Open. Filed 2026-11-09 by Aria, p1; worker issue-67 in progress. Nobody's call: the data decides.**
+**Done 2026-11-09 (PR #88, issue #67). Filed 2026-11-09 by Aria, p1. Nobody's call: the data decides.**
 
 Depends on: 063, 068
 
