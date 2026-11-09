@@ -1,6 +1,6 @@
 # 89. Dash0 dashboard as code: the Wide Door panels live in the repo
 
-**Open. Filed 2026-11-09 by Aria (issue #89). Nobody's call: the metrics exist, the dashboard is their reviewed home.**
+**Done 2026-11-09 (PR #95, issue #89). Filed 2026-11-09 by Aria. Nobody's call: the metrics exist, the dashboard is their reviewed home. Route: the Dash0 API from `tools/dash0-dashboard.sh`, because the cluster has no Perses CRD for the operator to sync. Evidence: the dashboard id and the API response are in the PR body.**
 
 Depends on: 011
 
