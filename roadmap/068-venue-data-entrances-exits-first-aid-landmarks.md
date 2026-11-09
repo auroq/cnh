@@ -1,6 +1,6 @@
 # 68. Venue data: entrances by street side, exits and what is outside them, first aid, landmarks and aliases
 
-**Open. Filed 2026-11-09 by Aria, p1. Aria's call: what is verified, what is a guess, and how it is worded; this is the human-authored part.**
+**Open. Filed 2026-11-09 by Aria, p1; the Salt Palace directory, parking and tour data landed in PR #115 with the audit in docs/venue-sources.md. Aria's call: what is verified, what is a guess, and how it is worded; this is the human-authored part.**
 
 Depends on: 008
 

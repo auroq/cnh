@@ -29,6 +29,6 @@ Times are Mountain Time on 2026-11-09: coding starts at 11:00, code freezes at 1
 | --- | --- | --- | --- |
 | [013](roadmap/013-demo-and-submission.md) | the demo script, README architecture and the submission checklist | 010, 011, 012 | nobody |
 | [068](roadmap/068-venue-data-entrances-exits-first-aid-landmarks.md) | entrances by street side, exits and what is outside them, first aid, landmarks and aliases, each verified or not | 008 | Aria, what is verified |
-| [079](roadmap/079-routes-not-just-destinations.md) | **after the event:** routes with obstacles, as steps in words and on a map | 068, 075, 081 | Aria, the next project |
-| [118](roadmap/118-off-prefer-must.md) | each need is Off, Prefer or Must; Must filters, Prefer ranks; the profile page and bar say which | 103, 114 | nobody |
-| [096](roadmap/096-attendee-reports.md) | attendees verify, dispute and annotate places; shown at once, trusted after a second person agrees | 063 | Aria, the trust rules |
+| [079](roadmap/079-routes-not-just-destinations.md) | **after the event:** routes with obstacles, as steps in words and on a map; phase 1 is open as PR #125, not merged | 068, 075, 081 | Aria, the next project |
+| [118](roadmap/118-off-prefer-must.md) | each need is Off, Prefer or Must; Must filters and Prefer ranks since PR #124, but Must is set only through the `prefs` link today; the profile page and bar still to say which | 103, 114 | nobody |
+| [096](roadmap/096-attendee-reports.md) | attendees verify, dispute and annotate places; shown at once, trusted after a second person agrees; built in PR #102, issue still open | 063 | Aria, the trust rules |

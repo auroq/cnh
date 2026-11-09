@@ -1,6 +1,6 @@
 # 96. Attendees verify, dispute and annotate places: shown immediately, trusted after a second person agrees
 
-**Open. Filed 2026-11-09 by Aria (issue #96). Aria's call: she defined the trust rules.**
+**Open. Filed 2026-11-09 by Aria (issue #96); the form, the reports index, the trust rules and `widedoor reports` landed in PR #102, and the issue stays open for Aria to close. Aria's call: she defined the trust rules.**
 
 Depends on: 063, 081 (only the cookie name)
 
