@@ -1,21 +1,13 @@
 import { expect, test, type Page } from "@playwright/test";
 import { scan } from "../helpers/axe.js";
 
-const chips = [
-  "Step-free only",
-  "Avoid crowds and noise",
-  "Quiet spaces matter",
-  "All-gender restrooms",
-  "Captions or ASL",
-  "I use a wheelchair or scooter",
-  "Dietary needs, unspecified",
-];
+const chips = ["step-free", "avoid-crowds", "quiet-matters", "all-gender", "captions-asl", "wheels", "dietary"];
 
 const heading = /What Wide Door knows about you/;
 
 async function openPanel(page: Page) {
   const panel = page.locator("details.profile");
-  if (!(await panel.getAttribute("open"))) await panel.locator("summary").click();
+  if (!(await panel.getAttribute("open"))) await panel.locator("summary").first().click();
   return panel;
 }
 
@@ -40,10 +32,10 @@ test.describe("when I open the profile panel with step-free and wheels in the qu
     await page.getByRole("button", { name: "Remove Step-free only" }).focus();
     const reached: string[] = [];
     for (let i = 0; i < chips.length; i++) {
-      reached.push(await page.evaluate(() => (document.activeElement as HTMLElement)?.innerText.trim() ?? ""));
+      reached.push(await page.evaluate(() => (document.activeElement as HTMLButtonElement)?.value ?? ""));
       await page.keyboard.press("Tab");
     }
-    expect(reached.map((t) => t.replace(/^✓\s*/, ""))).toEqual(chips);
+    expect(reached).toEqual(chips);
   });
 
   test("it should give every chip a visible focus ring", async ({ page }) => {
