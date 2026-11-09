@@ -103,6 +103,55 @@ func TestServer(t *testing.T) {
 		}
 	})
 
+	t.Run("when the page is opened from a scanned code", func(t *testing.T) {
+		_, body := get(t, answered, "/?from=room-salt-palace-level-1-grand-ballroom-j")
+		checks := map[string]string{
+			"say where it thinks you are":              "You scanned the code at <strong>Grand Ballroom J</strong>, Salt Palace Level 1.",
+			"offer a way to change it":                 `<a href="#from">Change where you are</a>`,
+			"pre-fill the location with the room name": `id="from" name="from" type="text" value="Grand Ballroom J"`,
+			"put the cursor in the question field":     `enterkeyhint="search" autofocus`,
+		}
+		for name, want := range checks {
+			t.Run("it should "+name, func(t *testing.T) {
+				if !strings.Contains(body, want) {
+					t.Fatalf("%q missing in %s", want, body)
+				}
+			})
+		}
+	})
+
+	t.Run("when the page is opened from a code nobody knows", func(t *testing.T) {
+		_, body := get(t, fakeAsker{}, "/?from=room-nowhere")
+		t.Run("it should not claim a location", func(t *testing.T) {
+			if strings.Contains(body, "You scanned the code at") {
+				t.Fatalf("claimed a location in %s", body)
+			}
+		})
+		t.Run("it should keep what was typed in the location field", func(t *testing.T) {
+			if !strings.Contains(body, `value="room-nowhere"`) {
+				t.Fatalf("from missing in %s", body)
+			}
+		})
+	})
+
+	t.Run("when the page is opened without a location", func(t *testing.T) {
+		_, body := get(t, answered, "/")
+		t.Run("it should not steal focus from the top of the page", func(t *testing.T) {
+			if strings.Contains(body, "autofocus") {
+				t.Fatalf("autofocus in %s", body)
+			}
+		})
+	})
+
+	t.Run("when a question is asked from a location", func(t *testing.T) {
+		_, body := get(t, answered, "/ask?q=quiet+room&from=Grand+Ballroom+J")
+		t.Run("it should leave focus alone so the answer is heard", func(t *testing.T) {
+			if strings.Contains(body, "autofocus") {
+				t.Fatalf("autofocus in %s", body)
+			}
+		})
+	})
+
 	t.Run("when the liveness probe is hit", func(t *testing.T) {
 		res, _ := get(t, down, "/healthz")
 		t.Run("it should be ok even with the search down", func(t *testing.T) {

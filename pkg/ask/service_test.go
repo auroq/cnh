@@ -17,6 +17,8 @@ type fakeStore struct {
 	searched []string
 	guessed  []string
 	kinds    []string
+
+	noneOfAnyKind bool
 }
 
 func (f *fakeStore) Ping(context.Context) error { return f.err }
@@ -29,6 +31,9 @@ func (f *fakeStore) LocateRoom(_ context.Context, asked string) (Here, error) {
 func (f *fakeStore) FindPlaces(_ context.Context, question, kind string) ([]Place, error) {
 	f.searched = append(f.searched, question)
 	f.kinds = append(f.kinds, kind)
+	if kind != "" && f.noneOfAnyKind {
+		return nil, f.err
+	}
 	if f.byKind != nil {
 		return f.byKind[kind], f.err
 	}
@@ -105,6 +110,24 @@ func TestAsk(t *testing.T) {
 			want := "Elevators: Salt Palace. Same building, you are on Level 2 and it is on an unlisted level. Unverified: read off a plan, nobody has checked it yet."
 			if ans.Summary != want {
 				t.Fatalf("\n got %q\nwant %q", ans.Summary, want)
+			}
+		})
+	})
+
+	t.Run("when the question names a kind the store has no place for", func(t *testing.T) {
+		store := &fakeStore{places: []Place{outside255}, noneOfAnyKind: true}
+		ans, err := (&Service{Store: store}).Ask(ctx, "nearest elevator", "")
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Run("it should fall back to places of any kind", func(t *testing.T) {
+			if len(store.kinds) != 2 || store.kinds[0] != "elevator" || store.kinds[1] != "" {
+				t.Fatalf("kinds %q", store.kinds)
+			}
+		})
+		t.Run("it should answer the best place of any kind", func(t *testing.T) {
+			if len(ans.Places) == 0 || ans.Places[0].ID != outside255.ID {
+				t.Fatalf("places %+v", ans.Places)
 			}
 		})
 	})

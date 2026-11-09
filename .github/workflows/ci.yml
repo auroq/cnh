@@ -18,7 +18,9 @@ jobs:
       - run: go vet ./...
       - run: go test -race ./...
   acceptance:
-    if: github.event_name != 'pull_request'
+    # The deploy gate in cd.yml runs these against the live site after each release.
+    # On a push to main the live site still runs the previous release, so a test for new behaviour would fail here and block CD.
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     env:
       WIDEDOOR_URL: https://widedoor.cnh.auroq.com
