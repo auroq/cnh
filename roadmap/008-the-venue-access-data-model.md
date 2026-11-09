@@ -1,6 +1,6 @@
 # 8. The venue access data model
 
-**Open. Filed 2026-11-09, from the kickoff plan. Aria's call: which access attributes are seeded as "unverified" from the floor plan.**
+**Done 2026-11-09 (PR #19, issue #8). Filed 2026-11-09, from the kickoff plan. Aria's call: which access attributes are seeded as "unverified" from the floor plan.**
 
 Depends on: 006
 
