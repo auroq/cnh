@@ -11,10 +11,6 @@ spec:
     targetRevision: 0.42.6
     helm:
       valuesObject:
-        components:
-          frontend-proxy:
-            service:
-              type: ClusterIP
         opentelemetry-collector:
           extraEnvs:
             - name: DASH0_AUTH_TOKEN
@@ -24,18 +20,21 @@ spec:
                   key: token
           config:
             exporters:
-              otlp/dash0:
-                endpoint: ${env:DASH0_OTLP_ENDPOINT}
+              otlp_grpc/dash0:
+                endpoint: ingress.us-west-2.aws.dash0.com:4317
                 headers:
                   Authorization: Bearer ${env:DASH0_AUTH_TOKEN}
+                  Dash0-Dataset: otel-demo
+                sending_queue:
+                  batch: {}
             service:
               pipelines:
                 traces:
-                  exporters: [otlp/dash0, debug]
+                  exporters: [otlp_grpc/jaeger, otlp_grpc/dash0, debug, span_metrics]
                 metrics:
-                  exporters: [otlp/dash0, debug]
+                  exporters: [otlp_http/prometheus, otlp_grpc/dash0, debug]
                 logs:
-                  exporters: [otlp/dash0, debug]
+                  exporters: [opensearch, otlp_grpc/dash0, debug]
   destination:
     server: https://kubernetes.default.svc
     namespace: otel-demo
@@ -44,5 +43,4 @@ spec:
       prune: true
       selfHeal: true
     syncOptions:
-      - CreateNamespace=true
       - ServerSideApply=true

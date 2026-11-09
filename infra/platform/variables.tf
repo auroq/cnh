@@ -52,3 +52,9 @@ variable "versions" {
     dash0         = "0.159.0"
   }
 }
+
+variable "enable_sandbox" {
+  type        = bool
+  default     = false
+  description = "Learning sandbox: otel-demo namespace with a Dash0 export secret"
+}

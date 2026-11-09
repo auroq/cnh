@@ -190,3 +190,24 @@ resource "digitalocean_record" "wildcard" {
   value  = data.kubernetes_resource.public_gateway.object.status.addresses[0].value
   ttl    = 300
 }
+
+resource "kubernetes_namespace_v1" "otel_demo" {
+  count = var.enable_sandbox ? 1 : 0
+
+  metadata {
+    name = "otel-demo"
+  }
+}
+
+resource "kubernetes_secret_v1" "otel_demo_dash0" {
+  count = var.enable_sandbox && var.enable_dash0 ? 1 : 0
+
+  metadata {
+    name      = "dash0-export"
+    namespace = kubernetes_namespace_v1.otel_demo[0].metadata[0].name
+  }
+
+  data = {
+    token = data.onepassword_item.dash0[0].credential
+  }
+}
