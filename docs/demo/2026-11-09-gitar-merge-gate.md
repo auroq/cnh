@@ -1,7 +1,7 @@
 # Gitar's approval as the merge gate, 2026-11-09 afternoon
 
 Evidence for roadmap item 043 and the Gitar/Sonar "Never Merge Broken" track.
-From 15:00 MT, `main` requires one approving review besides the status checks, and Gitar posts that review only when [`.gitar/config/approve.md`](../../.gitar/config/approve.md) holds ([ADR 0009](../adr/0009-gitar-approval-is-the-merge-gate.md)).
+From 13:40 MT, `main` requires one approving review besides the status checks, and Gitar posts that review only when [`.gitar/config/approve.md`](../../.gitar/config/approve.md) holds ([ADR 0009](../adr/0009-gitar-approval-is-the-merge-gate.md)).
 
 ## Why it was needed
 
