@@ -43,7 +43,7 @@ while true; do
       gh pr merge "$number" --repo "$repo" --disable-auto >/dev/null 2>&1 || true
       gh pr merge "$number" --repo "$repo" --auto --squash >/dev/null 2>&1 || true
       rearmed=1
-      echo "PR #$number: checks passed, auto-merge re-armed"
+      echo "PR #$number: checks passed, auto-merge re-armed" >&2
     fi
   else
     if gh pr checks "$number" --repo "$repo" 2>/dev/null | grep -qE '\bfail\b'; then
