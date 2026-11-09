@@ -1,6 +1,6 @@
 # 118. Each need is Off, Prefer or Must: Must filters, Prefer ranks, and the profile says which
 
-**Open (issue #118). Aria's direction: "I would rather avoid stairs" and "I cannot do stairs" are different facts.**
+**Open. Filed 2026-11-09 by Aria, p1, model and ask half landed in PR #124; the profile page half is still to do. Aria's direction: "I would rather avoid stairs" and "I cannot do stairs" are different facts.**
 
 Depends on: 103, 114
 
