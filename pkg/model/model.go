@@ -13,8 +13,12 @@ type Place struct {
 	Near     string   `json:"near"`
 	Notes    string   `json:"notes,omitempty"`
 	For      []string `json:"for,omitempty"`
+	Route    []string `json:"route,omitempty"`
 	Verified bool     `json:"verified"`
 	Source   string   `json:"source"`
+	Aliases  []string `json:"aliases,omitempty"`
+	Side     string   `json:"side,omitempty"`
+	LeadsTo  string   `json:"leads_to,omitempty"`
 }
 
 // Room is a location the schedule names, split into its parts.
@@ -43,12 +47,15 @@ type Session struct {
 	Distance        string `json:"distance,omitempty"`
 }
 
-// Here is where the attendee is: a room they named, resolved to a venue and level.
+// Here is where the attendee is: a place they described in their own words, resolved to a venue and level.
+// Side is the street side when they stand at a door; Via names the rule that resolved what they said.
 type Here struct {
 	Asked string `json:"asked"`
 	Room  string `json:"room,omitempty"`
 	Venue string `json:"venue,omitempty"`
 	Level string `json:"level,omitempty"`
+	Side  string `json:"side,omitempty"`
+	Via   string `json:"via,omitempty"`
 }
 
 // Need is what an attendee said they need, in their words, mapped to the kinds of place that can meet it.

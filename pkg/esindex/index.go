@@ -109,7 +109,8 @@ func sessionDoc(s schedule.Session, now time.Time) map[string]any {
 func placeDoc(p venue.Place, now time.Time) map[string]any {
 	return map[string]any{
 		"id": p.ID, "kind": p.Kind, "name": p.Name, "venue": p.Venue, "level": p.Level,
-		"near": p.Near, "notes": p.Notes, "for": p.For, "verified": p.Verified, "source": p.Source,
+		"near": p.Near, "notes": p.Notes, "for": p.For, "route": p.Route, "verified": p.Verified, "source": p.Source,
+		"aliases": p.Aliases, "side": p.Side, "leads_to": p.LeadsTo,
 		"content": placeContent(p), "ingested_at": now,
 	}
 }
@@ -145,8 +146,12 @@ var PlacesMapping = map[string]any{
 			"near":        map[string]any{"type": "text"},
 			"notes":       map[string]any{"type": "text"},
 			"for":         map[string]any{"type": "keyword"},
+			"route":       map[string]any{"type": "text"},
 			"verified":    map[string]any{"type": "boolean"},
 			"source":      map[string]any{"type": "keyword", "index": false},
+			"aliases":     map[string]any{"type": "text"},
+			"side":        map[string]any{"type": "keyword"},
+			"leads_to":    map[string]any{"type": "text"},
 			"content":     map[string]any{"type": "semantic_text"},
 			"ingested_at": map[string]any{"type": "date"},
 		},
@@ -154,7 +159,13 @@ var PlacesMapping = map[string]any{
 }
 
 func placeContent(p venue.Place) string {
-	parts := []string{p.Name, strings.ReplaceAll(p.Kind, "-", " "), p.Venue, p.Level, p.Near, p.Notes}
+	parts := []string{p.Name, strings.ReplaceAll(p.Kind, "-", " "), p.Venue, p.Level, p.Near, p.Notes, strings.Join(p.Aliases, ", ")}
+	if p.Side != "" {
+		parts = append(parts, p.Side+" side")
+	}
+	if p.LeadsTo != "" {
+		parts = append(parts, "leads to "+p.LeadsTo)
+	}
 	if len(p.For) > 0 {
 		parts = append(parts, "for "+strings.Join(p.For, ", "))
 	}

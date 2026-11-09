@@ -21,6 +21,8 @@ type Here struct {
 	Room  string `json:"room,omitempty"`
 	Venue string `json:"venue,omitempty"`
 	Level string `json:"level,omitempty"`
+	Side  string `json:"side,omitempty"`
+	Via   string `json:"via,omitempty"`
 }
 
 type Place struct {
@@ -32,8 +34,11 @@ type Place struct {
 	Near     string   `json:"near"`
 	Notes    string   `json:"notes,omitempty"`
 	For      []string `json:"for,omitempty"`
+	Route    []string `json:"route,omitempty"`
 	Verified bool     `json:"verified"`
 	Source   string   `json:"source"`
+	Side     string   `json:"side,omitempty"`
+	LeadsTo  string   `json:"leads_to,omitempty"`
 }
 
 type Session struct {

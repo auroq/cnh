@@ -149,3 +149,11 @@ ingest: ## Run the schedule ingest against the cluster's Elasticsearch through a
 .PHONY: issues
 issues: ## Mirror roadmap items to GitHub issues (ADR 0003)
 	tools/issues.sh
+
+.PHONY: dashboard
+dashboard: ## Push deploy/dash0/*.json to Dash0 (PUT by origin, token via secret-run)
+	tools/dash0-dashboard.sh
+
+.PHONY: dashboard-check
+dashboard-check: ## Read back the Dash0 dashboards deploy/dash0/*.json describe
+	tools/dash0-dashboard.sh --check

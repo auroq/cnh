@@ -16,3 +16,4 @@ A record is accepted or proposed; a decision that changes gets a new record that
 | [0009](0009-gitar-approval-is-the-merge-gate.md) | Gitar's approving review, against `.gitar/config/approve.md`, is what lets a PR merge | Superseded by 0010 |
 | [0010](0010-gitar-approval-is-advisory.md) | Gitar's approval is advisory on a single-author repository; the status checks are the gate | Accepted |
 | [0011](0011-types-live-by-kind.md) | types live by kind: `pkg/model`, private adapter shapes, `pkg/api/v1` | Accepted |
+| [0012](0012-how-we-describe-distance.md) | distance is route facts (level change, elevator, connection), never a single walk time | Accepted |

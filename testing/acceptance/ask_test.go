@@ -9,16 +9,12 @@ import (
 
 type answer struct {
 	Summary string `json:"summary"`
-	Here    struct {
-		Asked string `json:"asked"`
-		Room  string `json:"room"`
-		Venue string `json:"venue"`
-		Level string `json:"level"`
-	} `json:"here"`
-	Places []struct {
+	Here    here   `json:"here"`
+	Places  []struct {
 		ID       string `json:"id"`
 		Kind     string `json:"kind"`
 		Verified bool   `json:"verified"`
+		Side     string `json:"side"`
 	} `json:"places"`
 	Sessions []struct {
 		Title string `json:"title"`
@@ -26,6 +22,15 @@ type answer struct {
 		Start string `json:"start"`
 	} `json:"sessions"`
 	SessionsShownBecause string `json:"sessions_shown_because"`
+}
+
+type here struct {
+	Asked string `json:"asked"`
+	Room  string `json:"room"`
+	Venue string `json:"venue"`
+	Level string `json:"level"`
+	Side  string `json:"side"`
+	Via   string `json:"via"`
 }
 
 func ask(t *testing.T, question, from string) answer {
@@ -37,7 +42,7 @@ func ask(t *testing.T, question, from string) answer {
 
 var distanceWords = map[distance]string{
 	sameLevel:     "Same level as you",
-	sameBuilding:  "Same building, you are on",
+	sameBuilding:  "Same building,",
 	otherBuilding: "It is in the",
 }
 

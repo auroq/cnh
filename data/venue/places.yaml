@@ -2,6 +2,7 @@
 # verified: true  means the organiser or venue published it (source is the page).
 # verified: false means it was read off a floor plan or inferred, and nobody has checked it on the floor.
 # Wide Door always says which it is.
+# route: plain sentences about the way there that the source supports (a connection, a level change, who to ask). Never a walk time (ADR 0012).
 places:
   - id: quiet-room-260a
     kind: quiet-room
@@ -11,6 +12,8 @@ places:
     near: Room 260A, Level 2 meeting rooms
     notes: Open to every attendee. No talking, no interacting, no working inside.
     for: [sensory, rest, neurodivergent]
+    route:
+      - The organiser does not publish where the elevators are; staff at registration will point you to the nearest one.
     verified: true
     source: https://events.linuxfoundation.org/kubecon-cloudnativecon-north-america/attend/inclusion-accessibility/
   - id: quiet-room-260b
@@ -21,6 +24,8 @@ places:
     near: Room 260B, Level 2 meeting rooms
     notes: For women and non-binary attendees. No talking, no interacting, no working inside.
     for: [sensory, rest, neurodivergent, women, non-binary]
+    route:
+      - The organiser does not publish where the elevators are; staff at registration will point you to the nearest one.
     verified: true
     source: https://events.linuxfoundation.org/kubecon-cloudnativecon-north-america/attend/inclusion-accessibility/
   - id: prayer-room-zion
@@ -31,6 +36,8 @@ places:
     near: Zion room
     notes: Quiet space for prayer and reflection. No talking, no working inside.
     for: [prayer, rest]
+    route:
+      - The Hyatt Regency connects to the Salt Palace at the hotel lobby, Level 1, by the entrance doors between the two buildings.
     verified: true
     source: https://events.linuxfoundation.org/kubecon-cloudnativecon-north-america/attend/inclusion-accessibility/
   - id: nursing-room
@@ -59,6 +66,8 @@ places:
     level: Level 2
     near: Outside room 255
     for: [restroom, trans, non-binary]
+    route:
+      - The organiser does not publish where the elevators are; staff at registration will point you to the nearest one.
     verified: true
     source: https://events.linuxfoundation.org/kubecon-cloudnativecon-north-america/attend/inclusion-accessibility/
   - id: agr-hy-l1-lobby
@@ -68,6 +77,8 @@ places:
     level: Level 1
     near: Lobby, by the Salt Palace entrance doors
     for: [restroom, trans, non-binary]
+    route:
+      - The Hyatt Regency connects to the Salt Palace at the hotel lobby, Level 1, by the entrance doors between the two buildings.
     verified: true
     source: https://events.linuxfoundation.org/kubecon-cloudnativecon-north-america/attend/inclusion-accessibility/
   - id: agr-hy-l2-juniper
@@ -77,6 +88,8 @@ places:
     level: Level 2
     near: By the Juniper room
     for: [restroom, trans, non-binary]
+    route:
+      - The Hyatt Regency connects to the Salt Palace at the hotel lobby, Level 1, by the entrance doors between the two buildings.
     verified: true
     source: https://events.linuxfoundation.org/kubecon-cloudnativecon-north-america/attend/inclusion-accessibility/
   - id: agr-hy-l3-powder
@@ -86,6 +99,8 @@ places:
     level: Level 3
     near: By the Powder Mountain room
     for: [restroom, trans, non-binary]
+    route:
+      - The Hyatt Regency connects to the Salt Palace at the hotel lobby, Level 1, by the entrance doors between the two buildings.
     verified: true
     source: https://events.linuxfoundation.org/kubecon-cloudnativecon-north-america/attend/inclusion-accessibility/
   - id: agr-hy-l4-broadcast
@@ -95,6 +110,8 @@ places:
     level: Level 4
     near: By the Broadcast Lounge
     for: [restroom, trans, non-binary]
+    route:
+      - The Hyatt Regency connects to the Salt Palace at the hotel lobby, Level 1, by the entrance doors between the two buildings.
     verified: true
     source: https://events.linuxfoundation.org/kubecon-cloudnativecon-north-america/attend/inclusion-accessibility/
   - id: registration-200-south
@@ -107,6 +124,7 @@ places:
     for: [help, mobility]
     verified: true
     source: https://sessionize.com/api/v2/uo948i5p/view/markdown
+    aliases: [registration, where I registered, where everyone registered, badge pick-up, badge pickup, the registration desk, check-in]
   - id: coat-check-east
     kind: coat-check
     name: Coat and bag check
@@ -114,8 +132,11 @@ places:
     level: Level 2
     near: East Registration
     for: [help]
+    route:
+      - The organiser does not publish where the elevators are; staff at registration will point you to the nearest one.
     verified: true
     source: https://sessionize.com/api/v2/uo948i5p/view/markdown
+    aliases: [coat check, the coat check, bag check, east registration]
   - id: community-hub-grand-j
     kind: community-hub
     name: Community Hub and Merge Forward gatherings
@@ -126,6 +147,44 @@ places:
     for: [community, deaf, queer, bipoc, women]
     verified: true
     source: https://sessionize.com/api/v2/uo948i5p/view/markdown
+    aliases: [community hub, the community hub, merge forward]
+  - id: solutions-showcase
+    kind: landmark
+    name: Solutions Showcase
+    venue: Salt Palace
+    level: Level 1
+    near: Halls A-C and 1-5
+    notes: The sponsor booths and the expo floor. An all-gender restroom is in the Amber Hive Zone.
+    for: [everyone]
+    verified: true
+    source: https://sessionize.com/api/v2/uo948i5p/view/markdown
+    aliases: [sponsor booths, the sponsor booths, the showcase, solutions showcase, expo hall, the expo, vendor hall]
+  - id: entrance-west-temple
+    kind: entrance
+    name: Main entrance, West Temple
+    venue: Salt Palace
+    level: ""
+    near: Doors on West Temple, the Hyatt Regency side
+    notes: Seeded as unverified from the floor plan. Whether this door is step-free has not been checked.
+    for: [everyone]
+    verified: false
+    source: floor plan, unverified
+    aliases: [West Temple side, West Temple entrance, main entrance, the main doors, the Hyatt side]
+    side: West Temple
+    leads_to: West Temple and the Hyatt Regency
+  - id: entrance-100-south
+    kind: entrance
+    name: 100 South entrance
+    venue: Salt Palace
+    level: ""
+    near: Doors on 100 South
+    notes: Seeded as unverified from the floor plan. Whether this door is step-free has not been checked.
+    for: [everyone]
+    verified: false
+    source: floor plan, unverified
+    aliases: [100 S side, 100 South side, 100 South entrance, 100 S entrance]
+    side: 100 South
+    leads_to: 100 South
   - id: wheelchair-rental
     kind: mobility-equipment
     name: Wheelchair and scooter rental
@@ -163,6 +222,8 @@ places:
     near: Hotel elevator bank off the lobby, serving Levels 1 to 5
     notes: Seeded as unverified from the hotel layout.
     for: [mobility]
+    route:
+      - The Hyatt Regency connects to the Salt Palace at the hotel lobby, Level 1, by the entrance doors between the two buildings.
     verified: false
     source: floor plan, unverified
   - id: step-free-200-south
@@ -175,3 +236,6 @@ places:
     for: [mobility]
     verified: false
     source: floor plan, unverified
+    aliases: [200 South entrance, 200 S side, 200 South side, 200 S entrance, step-free entrance]
+    side: 200 South
+    leads_to: 200 South and the 200 South Lot

@@ -10,7 +10,7 @@ import (
 	"github.com/auroq/cnh/testing/helpers"
 )
 
-const roomNotFound = "We could not find a room called"
+const roomNotFound = "We could not find a place called"
 
 func page(t *testing.T, question, from string) string {
 	t.Helper()
@@ -99,8 +99,8 @@ func TestAPIShape(t *testing.T) {
 				t.Fatalf("keys = %v", got)
 			}
 		})
-		t.Run("it should describe here with asked, room, venue and level", func(t *testing.T) {
-			if got := keysOf(t, a["here"]); !within(got, []string{"asked", "room", "venue", "level"}) {
+		t.Run("it should describe here with asked, room, venue, level, side and via", func(t *testing.T) {
+			if got := keysOf(t, a["here"]); !within(got, []string{"asked", "room", "venue", "level", "side", "via"}) {
 				t.Fatalf("here keys = %v", got)
 			}
 		})

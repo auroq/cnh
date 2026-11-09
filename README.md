@@ -29,6 +29,7 @@ The shape is fixed by the ADRs:
 - **Review:** every PR after the first commit is reviewed by Gitar against [`.gitar/review/`](.gitar/review/); its approval is advisory and the CI checks are the gate ([ADR 0010](docs/adr/0010-gitar-approval-is-advisory.md)).
 - **Release:** CI and CD are separate workflows; CD builds the image, opens the bump PR, waits for the canary, tests the live site and reverts by PR on failure ([ADR 0008](docs/adr/0008-ci-cd-separation-and-rollback-by-revert.md)).
 - **Types:** `pkg/model` is what the business means, adapter shapes stay private, `pkg/api/v1` is what clients were promised ([ADR 0011](docs/adr/0011-types-live-by-kind.md)).
+- **Distance:** an answer says the level change and the route facts the organiser published, and never a walk time, because a single time assumes a pace and a body that the people this app is for do not share ([ADR 0012](docs/adr/0012-how-we-describe-distance.md)).
 - **Secrets:** Sealed Secrets only ([ADR 0006](docs/adr/0006-sealed-secrets.md)).
 
 ### Observability
@@ -38,6 +39,8 @@ Traces: every request is a span named for its route (`GET /api/ask`), with an `a
 Metrics: `widedoor.ask.duration`, `widedoor.ask.answers` by the kind of the top place and whether it was verified, and `widedoor.ask.unverified_served`, which counts how many times we told an attendee something nobody had checked on the floor yet; the ingest job reports `widedoor.ingest.sessions_indexed`, `widedoor.ingest.detail_failures` and `widedoor.ingest.duration`.
 Logs: `slog` goes through the `otelslog` bridge, so every request log reaches Dash0 as a log record with the trace and span id it belongs to.
 `widedoor.ask.unverified_served` is the accessibility metric: it is the list of what to go and verify next.
+The Dash0 dashboard "Wide Door" is a file too: [`deploy/dash0/wide-door.json`](deploy/dash0/wide-door.json) in the Perses format, reviewed like any other change and pushed with `make dashboard` through the Dash0 API by [`tools/dash0-dashboard.sh`](tools/dash0-dashboard.sh), with the token coming from the vault through `secret-run`.
+Its panels are the accessibility story in metrics: ask latency, answers by kind and by whether anyone verified the place, "What volunteers should go verify", profile chips as needs without identities, requests by route and release, and the health of the schedule ingest.
 
 ## Evidence from the day
 
