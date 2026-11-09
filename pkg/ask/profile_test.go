@@ -112,3 +112,66 @@ func TestAskFor(t *testing.T) {
 		})
 	})
 }
+
+func TestAskForMust(t *testing.T) {
+	ctx := context.Background()
+	stairs := Place{ID: "main-entrance", Kind: "entrance", Name: "Main entrance, stairs", Venue: "Salt Palace", Level: "Level 1"}
+	stepFree := Place{ID: "step-free-200-south", Kind: "step-free-entrance", Name: "Step-free entrance, 200 South", Venue: "Salt Palace", Level: "Level 1"}
+	gendered := Place{ID: "restroom-l1", Kind: "restroom", Name: "Restroom, Level 1", Venue: "Salt Palace", Level: "Level 1"}
+	allGender := Place{ID: "agr-l1", Kind: "all-gender-restroom", Name: "All-gender restroom", Venue: "Salt Palace", Level: "Level 1"}
+	lounge := Place{ID: "lounge", Kind: "lounge", Name: "Attendee lounge", Venue: "Salt Palace", Level: "Level 1"}
+	quiet := Place{ID: "quiet-room-260a", Kind: "quiet-room", Name: "All-attendee quiet room", Venue: "Salt Palace", Level: "Level 2"}
+
+	cases := []struct {
+		name     string
+		prefs    string
+		question string
+		places   []Place
+		want     []string
+		summary  string
+	}{
+		{"step-free is a must and a step-free entrance exists", "step-free!", "nearest entrance", []Place{stairs, stepFree}, []string{"step-free-200-south"}, "Step-free entrance"},
+		{"step-free is preferred and a step-free entrance exists", "step-free", "nearest entrance", []Place{stepFree, stairs}, []string{"step-free-200-south", "main-entrance"}, "Step-free entrance"},
+		{"step-free is a must and only stairs exist", "step-free!", "nearest entrance", []Place{stairs}, []string{"main-entrance"}, "Nothing we know meets: step-free. Nearest otherwise: Main entrance, stairs."},
+		{"wheels is a must and only stairs exist", "wheels!", "which door do I use to get in", []Place{stairs}, []string{"main-entrance"}, "Nothing we know meets: wheels."},
+		{"all-gender is a must and a gendered restroom is nearer", "all-gender!", "nearest all-gender restroom", []Place{gendered, allGender}, []string{"agr-l1"}, "All-gender restroom"},
+		{"all-gender is preferred and a gendered restroom is nearer", "all-gender", "nearest all-gender restroom", []Place{gendered, allGender}, []string{"restroom-l1", "agr-l1"}, "Restroom"},
+		{"quiet is a must and only a lounge exists", "quiet-matters!", "somewhere to sit and rest", []Place{lounge}, []string{"lounge"}, "Nothing we know meets: quiet-matters."},
+		{"quiet is a must and a quiet room exists", "quiet-matters!", "somewhere to sit and rest", []Place{lounge, quiet}, []string{"quiet-room-260a"}, "quiet room"},
+	}
+	for _, c := range cases {
+		t.Run("when "+c.name, func(t *testing.T) {
+			store := &fakeStore{places: c.places}
+			ans, err := (&Service{Store: store, Now: func() time.Time { return noon }}).AskFor(ctx, c.question, "", model.ParsePreferences(c.prefs))
+			if err != nil {
+				t.Fatal(err)
+			}
+			t.Run("it should show "+strings.Join(c.want, " then "), func(t *testing.T) {
+				var got []string
+				for _, p := range ans.Places {
+					got = append(got, p.ID)
+				}
+				if strings.Join(got, ",") != strings.Join(c.want, ",") {
+					t.Fatalf("places %q", got)
+				}
+			})
+			t.Run("it should say "+c.summary, func(t *testing.T) {
+				if !strings.Contains(ans.Summary, c.summary) {
+					t.Fatalf("summary %q", ans.Summary)
+				}
+			})
+			t.Run("it should report the chip's strength", func(t *testing.T) {
+				if len(ans.Applied) == 0 || ans.Applied[0].Strength != model.ParsePreferences(c.prefs)[0].Strength {
+					t.Fatalf("applied %+v", ans.Applied)
+				}
+			})
+			if strings.HasPrefix(c.summary, "Nothing") {
+				t.Run("it should mark the nearest place as not meeting the must", func(t *testing.T) {
+					if len(ans.Places[0].DoesNotMeet) != 1 {
+						t.Fatalf("place %+v", ans.Places[0])
+					}
+				})
+			}
+		})
+	}
+}

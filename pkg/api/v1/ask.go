@@ -49,8 +49,9 @@ type Profile struct {
 }
 
 type Applied struct {
-	Chip   string `json:"chip"`
-	Effect string `json:"effect"`
+	Chip     string `json:"chip"`
+	Effect   string `json:"effect"`
+	Strength string `json:"strength,omitempty"`
 }
 
 type Here struct {

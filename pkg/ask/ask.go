@@ -154,6 +154,7 @@ func (s *Service) answer(ctx context.Context, question, from string, prefs Prefe
 		return ans, err
 	}
 	ans.Places = RankByNearness(places, here)
+	applyMusts(&ans, question, prefs)
 	if len(ans.Places) > maxPlaces {
 		ans.Places = ans.Places[:maxPlaces]
 	}
