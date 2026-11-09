@@ -105,3 +105,4 @@ Radar watches the cluster the whole time and lists a stalled Rollout as a live i
 The rule is in [`.gitar/review/architecture.md`](../.gitar/review/architecture.md): model and use case import nothing from this module, adapters may import the model, controllers import use cases and adapters, and nobody imports a controller.
 `tools/archcheck.sh` reads the import graph with `go list` and fails CI with the offending edge named, so the rule cannot drift from the code without a red check.
 A new package has to be placed in a layer in that script and get a line on this page before CI goes green.
+The OpenTelemetry API packages (`go.opentelemetry.io/otel`, `.../trace`, `.../metric`, `.../attribute`, `.../codes`) and `otelhttp` are instrumentation vocabulary like the standard library and may be used in any layer; the SDK, the exporters and the log bridge live only in `pkg/telemetry`.
