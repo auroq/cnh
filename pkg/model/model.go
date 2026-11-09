@@ -54,4 +54,5 @@ type Answer struct {
 	Summary  string    `json:"summary"`
 	Places   []Place   `json:"places"`
 	Sessions []Session `json:"sessions"`
+	Applied  []Applied `json:"applied,omitempty"`
 }
