@@ -50,11 +50,10 @@ type (
 )
 
 // Service answers questions. Needs is the vocabulary that turns what people say into kinds of place.
-// Now is the clock sessions are timed against; nil means time.Now, tests fix it.
+// Now is the clock sessions and doors are timed against; nil means time.Now, tests fix it.
 type Service struct {
 	Store  Store
 	Needs  []Need
-	Now    func() time.Time
 	Tracer trace.TracerProvider
 	Meter  metric.MeterProvider
 	Now    func() time.Time

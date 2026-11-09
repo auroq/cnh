@@ -160,13 +160,6 @@ func (s *Service) sessionsFor(ctx context.Context, ans *Answer, question string)
 	return nil
 }
 
-func (s *Service) now() time.Time {
-	if s.Now == nil {
-		return time.Now()
-	}
-	return s.Now()
-}
-
 func containsAny(words string, phrases []string) bool {
 	for _, p := range phrases {
 		if strings.Contains(words, " "+p+" ") {
