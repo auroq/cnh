@@ -5,16 +5,19 @@ repo="${REPO:-auroq/cnh}"
 
 usage() {
   cat <<EOF
-usage: $(basename "$0") --title TEXT (--body-file FILE | --body TEXT) [--base BRANCH]
+usage: $(basename "$0") (--closes N | --refs N) --title TEXT (--body-file FILE | --body TEXT) [--base BRANCH]
        $(basename "$0") --existing NUMBER
 
 Opens a pull request from the current branch and applies this repo's PR policy:
+the issue it is for in the body (Gitar approves only PRs that cite one, ADR 0009),
 a "gitar display:verbose" and "gitar auto-apply:off" comment, then GitHub auto-merge (squash).
-With --existing, only applies the policy to an already open PR.
+With --existing, only applies the comment and auto-merge to an already open PR.
 
+  --closes N         the roadmap issue this PR finishes ("Closes #N" goes in the body)
+  --refs N           the roadmap issue this PR is part of ("Refs #N" goes in the body)
   --title TEXT       PR title
-  --body-file FILE   PR body from a file (the Claude Code footer is appended)
-  --body TEXT        PR body inline (the footer is appended)
+  --body-file FILE   PR body from a file (the issue line and the Claude Code footer are appended)
+  --body TEXT        PR body inline (same)
   --base BRANCH      target branch (default main)
   --existing NUMBER  apply comment and auto-merge to PR NUMBER instead of opening one
   --no-auto-merge    skip arming auto-merge
@@ -22,9 +25,11 @@ With --existing, only applies the policy to an already open PR.
 EOF
 }
 
-title="" body="" body_file="" base="main" existing="" auto_merge=1
+title="" body="" body_file="" base="main" existing="" auto_merge=1 issue_line=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
+    --closes) issue_line="Closes #$2"; shift 2 ;;
+    --refs) issue_line="Refs #$2"; shift 2 ;;
     --title) title="$2"; shift 2 ;;
     --body) body="$2"; shift 2 ;;
     --body-file) body_file="$2"; shift 2 ;;
@@ -43,12 +48,13 @@ fi
 
 if [[ -z "$existing" ]]; then
   [[ -n "$title" ]] || { echo "--title is required" >&2; exit 2; }
+  [[ -n "$issue_line" ]] || { echo "--closes N or --refs N is required: every PR cites its roadmap issue" >&2; exit 2; }
   if [[ -n "$body_file" ]]; then
     body="$(cat "$body_file")"
   fi
   [[ -n "$body" ]] || { echo "--body or --body-file is required" >&2; exit 2; }
   head="$(git rev-parse --abbrev-ref HEAD)"
-  url="$(gh pr create --repo "$repo" --base "$base" --head "$head" --title "$title" --body "${body}${footer}")"
+  url="$(gh pr create --repo "$repo" --base "$base" --head "$head" --title "$title" --body "${body}"$'\n\n'"${issue_line}${footer}")"
   existing="${url##*/}"
   echo "$url"
 fi
