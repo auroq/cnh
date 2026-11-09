@@ -30,6 +30,8 @@ spec:
   selector:
     matchLabels:
       app.kubernetes.io/name: widedoor
+  progressDeadlineSeconds: 120
+  progressDeadlineAbort: true
   strategy:
     canary:
       steps:
