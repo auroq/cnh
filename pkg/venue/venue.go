@@ -4,6 +4,7 @@ package venue
 import (
 	"fmt"
 	"io"
+	"os"
 	"sort"
 	"strings"
 
@@ -136,4 +137,17 @@ func slug(s string) string {
 		}
 	}
 	return strings.TrimRight(b.String(), "-")
+}
+
+// File is a places.yaml on disk, loaded on demand.
+type File string
+
+// Places loads and validates the file.
+func (f File) Places() ([]Place, error) {
+	r, err := os.Open(string(f))
+	if err != nil {
+		return nil, err
+	}
+	defer r.Close()
+	return Load(r)
 }

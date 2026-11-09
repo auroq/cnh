@@ -1,6 +1,6 @@
 # 31. The architecture is written down and enforced
 
-**Open. Filed 2026-11-09, during Ring 3, by Aria. Nobody's call: it writes down what item 025 built.**
+**Done 2026-11-09 (PR #33, issue #31). Filed 2026-11-09, during Ring 3, by Aria. Nobody's call: it writes down what item 025 built.**
 
 Depends on: 025
 

@@ -4,7 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/auroq/cnh/pkg/sessionize"
+	"github.com/auroq/cnh/pkg/ingest"
+	"github.com/auroq/cnh/pkg/schedule"
 	"github.com/auroq/cnh/pkg/venue"
 )
 
@@ -17,12 +18,7 @@ type Indexer struct {
 	Now           func() time.Time
 }
 
-// Result is what one bulk write did.
-type Result struct {
-	Sent   int
-	Failed int
-	Count  int
-}
+var _ ingest.Indexer = (*Indexer)(nil)
 
 func (x *Indexer) sessions() string {
 	if x.SessionsIndex == "" {
@@ -52,7 +48,7 @@ func (x *Indexer) EnsureIndexes(ctx context.Context) error {
 	return x.Client.EnsureIndex(ctx, x.places(), PlacesMapping)
 }
 
-func (x *Indexer) IndexSessions(ctx context.Context, sessions []sessionize.Session) (Result, error) {
+func (x *Indexer) IndexSessions(ctx context.Context, sessions []schedule.Session) (ingest.Result, error) {
 	now := x.now()
 	docs := make([]Doc, 0, len(sessions))
 	for _, s := range sessions {
@@ -61,7 +57,7 @@ func (x *Indexer) IndexSessions(ctx context.Context, sessions []sessionize.Sessi
 	return x.write(ctx, x.sessions(), docs)
 }
 
-func (x *Indexer) IndexPlaces(ctx context.Context, places []venue.Place) (Result, error) {
+func (x *Indexer) IndexPlaces(ctx context.Context, places []venue.Place) (ingest.Result, error) {
 	now := x.now()
 	docs := make([]Doc, 0, len(places))
 	for _, p := range places {
@@ -70,9 +66,9 @@ func (x *Indexer) IndexPlaces(ctx context.Context, places []venue.Place) (Result
 	return x.write(ctx, x.places(), docs)
 }
 
-func (x *Indexer) write(ctx context.Context, index string, docs []Doc) (Result, error) {
+func (x *Indexer) write(ctx context.Context, index string, docs []Doc) (ingest.Result, error) {
 	failed, err := x.Client.Bulk(ctx, index, docs, x.Batch)
-	res := Result{Sent: len(docs), Failed: failed}
+	res := ingest.Result{Sent: len(docs), Failed: failed}
 	if err != nil {
 		return res, err
 	}
@@ -80,7 +76,7 @@ func (x *Indexer) write(ctx context.Context, index string, docs []Doc) (Result, 
 	return res, nil
 }
 
-func sessionDoc(s sessionize.Session, now time.Time) map[string]any {
+func sessionDoc(s schedule.Session, now time.Time) map[string]any {
 	content := s.Title
 	if s.Description != "" {
 		content += "\n\n" + s.Description
