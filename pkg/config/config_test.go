@@ -93,6 +93,7 @@ func TestTypedAccessors(t *testing.T) {
 			{"ingest concurrency", cfg.Ingest().Concurrency(), 3},
 			{"ingest skip details", cfg.Ingest().SkipDetails(), true},
 			{"ingest timeout", cfg.Ingest().Timeout().String(), "2m0s"},
+			{"ingest elasticsearch timeout default", cfg.Ingest().ESTimeout().String(), "5m0s"},
 			{"telemetry endpoint", cfg.Telemetry().OTLPEndpoint(), "http://collector:4318"},
 			{"telemetry service name default", cfg.Telemetry().ServiceName(), "widedoor"},
 		}

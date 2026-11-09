@@ -37,6 +37,7 @@ const (
 	KeyIngestFetchTimeout  = "ingest.fetch_timeout"
 	KeyIngestSkipDetails   = "ingest.skip_details"
 	KeyIngestBatch         = "ingest.batch"
+	KeyIngestESTimeout     = "ingest.es_timeout"
 
 	KeyTelemetryOTLPEndpoint = "telemetry.otlp_endpoint"
 	KeyTelemetryServiceName  = "telemetry.service_name"
@@ -58,6 +59,7 @@ var Defaults = map[string]any{
 	KeyIngestFetchTimeout:         30 * time.Second,
 	KeyIngestSkipDetails:          false,
 	KeyIngestBatch:                50,
+	KeyIngestESTimeout:            5 * time.Minute,
 	KeyTelemetryOTLPEndpoint:      "",
 	KeyTelemetryServiceName:       "widedoor",
 }
@@ -89,6 +91,7 @@ type Ingest interface {
 	FetchTimeout() time.Duration
 	SkipDetails() bool
 	Batch() int
+	ESTimeout() time.Duration
 }
 
 // Telemetry is what the OpenTelemetry setup needs.
@@ -211,6 +214,7 @@ func (i ingest) Timeout() time.Duration      { return i.v.GetDuration(KeyIngestT
 func (i ingest) FetchTimeout() time.Duration { return i.v.GetDuration(KeyIngestFetchTimeout) }
 func (i ingest) SkipDetails() bool           { return i.v.GetBool(KeyIngestSkipDetails) }
 func (i ingest) Batch() int                  { return i.v.GetInt(KeyIngestBatch) }
+func (i ingest) ESTimeout() time.Duration    { return i.v.GetDuration(KeyIngestESTimeout) }
 
 type telemetry struct{ v *viper.Viper }
 

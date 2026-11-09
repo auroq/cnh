@@ -72,6 +72,9 @@ func (x *Indexer) write(ctx context.Context, index string, docs []Doc) (ingest.R
 	if err != nil {
 		return res, err
 	}
+	if err := x.Client.Refresh(ctx, index); err != nil {
+		return res, err
+	}
 	res.Count, _ = x.Client.Count(ctx, index)
 	return res, nil
 }
