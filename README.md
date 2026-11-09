@@ -39,6 +39,8 @@ Traces: every request is a span named for its route (`GET /api/ask`), with an `a
 Metrics: `widedoor.ask.duration`, `widedoor.ask.answers` by the kind of the top place and whether it was verified, and `widedoor.ask.unverified_served`, which counts how many times we told an attendee something nobody had checked on the floor yet; the ingest job reports `widedoor.ingest.sessions_indexed`, `widedoor.ingest.detail_failures` and `widedoor.ingest.duration`.
 Logs: `slog` goes through the `otelslog` bridge, so every request log reaches Dash0 as a log record with the trace and span id it belongs to.
 `widedoor.ask.unverified_served` is the accessibility metric: it is the list of what to go and verify next.
+The Dash0 dashboard "Wide Door" is a file too: [`deploy/dash0/wide-door.json`](deploy/dash0/wide-door.json) in the Perses format, reviewed like any other change and pushed with `make dashboard` through the Dash0 API by [`tools/dash0-dashboard.sh`](tools/dash0-dashboard.sh), with the token coming from the vault through `secret-run`.
+Its panels are the accessibility story in metrics: ask latency, answers by kind and by whether anyone verified the place, "What volunteers should go verify", profile chips as needs without identities, requests by route and release, and the health of the schedule ingest.
 
 ## Evidence from the day
 
