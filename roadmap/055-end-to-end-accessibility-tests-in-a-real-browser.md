@@ -1,6 +1,6 @@
 # 55. End-to-end accessibility tests in a real browser, run by the CD gate
 
-**Open. Filed 2026-11-09 by Aria (issue #55). Nobody's call: the target users define it, and the checks are the ones `.gitar/review/a11y.md` already asks for.**
+**Done 2026-11-09 (PR #65, issue #55). Filed 2026-11-09 by Aria. Nobody's call: the target users define it, and the checks are the ones `.gitar/review/a11y.md` already asks for. The `cd.yml` wiring is the integrator's, from the snippet in the PR.**
 
 Depends on: 010, 036
 
