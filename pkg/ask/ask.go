@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/auroq/cnh/pkg/model"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/trace"
@@ -27,49 +28,14 @@ type Store interface {
 	FindSessions(ctx context.Context, question string) ([]Session, error)
 }
 
-type Place struct {
-	ID       string   `json:"id"`
-	Kind     string   `json:"kind"`
-	Name     string   `json:"name"`
-	Venue    string   `json:"venue"`
-	Level    string   `json:"level"`
-	Near     string   `json:"near"`
-	Notes    string   `json:"notes,omitempty"`
-	For      []string `json:"for,omitempty"`
-	Verified bool     `json:"verified"`
-	Source   string   `json:"source"`
-}
+// The domain types live in pkg/model; these names stay so callers read naturally.
+type (
+	Place   = model.Place
+	Session = model.Session
+	Here    = model.Here
+	Answer  = model.Answer
+)
 
-type Session struct {
-	ID       string    `json:"id"`
-	Title    string    `json:"title"`
-	URL      string    `json:"url"`
-	Speakers []string  `json:"speakers"`
-	Start    time.Time `json:"start"`
-	End      time.Time `json:"end"`
-	Location string    `json:"location"`
-	Venue    string    `json:"venue"`
-	Level    string    `json:"level"`
-	Room     string    `json:"room"`
-}
-
-// Here is where the attendee is: a room they named, resolved to a venue and level.
-type Here struct {
-	Asked string `json:"asked"`
-	Room  string `json:"room,omitempty"`
-	Venue string `json:"venue,omitempty"`
-	Level string `json:"level,omitempty"`
-}
-
-type Answer struct {
-	Question string    `json:"question"`
-	Here     Here      `json:"here"`
-	Summary  string    `json:"summary"`
-	Places   []Place   `json:"places"`
-	Sessions []Session `json:"sessions"`
-}
-
-// Service answers questions. Tracer and Meter are optional; nil means the OpenTelemetry globals.
 type Service struct {
 	Store  Store
 	Tracer trace.TracerProvider

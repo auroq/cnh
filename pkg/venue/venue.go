@@ -8,24 +8,35 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/auroq/cnh/pkg/model"
 	"gopkg.in/yaml.v3"
 )
 
-type Place struct {
-	ID       string   `yaml:"id" json:"id"`
-	Kind     string   `yaml:"kind" json:"kind"`
-	Name     string   `yaml:"name" json:"name"`
-	Venue    string   `yaml:"venue" json:"venue"`
-	Level    string   `yaml:"level" json:"level"`
-	Near     string   `yaml:"near" json:"near"`
-	Notes    string   `yaml:"notes" json:"notes,omitempty"`
-	For      []string `yaml:"for" json:"for,omitempty"`
-	Verified bool     `yaml:"verified" json:"verified"`
-	Source   string   `yaml:"source" json:"source"`
+// Place and Room are the model types; this package owns the curated file's shape and the rooms derived from the schedule.
+type (
+	Place = model.Place
+	Room  = model.Room
+)
+
+type placeYAML struct {
+	ID       string   `yaml:"id"`
+	Kind     string   `yaml:"kind"`
+	Name     string   `yaml:"name"`
+	Venue    string   `yaml:"venue"`
+	Level    string   `yaml:"level"`
+	Near     string   `yaml:"near"`
+	Notes    string   `yaml:"notes"`
+	For      []string `yaml:"for"`
+	Verified bool     `yaml:"verified"`
+	Source   string   `yaml:"source"`
+}
+
+func (p placeYAML) model() model.Place {
+	return model.Place{ID: p.ID, Kind: p.Kind, Name: p.Name, Venue: p.Venue, Level: p.Level, Near: p.Near, Notes: p.Notes, For: p.For, Verified: p.Verified, Source: p.Source}
 }
 
 type file struct {
-	Places []Place `yaml:"places"`
+	Places []placeYAML `yaml:"places"`
 }
 
 // Load reads places.yaml and validates that every place has an id, kind, name, venue and source.
@@ -46,14 +57,11 @@ func Load(r io.Reader) ([]Place, error) {
 		}
 		seen[p.ID] = true
 	}
-	return f.Places, nil
-}
-
-// Room is a location that the schedule names.
-type Room struct {
-	Venue string
-	Level string
-	Room  string
+	places := make([]Place, 0, len(f.Places))
+	for _, p := range f.Places {
+		places = append(places, p.model())
+	}
+	return places, nil
 }
 
 // RoomsFromLocations turns the distinct "Venue | Level | Room" strings of the schedule into room places.
@@ -104,21 +112,6 @@ func SplitLocation(loc string) (Room, bool) {
 	}
 	r.Room = strings.Join(rest, ", ")
 	return r, true
-}
-
-// Content is the text the semantic field is built from.
-func (p Place) Content() string {
-	parts := []string{p.Name, strings.ReplaceAll(p.Kind, "-", " "), p.Venue, p.Level, p.Near, p.Notes}
-	if len(p.For) > 0 {
-		parts = append(parts, "for "+strings.Join(p.For, ", "))
-	}
-	var out []string
-	for _, s := range parts {
-		if s = strings.TrimSpace(s); s != "" {
-			out = append(out, s)
-		}
-	}
-	return strings.Join(out, ". ")
 }
 
 func slug(s string) string {
