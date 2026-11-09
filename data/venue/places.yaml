@@ -1,0 +1,177 @@
+# Venue access features for KubeCon + CloudNativeCon North America 2026.
+# verified: true  means the organiser or venue published it (source is the page).
+# verified: false means it was read off a floor plan or inferred, and nobody has checked it on the floor.
+# Wide Door always says which it is.
+places:
+  - id: quiet-room-260a
+    kind: quiet-room
+    name: All-attendee quiet room
+    venue: Salt Palace
+    level: Level 2
+    near: Room 260A, Level 2 meeting rooms
+    notes: Open to every attendee. No talking, no interacting, no working inside.
+    for: [sensory, rest, neurodivergent]
+    verified: true
+    source: https://events.linuxfoundation.org/kubecon-cloudnativecon-north-america/attend/inclusion-accessibility/
+  - id: quiet-room-260b
+    kind: quiet-room
+    name: Women and non-binary quiet room
+    venue: Salt Palace
+    level: Level 2
+    near: Room 260B, Level 2 meeting rooms
+    notes: For women and non-binary attendees. No talking, no interacting, no working inside.
+    for: [sensory, rest, neurodivergent, women, non-binary]
+    verified: true
+    source: https://events.linuxfoundation.org/kubecon-cloudnativecon-north-america/attend/inclusion-accessibility/
+  - id: prayer-room-zion
+    kind: prayer-room
+    name: Prayer room
+    venue: Hyatt Regency
+    level: Level 5
+    near: Zion room
+    notes: Quiet space for prayer and reflection. No talking, no working inside.
+    for: [prayer, rest]
+    verified: true
+    source: https://events.linuxfoundation.org/kubecon-cloudnativecon-north-america/attend/inclusion-accessibility/
+  - id: nursing-room
+    kind: nursing-room
+    name: Private nursing room
+    venue: Salt Palace
+    level: ""
+    near: Ask at registration or any information desk for the location
+    notes: A private nursing room is available on every event day. The organiser does not publish the room number.
+    for: [parents, nursing]
+    verified: true
+    source: https://events.linuxfoundation.org/kubecon-cloudnativecon-north-america/attend/inclusion-accessibility/
+  - id: agr-sp-l1-showcase
+    kind: all-gender-restroom
+    name: All-gender restroom, Solutions Showcase
+    venue: Salt Palace
+    level: Level 1
+    near: Solutions Showcase, Halls A-C and 1-5, Amber Hive Zone
+    for: [restroom, trans, non-binary]
+    verified: true
+    source: https://events.linuxfoundation.org/kubecon-cloudnativecon-north-america/attend/inclusion-accessibility/
+  - id: agr-sp-l2-255
+    kind: all-gender-restroom
+    name: All-gender restroom outside 255
+    venue: Salt Palace
+    level: Level 2
+    near: Outside room 255
+    for: [restroom, trans, non-binary]
+    verified: true
+    source: https://events.linuxfoundation.org/kubecon-cloudnativecon-north-america/attend/inclusion-accessibility/
+  - id: agr-hy-l1-lobby
+    kind: all-gender-restroom
+    name: All-gender restroom, Hyatt lobby
+    venue: Hyatt Regency
+    level: Level 1
+    near: Lobby, by the Salt Palace entrance doors
+    for: [restroom, trans, non-binary]
+    verified: true
+    source: https://events.linuxfoundation.org/kubecon-cloudnativecon-north-america/attend/inclusion-accessibility/
+  - id: agr-hy-l2-juniper
+    kind: all-gender-restroom
+    name: All-gender restroom by Juniper
+    venue: Hyatt Regency
+    level: Level 2
+    near: By the Juniper room
+    for: [restroom, trans, non-binary]
+    verified: true
+    source: https://events.linuxfoundation.org/kubecon-cloudnativecon-north-america/attend/inclusion-accessibility/
+  - id: agr-hy-l3-powder
+    kind: all-gender-restroom
+    name: All-gender restroom by Powder Mountain
+    venue: Hyatt Regency
+    level: Level 3
+    near: By the Powder Mountain room
+    for: [restroom, trans, non-binary]
+    verified: true
+    source: https://events.linuxfoundation.org/kubecon-cloudnativecon-north-america/attend/inclusion-accessibility/
+  - id: agr-hy-l4-broadcast
+    kind: all-gender-restroom
+    name: All-gender restroom by the Broadcast Lounge
+    venue: Hyatt Regency
+    level: Level 4
+    near: By the Broadcast Lounge
+    for: [restroom, trans, non-binary]
+    verified: true
+    source: https://events.linuxfoundation.org/kubecon-cloudnativecon-north-america/attend/inclusion-accessibility/
+  - id: registration-200-south
+    kind: info-desk
+    name: Registration and badge pick-up
+    venue: Salt Palace
+    level: ""
+    near: 200 South entrance
+    notes: Staff here know the elevator locations, the nursing room and the first-aid points. Pronoun and communication stickers are here.
+    for: [help, mobility]
+    verified: true
+    source: https://sessionize.com/api/v2/uo948i5p/view/markdown
+  - id: coat-check-east
+    kind: coat-check
+    name: Coat and bag check
+    venue: Salt Palace
+    level: Level 2
+    near: East Registration
+    for: [help]
+    verified: true
+    source: https://sessionize.com/api/v2/uo948i5p/view/markdown
+  - id: community-hub-grand-j
+    kind: community-hub
+    name: Community Hub and Merge Forward gatherings
+    venue: Salt Palace
+    level: Level 1
+    near: Grand Ballroom J
+    notes: Peer group gatherings, Sign Language Crash Course and Merge Forward sessions meet here on 10 to 12 November.
+    for: [community, deaf, queer, bipoc, women]
+    verified: true
+    source: https://sessionize.com/api/v2/uo948i5p/view/markdown
+  - id: wheelchair-rental
+    kind: mobility-equipment
+    name: Wheelchair and scooter rental
+    venue: Salt Palace
+    level: ""
+    near: Arranged through Mobility City, not a desk on site
+    notes: Rent from Mobility City directly. Reserved accessible seating is set aside in every session room.
+    for: [mobility]
+    verified: true
+    source: https://events.linuxfoundation.org/kubecon-cloudnativecon-north-america/attend/inclusion-accessibility/
+  - id: parking-accessible
+    kind: parking
+    name: Accessible parking
+    venue: Salt Palace
+    level: ""
+    near: 200 South Lot and 300 West Lot
+    for: [mobility]
+    verified: true
+    source: https://events.linuxfoundation.org/kubecon-cloudnativecon-north-america/attend/venue-travel/
+  - id: elevators-salt-palace
+    kind: elevator
+    name: Elevators between Salt Palace levels
+    venue: Salt Palace
+    level: ""
+    near: The organiser does not publish elevator positions. Staff at registration and the information desks will point you to the nearest one.
+    notes: Seeded as unverified. If you find one, tell us where and we will mark it verified.
+    for: [mobility]
+    verified: false
+    source: floor plan, unverified
+  - id: elevators-hyatt
+    kind: elevator
+    name: Hotel elevators, Hyatt Regency
+    venue: Hyatt Regency
+    level: ""
+    near: Hotel elevator bank off the lobby, serving Levels 1 to 5
+    notes: Seeded as unverified from the hotel layout.
+    for: [mobility]
+    verified: false
+    source: floor plan, unverified
+  - id: step-free-200-south
+    kind: step-free-entrance
+    name: Step-free entrance, 200 South
+    venue: Salt Palace
+    level: ""
+    near: 200 South entrance, where registration is
+    notes: Seeded as unverified. Accessible parking is in the 200 South Lot, which suggests this is the accessible entrance, but nobody has checked.
+    for: [mobility]
+    verified: false
+    source: floor plan, unverified
