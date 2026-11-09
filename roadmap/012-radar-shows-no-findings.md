@@ -21,3 +21,15 @@ Radar "AI SRE" judges both the clean manifests and the agent's diagnosis of a re
 ## Touches
 
 `deploy/`.
+
+## Staging the failure
+
+The Rollout `widedoor` has `progressDeadlineSeconds: 120` and `progressDeadlineAbort: true`, so a canary that never becomes ready is aborted by Argo Rollouts on its own and the stable pods keep serving.
+Images are pinned by commit SHA in `deploy/app/kustomization.yaml`, so the staged failure is one ordinary release that goes wrong:
+
+1. `tools/bump-image.sh --sha <a commit SHA the images workflow never built>` opens the bump PR; merge it.
+2. Argo CD syncs, the canary pod goes to `ImagePullBackOff`, and Radar's live issues list it under image pull failures with the Rollout as the subject.
+3. After two minutes Argo Rollouts aborts the canary; `kubectl argo rollouts get rollout widedoor -n wide-door` shows Degraded with the stable ReplicaSet still at full weight, and the site keeps answering.
+4. `tools/bump-image.sh` with no flags pins back to the latest good build, and the Rollout recovers.
+
+Radar's remaining findings on the namespace after items 006 and 012 are the two accepted `readOnlyRootFilesystem` ones on Elasticsearch and Kibana, and two ECK-generated `*-certs-public` Secrets that Radar calls orphaned because no pod mounts them; the operator owns them and they stay.
