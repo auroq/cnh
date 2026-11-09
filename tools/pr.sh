@@ -9,7 +9,7 @@ usage: $(basename "$0") (--closes N | --refs N) --title TEXT (--body-file FILE |
        $(basename "$0") --existing NUMBER
 
 Opens a pull request from the current branch and applies this repo's PR policy:
-the issue it is for in the body (Gitar approves only PRs that cite one, ADR 0009),
+the issue it is for in the title and the body (Gitar reads the title, ADR 0010),
 a "gitar display:verbose" and "gitar auto-apply:off" comment, then GitHub auto-merge (squash).
 With --existing, only applies the comment and auto-merge to an already open PR.
 
@@ -54,7 +54,7 @@ if [[ -z "$existing" ]]; then
   fi
   [[ -n "$body" ]] || { echo "--body or --body-file is required" >&2; exit 2; }
   head="$(git rev-parse --abbrev-ref HEAD)"
-  url="$(gh pr create --repo "$repo" --base "$base" --head "$head" --title "$title" --body "${issue_line}"$'\n\n'"${body}${footer}")"
+  url="$(gh pr create --repo "$repo" --base "$base" --head "$head" --title "$title ($issue_line)" --body "${issue_line}"$'\n\n'"${body}${footer}")"
   existing="${url##*/}"
   echo "$url"
 fi
