@@ -85,6 +85,7 @@ type Answer struct {
 	Learned              []Lesson  `json:"learned,omitempty"`
 	Unmet                []string  `json:"unmet,omitempty"`
 	Schedule             *Schedule `json:"schedule,omitempty"`
+	Route                *Route    `json:"route,omitempty"`
 }
 
 // Verdict is what an attendee who stood at a place said about it.

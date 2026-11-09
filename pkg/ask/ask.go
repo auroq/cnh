@@ -55,6 +55,7 @@ type Service struct {
 	Store  Store
 	Needs  []Need
 	Status Status
+	Router Router
 	Tracer trace.TracerProvider
 	Meter  metric.MeterProvider
 	Now    func() time.Time
@@ -158,6 +159,7 @@ func (s *Service) answer(ctx context.Context, question, from string, prefs Prefe
 		ans.Places = ans.Places[:maxPlaces]
 	}
 	s.attach(ctx, ans.Places)
+	s.routeFor(&ans, prefs)
 
 	if err := s.sessionsFor(ctx, &ans, question); err != nil {
 		return ans, err

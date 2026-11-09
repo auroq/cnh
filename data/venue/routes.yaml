@@ -1,0 +1,185 @@
+# The walking graph between places in data/venue/places.yaml.
+# Nodes are place ids from that file plus a few junctions; edges are what the organiser and venue pages state.
+# An edge with verified: false was read off a floor plan or a virtual tour and nobody has walked it.
+# Kinds: corridor, door, stairs, escalator, elevator, skybridge. step_free is per edge. through_zone names a crowd zone the edge crosses.
+nodes:
+  - id: sp-l1-lobby
+    name: Salt Palace Level 1 lobby, by the West Temple doors
+  - id: sp-l2-lobby
+    name: Salt Palace Level 2, the Mezzanine, by East Registration
+  - id: sp-l1-south
+    name: Salt Palace Level 1, inside the 200 South doors
+  - id: hyatt-lobby
+    name: Hyatt Regency lobby, Level 1
+  - id: hyatt-l2
+    name: Hyatt Regency Level 2
+  - id: entrance-west-temple
+    name: Main entrance, West Temple
+  - id: step-free-200-south
+    name: Step-free entrance, 200 South
+  - id: registration-200-south
+    name: Registration and badge pick-up
+  - id: elevators-salt-palace
+    name: Elevators between Salt Palace levels
+  - id: coat-check-east
+    name: Coat and bag check
+  - id: quiet-room-260a
+    name: All-attendee quiet room, 260A
+  - id: quiet-room-260b
+    name: Women and non-binary quiet room, 260B
+  - id: agr-sp-l2-255
+    name: All-gender restroom outside 255
+  - id: agr-sp-l1-showcase
+    name: All-gender restroom, Solutions Showcase
+  - id: solutions-showcase
+    name: Solutions Showcase
+  - id: community-hub-grand-j
+    name: Community Hub, Grand Ballroom J
+  - id: agr-hy-l1-lobby
+    name: All-gender restroom, Hyatt lobby
+  - id: elevators-hyatt
+    name: Hotel elevators, Hyatt Regency
+  - id: agr-hy-l2-juniper
+    name: All-gender restroom by Juniper
+edges:
+  - from: entrance-west-temple
+    to: sp-l1-lobby
+    kind: door
+    step_free: false
+    verified: false
+    source: floor plan, unverified; whether this door is step-free is not stated
+  - from: step-free-200-south
+    to: sp-l1-south
+    kind: door
+    step_free: true
+    verified: false
+    source: floor plan, unverified; the organiser puts registration at the 200 South entrance
+  - from: sp-l1-south
+    to: registration-200-south
+    kind: corridor
+    step_free: true
+    through_zone: registration
+    verified: true
+    source: https://events.linuxfoundation.org/kubecon-cloudnativecon-north-america/attend/inclusion-accessibility/
+  - from: registration-200-south
+    to: elevators-salt-palace
+    kind: corridor
+    step_free: true
+    verified: true
+    source: https://events.linuxfoundation.org/kubecon-cloudnativecon-north-america/attend/inclusion-accessibility/ (registration staff point to the nearest elevator)
+  - from: sp-l1-lobby
+    to: sp-l1-south
+    kind: corridor
+    step_free: true
+    verified: false
+    source: https://www.imapenterprises.com/saltpalace/virtualtour/index.htm
+  - from: sp-l1-lobby
+    to: solutions-showcase
+    kind: corridor
+    step_free: true
+    through_zone: showcase
+    verified: false
+    source: https://www.visitsaltlake.com/salt-palace-convention-center/attend/venue-directory-map/
+  - from: solutions-showcase
+    to: agr-sp-l1-showcase
+    kind: corridor
+    step_free: true
+    through_zone: showcase
+    amenities: [restroom]
+    verified: true
+    source: https://events.linuxfoundation.org/kubecon-cloudnativecon-north-america/attend/inclusion-accessibility/
+  - from: sp-l1-south
+    to: community-hub-grand-j
+    kind: corridor
+    step_free: true
+    through_zone: food
+    verified: false
+    source: https://www.imapenterprises.com/saltpalace/virtualtour/index.htm (South Foyer to the Ballroom)
+  - from: sp-l1-lobby
+    to: community-hub-grand-j
+    kind: corridor
+    step_free: true
+    verified: false
+    source: https://www.imapenterprises.com/saltpalace/virtualtour/index.htm
+  - from: elevators-salt-palace
+    to: sp-l2-lobby
+    kind: elevator
+    step_free: true
+    verified: true
+    source: https://events.linuxfoundation.org/kubecon-cloudnativecon-north-america/attend/inclusion-accessibility/
+  - from: sp-l1-lobby
+    to: sp-l2-lobby
+    kind: stairs
+    step_free: false
+    verified: false
+    source: https://www.imapenterprises.com/saltpalace/virtualtour/index.htm
+  - from: sp-l1-lobby
+    to: sp-l2-lobby
+    kind: escalator
+    step_free: false
+    verified: false
+    source: https://www.imapenterprises.com/saltpalace/virtualtour/index.htm
+  - from: sp-l2-lobby
+    to: coat-check-east
+    kind: corridor
+    step_free: true
+    verified: true
+    source: https://events.linuxfoundation.org/kubecon-cloudnativecon-north-america/attend/inclusion-accessibility/ (coat check at East Registration, Level 2)
+  - from: sp-l2-lobby
+    to: quiet-room-260a
+    kind: corridor
+    step_free: true
+    amenities: [seating]
+    verified: true
+    source: https://events.linuxfoundation.org/kubecon-cloudnativecon-north-america/attend/inclusion-accessibility/
+  - from: quiet-room-260a
+    to: quiet-room-260b
+    kind: corridor
+    step_free: true
+    verified: true
+    source: https://events.linuxfoundation.org/kubecon-cloudnativecon-north-america/attend/inclusion-accessibility/
+  - from: sp-l2-lobby
+    to: agr-sp-l2-255
+    kind: corridor
+    step_free: true
+    amenities: [restroom]
+    verified: true
+    source: https://www.visitsaltlake.com/salt-palace-convention-center/attend/venue-directory-map/ (rooms 155, 255, 355 reached from the Mezzanine)
+  - from: sp-l1-lobby
+    to: hyatt-lobby
+    kind: skybridge
+    step_free: true
+    verified: true
+    source: https://events.linuxfoundation.org/kubecon-cloudnativecon-north-america/attend/inclusion-accessibility/ (the Hyatt is connected to the Salt Palace at the hotel lobby, Level 1)
+  - from: hyatt-lobby
+    to: agr-hy-l1-lobby
+    kind: corridor
+    step_free: true
+    amenities: [restroom, seating]
+    verified: true
+    source: https://events.linuxfoundation.org/kubecon-cloudnativecon-north-america/attend/inclusion-accessibility/
+  - from: hyatt-lobby
+    to: elevators-hyatt
+    kind: corridor
+    step_free: true
+    verified: true
+    source: https://events.linuxfoundation.org/kubecon-cloudnativecon-north-america/attend/inclusion-accessibility/
+  - from: elevators-hyatt
+    to: hyatt-l2
+    kind: elevator
+    step_free: true
+    verified: true
+    source: https://events.linuxfoundation.org/kubecon-cloudnativecon-north-america/attend/inclusion-accessibility/
+  - from: hyatt-lobby
+    to: hyatt-l2
+    kind: stairs
+    step_free: false
+    verified: false
+    source: hotel floor plan, unverified
+  - from: hyatt-l2
+    to: agr-hy-l2-juniper
+    kind: corridor
+    step_free: true
+    amenities: [restroom]
+    verified: true
+    source: https://events.linuxfoundation.org/kubecon-cloudnativecon-north-america/attend/inclusion-accessibility/
