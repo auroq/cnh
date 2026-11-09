@@ -55,8 +55,8 @@ func TestRequestSpans(t *testing.T) {
 		})
 	})
 
-	t.Run("when the probes are answered by the real use case", func(t *testing.T) {
-		recorder, get := traced(t, &ask.Service{Store: pingStore{}})
+	t.Run("when the probes are answered", func(t *testing.T) {
+		recorder, get := traced(t, fakeAsker{})
 		get("/healthz")
 		get("/readyz")
 		t.Run("it should record no span", func(t *testing.T) {
@@ -66,13 +66,6 @@ func TestRequestSpans(t *testing.T) {
 		})
 	})
 }
-
-type pingStore struct{}
-
-func (pingStore) Ping(context.Context) error                                  { return nil }
-func (pingStore) LocateRoom(context.Context, string) (ask.Here, error)        { return ask.Here{}, nil }
-func (pingStore) FindPlaces(context.Context, string) ([]ask.Place, error)     { return nil, nil }
-func (pingStore) FindSessions(context.Context, string) ([]ask.Session, error) { return nil, nil }
 
 func spanNames(spans []sdktrace.ReadOnlySpan) []string {
 	out := make([]string, 0, len(spans))
