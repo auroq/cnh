@@ -10,11 +10,15 @@ import (
 type answer struct {
 	Summary string `json:"summary"`
 	Here    struct {
+		Asked string `json:"asked"`
+		Room  string `json:"room"`
 		Venue string `json:"venue"`
+		Level string `json:"level"`
 	} `json:"here"`
 	Places []struct {
-		ID    string `json:"id"`
-		Level string `json:"level"`
+		ID       string `json:"id"`
+		Kind     string `json:"kind"`
+		Verified bool   `json:"verified"`
 	} `json:"places"`
 	Sessions []struct {
 		Title string `json:"title"`
@@ -28,37 +32,78 @@ func ask(t *testing.T, question, from string) answer {
 	return a
 }
 
+var distanceWords = map[distance]string{
+	sameLevel:    "Same level as you",
+	sameBuilding: "Same building, you are on",
+}
+
+func saysDistance(summary string, d distance) bool {
+	if d == noDistance {
+		for _, w := range distanceWords {
+			if strings.Contains(summary, w) {
+				return false
+			}
+		}
+		return !strings.Contains(summary, "It is in the")
+	}
+	return strings.Contains(summary, distanceWords[d])
+}
+
+func whereIAm(from string) string {
+	if from == "" {
+		return "and I do not say where I am"
+	}
+	return "and I am in " + from
+}
+
+func verifiedWording(verified bool) string {
+	if verified {
+		return "it should say the organiser published it"
+	}
+	return "it should say it is unverified"
+}
+
 func TestAsk(t *testing.T) {
 	t.Parallel()
 
-	t.Run("when I ask for the nearest all-gender restroom", func(t *testing.T) {
-		t.Parallel()
-		t.Run("and I am in 255 BC", func(t *testing.T) {
-			a := ask(t, "nearest all-gender restroom", "255 BC")
-			t.Run("it should answer the restroom outside 255", func(t *testing.T) {
-				if len(a.Places) == 0 || a.Places[0].ID != "agr-sp-l2-255" {
-					t.Fatalf("places = %+v", a.Places)
-				}
-			})
-			t.Run("it should say it is on the same level", func(t *testing.T) {
-				if !strings.Contains(a.Summary, "Same level as you") {
-					t.Fatalf("summary = %q", a.Summary)
-				}
-			})
-		})
-	})
-
-	t.Run("when I ask without saying where I am", func(t *testing.T) {
-		t.Parallel()
-		a := ask(t, "nearest all-gender restroom", "")
-		t.Run("it should still answer", func(t *testing.T) {
-			if len(a.Places) == 0 {
-				t.Fatalf("summary = %q, no places", a.Summary)
+	for _, q := range cases {
+		t.Run("when I ask for "+q.Ask, func(t *testing.T) {
+			t.Parallel()
+			for _, row := range q.Rows {
+				t.Run(whereIAm(row.From), func(t *testing.T) {
+					t.Parallel()
+					a := ask(t, q.Ask, row.From)
+					t.Run("it should answer "+row.Place+" first", func(t *testing.T) {
+						if len(a.Places) == 0 || a.Places[0].ID != row.Place {
+							t.Fatalf("places = %+v", a.Places)
+						}
+					})
+					t.Run("it should say "+row.Distance.String(), func(t *testing.T) {
+						if !saysDistance(a.Summary, row.Distance) {
+							t.Fatalf("summary = %q", a.Summary)
+						}
+					})
+					t.Run(verifiedWording(row.Verified), func(t *testing.T) {
+						if len(a.Places) == 0 || a.Places[0].Verified != row.Verified {
+							t.Fatalf("summary = %q, places = %+v", a.Summary, a.Places)
+						}
+					})
+				})
 			}
 		})
-		t.Run("it should leave the location unresolved", func(t *testing.T) {
-			if a.Here.Venue != "" {
-				t.Fatalf("here.venue = %q", a.Here.Venue)
+	}
+
+	t.Run("when I ask from a room nobody has heard of", func(t *testing.T) {
+		t.Parallel()
+		a := ask(t, "nearest all-gender restroom", "Narnia")
+		t.Run("it should echo what I typed", func(t *testing.T) {
+			if a.Here.Asked != "Narnia" {
+				t.Fatalf("here = %+v", a.Here)
+			}
+		})
+		t.Run("it should leave the room unresolved", func(t *testing.T) {
+			if a.Here.Room != "" || a.Here.Venue != "" || a.Here.Level != "" {
+				t.Fatalf("here = %+v", a.Here)
 			}
 		})
 	})

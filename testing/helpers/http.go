@@ -24,6 +24,17 @@ func BaseURL(t *testing.T) string {
 
 func GetJSON(t *testing.T, path string, query url.Values, out any) {
 	t.Helper()
+	status, body := Get(t, path, query, "application/json")
+	if status != http.StatusOK {
+		t.Fatalf("GET %s: %d: %s", path, status, body)
+	}
+	if err := json.Unmarshal([]byte(body), out); err != nil {
+		t.Fatalf("GET %s: decode: %v: %s", path, err, body)
+	}
+}
+
+func Get(t *testing.T, path string, query url.Values, accept string) (int, string) {
+	t.Helper()
 	u := BaseURL(t) + path
 	if len(query) > 0 {
 		u += "?" + query.Encode()
@@ -34,7 +45,7 @@ func GetJSON(t *testing.T, path string, query url.Values, out any) {
 	if err != nil {
 		t.Fatalf("GET %s: %v", u, err)
 	}
-	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Accept", accept)
 	res, err := (&http.Client{Timeout: 20 * time.Second}).Do(req)
 	if err != nil {
 		t.Fatalf("GET %s: %v", u, err)
@@ -44,12 +55,7 @@ func GetJSON(t *testing.T, path string, query url.Values, out any) {
 	if err != nil {
 		t.Fatalf("GET %s: read body: %v", u, err)
 	}
-	if res.StatusCode != http.StatusOK {
-		t.Fatalf("GET %s: %s: %s", u, res.Status, body)
-	}
-	if err := json.Unmarshal(body, out); err != nil {
-		t.Fatalf("GET %s: decode: %v: %s", u, err, body)
-	}
+	return res.StatusCode, string(body)
 }
 
 func Query(pairs ...string) url.Values {

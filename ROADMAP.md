@@ -27,11 +27,8 @@ Times are Mountain Time on 2026-11-09: coding starts at 11:00, code freezes at 1
 
 | item | what it wants | depends on | whose call |
 | --- | --- | --- | --- |
-| [004](roadmap/004-gitar-reviews-every-pr.md) | Gitar review rules in `.gitar/`, every change through a PR, CI fixed by auto-apply | 001 | nobody |
 | [007](roadmap/007-the-schedule-is-indexed.md) | the KubeCon schedule from Sessionize indexed with room and level | 006 | nobody |
-| [012](roadmap/012-radar-shows-no-findings.md) | Radar showing no findings on the app namespace, and one SRE story to demo | 005, 009 | nobody |
 | [013](roadmap/013-demo-and-submission.md) | the demo script, README architecture and the submission checklist | 010, 011, 012 | nobody |
 | [014](roadmap/014-stretch-the-transcript-source.md) | **stretch:** where transcripts come from | 013 | Aria, the transcript source |
 | [015](roadmap/015-stretch-live-mic-captions.md) | **stretch:** room-anchored large-text captions from a live mic | 014 | nobody |
 | [016](roadmap/016-stretch-search-inside-talks.md) | **stretch:** timestamped transcript search, joined to the schedule | 007, 015 | nobody |
-| [036](roadmap/036-ci-and-cd-are-separate-stages.md) | CI and CD as separate stages with integration tests, a post-deploy gate against the live site, and rollback by reverting the bump | 032 | Aria, bot commit or bump PR |
