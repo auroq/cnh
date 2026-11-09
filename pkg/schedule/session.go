@@ -1,21 +1,10 @@
 // Package schedule is the model of a conference session as the app sees it, whatever the source.
 package schedule
 
-import "time"
+import "github.com/auroq/cnh/pkg/model"
 
-type Session struct {
-	ID          string    `json:"id"`
-	Title       string    `json:"title"`
-	URL         string    `json:"url"`
-	Speakers    []string  `json:"speakers"`
-	Start       time.Time `json:"start"`
-	End         time.Time `json:"end"`
-	Location    string    `json:"location"`
-	Venue       string    `json:"venue"`
-	Level       string    `json:"level,omitempty"`
-	Room        string    `json:"room,omitempty"`
-	Description string    `json:"description,omitempty"`
-}
+// Session is the model type; this package only adds schedule-wide helpers.
+type Session = model.Session
 
 // Locations returns every session's "Venue | Level | Room" string, in order, duplicates included.
 func Locations(sessions []Session) []string {

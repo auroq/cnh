@@ -45,7 +45,7 @@ func TestPlaceDoc(t *testing.T) {
 			}
 		})
 		t.Run("it should use the place's own content text for the semantic field", func(t *testing.T) {
-			if doc["content"] != p.Content() {
+			if doc["content"] != placeContent(p) {
 				t.Fatalf("content %q", doc["content"])
 			}
 		})

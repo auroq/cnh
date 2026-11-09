@@ -2,6 +2,7 @@ package esindex
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/auroq/cnh/pkg/ingest"
@@ -105,7 +106,7 @@ func placeDoc(p venue.Place, now time.Time) map[string]any {
 	return map[string]any{
 		"id": p.ID, "kind": p.Kind, "name": p.Name, "venue": p.Venue, "level": p.Level,
 		"near": p.Near, "notes": p.Notes, "for": p.For, "verified": p.Verified, "source": p.Source,
-		"content": p.Content(), "ingested_at": now,
+		"content": placeContent(p), "ingested_at": now,
 	}
 }
 
@@ -146,4 +147,18 @@ var PlacesMapping = map[string]any{
 			"ingested_at": map[string]any{"type": "date"},
 		},
 	},
+}
+
+func placeContent(p venue.Place) string {
+	parts := []string{p.Name, strings.ReplaceAll(p.Kind, "-", " "), p.Venue, p.Level, p.Near, p.Notes}
+	if len(p.For) > 0 {
+		parts = append(parts, "for "+strings.Join(p.For, ", "))
+	}
+	var out []string
+	for _, s := range parts {
+		if s = strings.TrimSpace(s); s != "" {
+			out = append(out, s)
+		}
+	}
+	return strings.Join(out, ". ")
 }

@@ -120,8 +120,20 @@ test-integration: es-up ## Integration tests against the local docker compose El
 test-acceptance: ## Acceptance tests over HTTP against WIDEDOOR_URL (default: the deployed app)
 	WIDEDOOR_URL=$(WIDEDOOR_URL) go test -race -count=1 ./testing/acceptance/...
 
+E2E_DIR := testing/e2e
+export PLAYWRIGHT_BROWSERS_PATH := $(CURDIR)/$(E2E_DIR)/.cache/ms-playwright
+
+$(E2E_DIR)/node_modules: $(E2E_DIR)/package-lock.json
+	cd $(E2E_DIR) && npm ci --no-fund --no-audit
+	touch $@
+
+.PHONY: test-e2e
+test-e2e: $(E2E_DIR)/node_modules ## Browser accessibility tests (Playwright + axe) against WIDEDOOR_URL; first run installs Chromium into testing/e2e/.cache
+	cd $(E2E_DIR) && npx playwright install chromium
+	cd $(E2E_DIR) && WIDEDOOR_URL=$(WIDEDOOR_URL) npx playwright test
+
 .PHONY: test-all
-test-all: test test-integration test-acceptance ## Unit, integration and acceptance tests
+test-all: test test-integration test-acceptance test-e2e ## Unit, integration, acceptance and browser tests
 
 .PHONY: build
 build: ## Build the Go binaries into bin/

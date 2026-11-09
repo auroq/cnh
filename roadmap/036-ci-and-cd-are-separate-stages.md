@@ -1,6 +1,6 @@
 # 36. CI and CD are separate stages, nothing deploys untested, a bad deploy rolls itself back
 
-**Open. Filed 2026-11-09, during Ring 3, by Aria. Aria's call: bump by bot commit or by auto-merged PR, and the GitHub secret step is hers.**
+**Done 2026-11-09 (PRs #40, #46, #53, #60, Terraform cd-gate; first full release d2b00ca at 13:58 MT: build, bump PR, canary, gate green; issue #36). Filed 2026-11-09, during Ring 3, by Aria. Aria's call: bump by bot commit or by auto-merged PR, and the GitHub secret step is hers.**
 
 Depends on: 032
 

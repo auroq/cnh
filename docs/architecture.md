@@ -30,8 +30,10 @@ flowchart LR
 | --- | --- | --- |
 | `pkg/ask` | use case, and the model types | answers "where is the nearest X from here": resolves the room, infers the kind of place asked for, asks the store for that kind, ranks by level then building, writes the one sentence a screen reader hears first |
 | `pkg/ingest` | use case | fills the store: fetches the schedule through its `Source`, loads the curated places through `Places`, writes both through `Indexer`, and reports what was rejected |
-| `pkg/venue` | model | the curated access features (`data/venue/places.yaml`), the rooms derived from the schedule, and the loader that validates them |
-| `pkg/schedule` | model | a conference session as the app sees it, whatever the source |
+| `pkg/model` | model | `Place`, `Room`, `Session`, `Here`, `Answer`: what the business means, spoken by every port |
+| `pkg/api/v1` | contract | the frozen JSON of `/api/ask`; a wire change is a `v2` |
+| `pkg/venue` | model helper | the curated access features (`data/venue/places.yaml`) as model places, the rooms derived from the schedule, and the loader that validates them |
+| `pkg/schedule` | model helper | schedule-wide helpers over `model.Session` |
 | `pkg/config` | model | every setting named once: `Key*` constants, defaults, flag binding, and the typed `Server`, `Elasticsearch`, `Ingest` and `Telemetry` interfaces each layer takes |
 | `pkg/esindex` | adapter | everything Elasticsearch: the HTTP client, `Store` (the hybrid BM25 plus `semantic_text` query fused with RRF, the room lookup, hit parsing) and `Indexer` (both index mappings, document shapes, bulk writes) |
 | `pkg/sessionize` | adapter | fetches and parses the public KubeCon schedule from Sessionize's markdown view |
@@ -75,10 +77,24 @@ Settings come from flags, then `WIDEDOOR_*` environment variables, then `/etc/wi
 | a setting's name, default or where it is read from | `pkg/config/config.go`; in the cluster, `deploy/app/config.yaml` |
 | the curated places or how "nearest" knows levels | `data/venue/places.yaml`, `pkg/venue` |
 | the page, the form, the live region, the CSS | `pkg/web` |
+| a field in the JSON API, or what a type means | `pkg/api/v1` (the promise), `pkg/model` (the meaning), the adapter (the storage) |
 | what runs in the cluster, probes, resources, routes | `deploy/app` (synced by Argo CD, pinned by image SHA, bumped by `tools/bump-image.sh` or by `cd.yml`) |
 | how a release is built, pinned, checked and rolled back | `.github/workflows/cd.yml`, `tools/wait-pr.sh`, `tools/wait-rollout.sh`, `tools/smoke.sh`, ADR 0008 |
 | which spans, metrics and logs leave the app, and where they go | `pkg/telemetry` (providers, exporters, the slog bridge), `pkg/ask/telemetry.go` and `pkg/ingest/telemetry.go` (the instruments and attribute names), `telemetry.otlp_endpoint` in `deploy/app/config.yaml` (the Dash0 operator's collector) |
 | the platform under it (gateway, ECK, Argo, Dash0, Radar) | `infra/platform` (Terraform, built before kickoff) |
+
+## Where a type lives
+
+Three homes, and one sentence says which:
+
+| home | the sentence | holds | may import |
+| --- | --- | --- | --- |
+| `pkg/model` | "it is what the business means" | `Place`, `Room`, `Session`, `Here`, `Answer`; every port speaks these | nothing in this module |
+| the adapter that owns it | "it is how this adapter stores or reads it" | the YAML file shape in `pkg/venue`, the Elasticsearch documents and `semantic_text` content in `pkg/esindex`, the markdown rows in `pkg/sessionize`; private, mapped at the boundary | `pkg/model` |
+| `pkg/api/v1` | "it is what clients were promised" | `AskResponse`, `Here`, `Place`, `Session`, `Error`, field names frozen; `pkg/web` maps the model onto it and is the only importer | nothing in this module |
+
+`pkg/ask`, `pkg/venue` and `pkg/schedule` keep their old type names as aliases of the model types, so the code reads as before with one definition behind it.
+`pkg/web/contract_test.go` compares `/api/ask`'s encoding with a response recorded before the move, byte for byte ([ADR 0011](adr/0011-types-live-by-kind.md)).
 
 ## How a change reaches production
 

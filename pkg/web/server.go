@@ -17,6 +17,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
+	v1 "github.com/auroq/cnh/pkg/api/v1"
 	"github.com/auroq/cnh/pkg/ask"
 )
 
@@ -134,10 +135,10 @@ func (s *Server) apiAsk(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		s.log.ErrorContext(ctx, "api ask", "err", err.Error())
 		w.WriteHeader(http.StatusBadGateway)
-		_ = json.NewEncoder(w).Encode(map[string]string{"error": "search unavailable"})
+		_ = json.NewEncoder(w).Encode(v1.Error{Error: "search unavailable"})
 		return
 	}
-	_ = json.NewEncoder(w).Encode(a)
+	_ = json.NewEncoder(w).Encode(toV1(a))
 }
 
 func (s *Server) ready(w http.ResponseWriter, r *http.Request) {
