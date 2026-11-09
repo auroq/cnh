@@ -6,7 +6,7 @@ data "onepassword_vault" "cnh" {
 
 data "onepassword_item" "do_token" {
   vault = data.onepassword_vault.cnh.uuid
-  title = "Digital Ocean"
+  title = "Digital Ocean API CNH"
 }
 
 provider "digitalocean" {

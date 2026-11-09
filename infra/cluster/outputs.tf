@@ -11,7 +11,8 @@ output "endpoint" {
 }
 
 output "cluster_ca_certificate" {
-  value = digitalocean_kubernetes_cluster.cnh.kube_config[0].cluster_ca_certificate
+  value     = digitalocean_kubernetes_cluster.cnh.kube_config[0].cluster_ca_certificate
+  sensitive = true
 }
 
 output "kubeconfig" {
