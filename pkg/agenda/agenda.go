@@ -49,7 +49,7 @@ func JustLeft(sessions []model.Session, now time.Time) *model.Session {
 
 // BackToBack is true when BackToBackRun sessions follow each other with less than BackToBackGap between them.
 func BackToBack(sessions []model.Session) bool {
-	ordered := byStart(sessions)
+	ordered := ByStart(sessions)
 	run := 1
 	for i := 1; i < len(ordered); i++ {
 		if ordered[i].Start.Sub(ordered[i-1].End) < BackToBackGap {
@@ -64,7 +64,8 @@ func BackToBack(sessions []model.Session) bool {
 	return false
 }
 
-func byStart(sessions []model.Session) []model.Session {
+// ByStart is the schedule in the order it happens.
+func ByStart(sessions []model.Session) []model.Session {
 	out := append([]model.Session(nil), sessions...)
 	sort.SliceStable(out, func(i, j int) bool { return out[i].Start.Before(out[j].Start) })
 	return out

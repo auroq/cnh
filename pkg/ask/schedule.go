@@ -69,6 +69,7 @@ func (s *Service) agenda(ctx context.Context, ids []string) (Schedule, []Session
 	}
 	now := s.now()
 	return Schedule{
+		Sessions:   agenda.ByStart(sessions),
 		Next:       agenda.Next(sessions, now),
 		JustLeft:   agenda.JustLeft(sessions, now),
 		BackToBack: agenda.BackToBack(sessions),
@@ -95,3 +96,11 @@ func (s *Service) AskScheduled(ctx context.Context, question, from string, prefs
 	}
 	return ans, err
 }
+
+// ParseTitles reads what the attendee pasted, an iCal export or titles one per line, into distinct titles.
+func ParseTitles(text string) []string { return agenda.Parse(text) }
+
+// ParseScheduleIDs reads the sched parameter, and JoinScheduleIDs writes it.
+func ParseScheduleIDs(s string) []string { return agenda.ParseIDs(s) }
+
+func JoinScheduleIDs(ids []string) string { return agenda.JoinIDs(ids) }

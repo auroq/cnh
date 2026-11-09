@@ -39,12 +39,13 @@ flowchart LR
 | `pkg/api/v1` | contract | the frozen JSON of `/api/ask`; a wire change is a `v2` |
 | `pkg/venue` | model helper | the curated access features (`data/venue/places.yaml`) as model places, the need vocabulary (`data/venue/needs.yaml`) as model needs, the rooms derived from the schedule, and the loaders that validate them |
 | `pkg/schedule` | model helper | schedule-wide helpers over `model.Session` |
+| `pkg/agenda` | model helper | the schedule an attendee pasted: the parser for a Sched iCal export or a list of titles, the `sched` id encoding, and the pure rules for the next session, the one just left and three in a row, each taking the clock as an argument |
 | `pkg/config` | model | every setting named once: `Key*` constants, defaults, flag binding, and the typed `Server`, `Elasticsearch`, `Ingest` and `Telemetry` interfaces each layer takes |
 | `pkg/esindex` | adapter | everything Elasticsearch: the HTTP client, `Store` (the hybrid BM25 plus `semantic_text` query fused with RRF, the room lookup, hit parsing) and `Indexer` (both index mappings, document shapes, bulk writes) |
 | `pkg/sessionize` | adapter | fetches and parses the public KubeCon schedule from Sessionize's markdown view |
 | `pkg/telemetry` | adapter | everything OpenTelemetry: `Setup` builds the SDK providers and OTLP gRPC exporters (noops when no endpoint is set), `Handler` is the slog handler that sends every log line to Dash0 with its trace id, `Transport` makes each Elasticsearch call a child span |
 | `pkg/qr` | adapter | renders the code taped beside a door: the `/?from=<place id>` URL as SVG and PNG per place, and the printable sheet with the name in large type |
-| `pkg/web` | controller | the HTML page, the JSON API, the probes, the templates and the CSS; the profile panel, the `/profile` form, the `wd_prefs` cookie and the `widedoor.profile.chip_used` counter |
+| `pkg/web` | controller | the HTML page, the JSON API, the probes, the templates and the CSS; the profile panel, the `/profile` form, the `wd_prefs` cookie and the `widedoor.profile.chip_used` counter; the `/schedule` form, the `wd_sched` cookie and the `widedoor.schedule.matched` counter |
 | `pkg/cli` | wiring | the `widedoor` command and its `serve`, `ingest` and `qr` subcommands: load config, construct adapters, hand them to the use cases |
 | `pkg/app` | wiring | `Main()`: builds the command line and turns its result into an exit code |
 | `cmd/widedoor` | wiring | `os.Exit(app.Main())` |
@@ -60,6 +61,8 @@ flowchart LR
 | `ingest.Needs` (`Needs`) | `pkg/ingest` | `venue.NeedsFile` | where the need vocabulary comes from; `serve` reads the same file for the exact-phrase step |
 | `ingest.Indexer` (`EnsureIndexes`, `IndexSessions`, `IndexPlaces`, `IndexNeeds`) | `pkg/ingest` | `esindex.Indexer` | the store's write side, so the ingest use case never sees a mapping or a bulk body |
 | `config.Server`, `config.Elasticsearch`, `config.Ingest`, `config.Venue`, `config.Telemetry` | `pkg/config` | `config.Configuration` over viper | each layer takes the slice of settings it needs; a test passes a struct |
+
+`ask.SessionFinder` (`MatchSession`, `SessionsByID`) and `web.Scheduled` (`MatchSessions`, `Agenda`, `AskScheduled`) are optional halves, like `ask.IDLocator` and `web.Profiled`: a store or use case without them still answers, and the schedule is simply not offered.
 
 Each port is declared by the package that uses it, not the one that implements it.
 That is the whole trick: dependencies point at interfaces owned by the caller, so the caller never depends on the callee's implementation.
@@ -87,6 +90,7 @@ Settings come from flags, then `WIDEDOOR_*` environment variables, then `/etc/wi
 | the curated places or how "nearest" knows levels | `data/venue/places.yaml`, `pkg/venue` |
 | the page, the form, the live region, the CSS | `pkg/web` |
 | the profile chips, the cookie, what a chip does to an answer | `pkg/model/preferences.go` (the chips), `pkg/web/profile.go` (the panel and the cookie), `pkg/ask` (the effects, one hook after `KindOf`) |
+| the pasted schedule, the `wd_sched` cookie, the next and just-left lines, the assumed location | `pkg/agenda` (the parser and the rules), `pkg/esindex/schedule.go` (title matching: exact, then fuzzy with most of the words), `pkg/ask/schedule.go` (`AskScheduled`, the one hook that assumes the room just left), `pkg/web/schedule.go` (the `/schedule` form and the cookie) |
 | a field in the JSON API, or what a type means | `pkg/api/v1` (the promise), `pkg/model` (the meaning), the adapter (the storage) |
 | the QR codes on the doors, which places get one, the printable sheet | `pkg/qr`; the URL they open is `/?from=<place id>`, read by `pkg/web` and resolved id-first by `pkg/ask` |
 | what runs in the cluster, probes, resources, routes | `deploy/app` (synced by Argo CD, pinned by image SHA, bumped by `tools/bump-image.sh` or by `cd.yml`) |

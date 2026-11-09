@@ -55,7 +55,7 @@ h3 { font-size: 1.2rem; margin-top: 1.5rem; }
 .field { margin: 1rem 0; }
 label { display: block; font-weight: 600; margin-bottom: 0.25rem; }
 .opt { font-weight: 400; color: var(--muted); }
-input {
+input, textarea {
   width: 100%;
   font: inherit;
   padding: 0.75rem;
@@ -121,3 +121,8 @@ footer { margin-top: 3rem; color: var(--muted); font-size: 0.9rem; border-top: 1
 .save summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; font-weight: 600; color: var(--accent); text-decoration: underline; }
 .link a { overflow-wrap: anywhere; }
 .copy { min-height: 44px; min-width: 44px; margin-left: 0.5rem; padding: 0.5rem 0.9rem; }
+.agenda { margin: 1rem 0; }
+.agenda-line { margin: 0.25rem 0; }
+.schedule textarea { min-height: 8rem; resize: vertical; }
+.schedule .secondary { margin-left: 0.5rem; }
+.missed { list-style: disc; }

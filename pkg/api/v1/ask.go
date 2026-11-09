@@ -12,6 +12,16 @@ type AskResponse struct {
 	Places   []Place   `json:"places"`
 	Sessions []Session `json:"sessions"`
 	Profile  *Profile  `json:"profile,omitempty"`
+	Schedule *Schedule `json:"schedule,omitempty"`
+}
+
+// Schedule is present only when the question carried sched: the attendee's next session, the one just left,
+// and the room assumed from it when no location was given.
+type Schedule struct {
+	Next            *Session `json:"next,omitempty"`
+	JustLeft        *Session `json:"just_left,omitempty"`
+	AssumedLocation string   `json:"assumed_location,omitempty"`
+	BackToBack      bool     `json:"back_to_back"`
 }
 
 // Profile is present only when the question carried prefs; it says which chips changed the answer and how.

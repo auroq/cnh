@@ -51,6 +51,9 @@ The server reads them on each request to render the panel and shape the answer, 
 The only trace is the counter `widedoor.profile.chip_used` with one attribute, `chip`, so Dash0 shows how often each need is stated and never a combination that could identify someone.
 "Forget me" clears all three places; "Save my profile" shows the link that carries only the chips, so the same profile can be opened on another device.
 Chips are also designed to carry a source, `chosen` or `learned` (a trailing `~` in the encoding), so a follow-up can suggest chips from what people ask and let them say no.
+The schedule works the same way: "Your schedule" takes a pasted Sched iCal export or a list of titles, matches them to the programme in Elasticsearch (exact title first, then the best fuzzy match with most of the words), and keeps only the matched session ids in the `sched` query parameter, the cookie `wd_sched` (same attributes and expiry) and localStorage.
+With a schedule present the page says "Your next session" and "You just left", assumes you are still near the room you just left when no location is given (and says so), and offers the nearest quiet room when three sessions run back to back.
+The only trace is the counter `widedoor.schedule.matched`, a count of matched sessions per paste.
 
 ## Evidence from the day
 
