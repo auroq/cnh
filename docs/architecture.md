@@ -28,7 +28,7 @@ flowchart LR
 
 | package | layer | what it is for |
 | --- | --- | --- |
-| `pkg/ask` | use case, and the model types | answers "where is the nearest X from here": resolves the room, searches, ranks by level then building, writes the one sentence a screen reader hears first |
+| `pkg/ask` | use case, and the model types | answers "where is the nearest X from here": resolves the room, infers the kind of place asked for, asks the store for that kind, ranks by level then building, writes the one sentence a screen reader hears first |
 | `pkg/ingest` | use case | fills the store: fetches the schedule through its `Source`, loads the curated places through `Places`, writes both through `Indexer`, and reports what was rejected |
 | `pkg/venue` | model | the curated access features (`data/venue/places.yaml`), the rooms derived from the schedule, and the loader that validates them |
 | `pkg/schedule` | model | a conference session as the app sees it, whatever the source |
@@ -69,7 +69,7 @@ Settings come from flags, then `WIDEDOOR_*` environment variables, then `/etc/wi
 
 | you want to change | look in |
 | --- | --- |
-| how answers are ranked, or the sentence a screen reader hears | `pkg/ask` (`RankByNearness`, `Summarise`) |
+| how answers are ranked, which kind a question asks for, or the sentence a screen reader hears | `pkg/ask` (`KindOf`, `RankByNearness`, `Summarise`) |
 | the Elasticsearch query, the retrievers, which fields are searched | `pkg/esindex/store.go` |
 | what is indexed and how it is mapped | `pkg/ingest` (the steps), `pkg/sessionize` (what is fetched), `pkg/esindex/index.go` (mappings and document shapes) |
 | a setting's name, default or where it is read from | `pkg/config/config.go`; in the cluster, `deploy/app/config.yaml` |
