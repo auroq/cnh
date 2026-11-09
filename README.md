@@ -56,6 +56,17 @@ make help
 Infrastructure targets are described in [`infra/`](infra/); the app targets are added as the rings land.
 The Makefile pins `KUBECONFIG` to `./.kube/config`, so its targets only ever talk to this cluster.
 
+### Print the door codes
+
+```bash
+go run ./cmd/widedoor qr --out qr --sheet
+```
+
+This writes one `<place id>.svg` and `<place id>.png` per room, entrance, landmark, quiet room, prayer room, nursing room, first-aid point, info desk and coat check, each encoding `https://widedoor.cnh.auroq.com/?from=<place id>`, and `sheet.html` with one printable page per place.
+Open `qr/sheet.html` in a browser and print it; each page has the place name at 48pt, the building and level, the code and the URL in text, so a volunteer can tape it beside the door sign.
+Scanning a code opens Wide Door with the location filled in and the cursor in the question field.
+Pass `--rooms=false` to skip fetching the schedule and render only the curated places, and `--qr-base-url` to encode another address.
+
 ## Infrastructure (`infra/`)
 
 | Root | State | Creates |

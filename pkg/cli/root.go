@@ -13,6 +13,7 @@ var groups = []struct {
 	commands []string
 }{
 	{cobra.Group{ID: "run", Title: "Run:"}, []string{"serve", "ingest"}},
+	{cobra.Group{ID: "print", Title: "Print:"}, []string{"qr"}},
 }
 
 // NewRoot builds the widedoor command with its subcommands grouped for --help.

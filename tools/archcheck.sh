@@ -30,7 +30,7 @@ layer_of() {
     pkg/model|pkg/api/v1|pkg/config) echo core ;;
     pkg/venue|pkg/schedule) echo model ;;
     pkg/ask|pkg/ingest) echo usecase ;;
-    pkg/esindex|pkg/sessionize|pkg/telemetry) echo adapter ;;
+    pkg/esindex|pkg/sessionize|pkg/telemetry|pkg/qr) echo adapter ;;
     pkg/web) echo web ;;
     pkg/cli|pkg/app|cmd/*) echo wiring ;;
     *) echo unknown ;;
