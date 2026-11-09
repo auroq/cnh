@@ -84,6 +84,21 @@ func TestPage(t *testing.T) {
 			}
 		})
 	})
+
+	t.Run("when the answer lists the Hyatt elevators", func(t *testing.T) {
+		t.Parallel()
+		body := page(t, "nearest elevator", "Hyatt lobby")
+		t.Run("it should offer a Were you here form that posts without JavaScript", func(t *testing.T) {
+			if !strings.Contains(body, `<form method="post" action="/report"`) {
+				t.Fatal("page has no report form")
+			}
+		})
+		t.Run("it should label the works-as-described radio", func(t *testing.T) {
+			if !strings.Contains(body, `<label for="verdict-works-elevators-hyatt">Works as described</label>`) {
+				t.Fatal("page has no labelled radio for elevators-hyatt")
+			}
+		})
+	})
 }
 
 func TestAPIShape(t *testing.T) {
@@ -106,7 +121,7 @@ func TestAPIShape(t *testing.T) {
 		})
 		t.Run("it should describe a place with the documented fields", func(t *testing.T) {
 			got := keysOf(t, firstOf(t, a["places"]))
-			if !within(got, []string{"id", "kind", "name", "venue", "level", "near", "notes", "for", "verified", "source"}) {
+			if !within(got, []string{"id", "kind", "name", "venue", "level", "near", "notes", "for", "verified", "source", "attendee_status", "report_count", "latest_note", "latest_at"}) {
 				t.Fatalf("place keys = %v", got)
 			}
 		})
