@@ -21,6 +21,7 @@ import (
 
 	v1 "github.com/auroq/cnh/pkg/api/v1"
 	"github.com/auroq/cnh/pkg/ask"
+	"github.com/auroq/cnh/pkg/model"
 )
 
 //go:embed templates/*.html static/*
@@ -44,6 +45,9 @@ type Server struct {
 	once               sync.Once
 	chipCounter        metric.Int64Counter
 	chipLearnedCounter metric.Int64Counter
+
+	schedOnce      sync.Once
+	matchedCounter metric.Int64Counter
 }
 
 // Option adjusts a Server; nil tracing options mean the OpenTelemetry globals.
@@ -73,6 +77,14 @@ type page struct {
 	Status      string
 	Forgot      bool
 	PrefsKnown  bool
+
+	Sched         string
+	Schedule      *model.Schedule
+	ScheduleCount string
+	ScheduleOpen  bool
+	Missed        int
+	ForgotSched   bool
+	QuietRoom     string
 }
 
 type kind struct{ Query, Label string }
@@ -115,6 +127,8 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /ask", s.home)
 	mux.HandleFunc("GET /profile", s.home)
 	mux.HandleFunc("POST /profile", s.profile)
+	mux.HandleFunc("GET /schedule", s.home)
+	mux.HandleFunc("POST /schedule", s.schedule)
 	mux.HandleFunc("GET /api/ask", s.apiAsk)
 	mux.HandleFunc("POST /report", s.report)
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, _ *http.Request) { fmt.Fprintln(w, "ok") })
@@ -131,10 +145,11 @@ func (s *Server) home(w http.ResponseWriter, r *http.Request) {
 	q := strings.TrimSpace(r.URL.Query().Get("q"))
 	from := strings.TrimSpace(r.URL.Query().Get("from"))
 	prefs := s.preferences(w, r)
+	ids := s.scheduleIDs(w, r)
 	p := page{Title: "Wide Door", Question: q, From: from, Kinds: quickKinds, Reported: reportMessage(r.URL.Query().Get("reported")), CanReport: s.reporter != nil}
+	ctx, cancel := context.WithTimeout(r.Context(), askTimeout)
+	defer cancel()
 	if q == "" && from != "" {
-		ctx, cancel := context.WithTimeout(r.Context(), askTimeout)
-		defer cancel()
 		if here, err := s.ask.Locate(ctx, from); err != nil {
 			s.log.ErrorContext(ctx, "locate", "err", err.Error())
 		} else if here.Room != "" {
@@ -143,10 +158,8 @@ func (s *Server) home(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if q != "" {
-		ctx, cancel := context.WithTimeout(r.Context(), askTimeout)
-		defer cancel()
 		s.countChips(ctx, prefs)
-		a, err := s.askFor(ctx, q, from, prefs)
+		a, err := s.askScheduled(ctx, q, from, prefs, ids)
 		if err != nil {
 			s.log.ErrorContext(ctx, "ask", "err", err.Error())
 			p.Error = searchDown
@@ -160,6 +173,7 @@ func (s *Server) home(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	s.describeProfile(&p, r, prefs)
+	s.describeSchedule(ctx, &p, r, ids, prefs)
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	if err := s.tmpl.ExecuteTemplate(w, "home.html", p); err != nil {
 		s.log.ErrorContext(r.Context(), "render", "err", err.Error())
@@ -170,10 +184,11 @@ func (s *Server) apiAsk(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), askTimeout)
 	defer cancel()
 	prefs := s.preferences(w, r)
+	ids := s.scheduleIDs(w, r)
 	if strings.TrimSpace(r.URL.Query().Get("q")) != "" {
 		s.countChips(ctx, prefs)
 	}
-	a, err := s.askFor(ctx, r.URL.Query().Get("q"), r.URL.Query().Get("from"), prefs)
+	a, err := s.askScheduled(ctx, r.URL.Query().Get("q"), r.URL.Query().Get("from"), prefs, ids)
 	w.Header().Set("Content-Type", "application/json")
 	if err != nil {
 		s.log.ErrorContext(ctx, "api ask", "err", err.Error())

@@ -20,7 +20,7 @@ EOF
 }
 
 # core: pkg/model (what the business means), pkg/api/v1 (what clients were promised), pkg/config; import nothing from this module
-# model helpers: pkg/venue, pkg/schedule; import pkg/model only
+# model helpers: pkg/venue, pkg/schedule, pkg/agenda; import pkg/model only
 # usecase: declare ports; import model packages only
 # adapter: implement ports; import model and use case packages, never a controller
 # web: the HTTP controller; imports pkg/ask, pkg/reports, pkg/model and pkg/api/v1, and is the only importer of pkg/api/v1
@@ -28,7 +28,7 @@ EOF
 layer_of() {
   case "$1" in
     pkg/model|pkg/api/v1|pkg/config) echo core ;;
-    pkg/venue|pkg/schedule|pkg/route) echo model ;;
+    pkg/venue|pkg/schedule|pkg/agenda|pkg/route) echo model ;;
     pkg/ask|pkg/ingest|pkg/reports) echo usecase ;;
     pkg/esindex|pkg/sessionize|pkg/telemetry|pkg/qr) echo adapter ;;
     pkg/web) echo web ;;
@@ -38,7 +38,7 @@ layer_of() {
 }
 
 is_core()    { [[ "$1" == pkg/model || "$1" == pkg/api/v1 || "$1" == pkg/config ]]; }
-is_model()   { [[ "$1" == pkg/venue || "$1" == pkg/schedule || "$1" == pkg/route ]]; }
+is_model()   { [[ "$1" == pkg/venue || "$1" == pkg/schedule || "$1" == pkg/agenda || "$1" == pkg/route ]]; }
 is_usecase() { [[ "$1" == pkg/ask || "$1" == pkg/ingest || "$1" == pkg/reports ]]; }
 
 allowed() {

@@ -84,6 +84,7 @@ type Answer struct {
 	SessionsShownBecause string    `json:"sessions_shown_because,omitempty"`
 	Learned              []Lesson  `json:"learned,omitempty"`
 	Unmet                []string  `json:"unmet,omitempty"`
+	Schedule             *Schedule `json:"schedule,omitempty"`
 	Route                *Route    `json:"route,omitempty"`
 }
 
