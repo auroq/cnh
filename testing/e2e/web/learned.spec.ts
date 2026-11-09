@@ -32,7 +32,7 @@ test.describe("when I ask for the nearest elevator with no profile", () => {
 
     test("it should not add the chip back when I ask again", async ({ page }) => {
       await page.goto("/ask?q=nearest+elevator");
-        await expect(page.getByRole("button", { name: "Add Step-free only" })).toBeVisible();
+      await expect(page.getByRole("button", { name: "Add Step-free only" })).toBeVisible();
     });
   });
 });
