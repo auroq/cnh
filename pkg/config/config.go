@@ -1,5 +1,6 @@
 // Package config is the one place settings are named, defaulted and read.
 // Precedence: flag, then environment (WIDEDOOR_, dots become underscores), then config file, then default.
+// One file per area (server, elasticsearch, ingest, venue, telemetry, qr) holds that area's keys, defaults, interface and accessors; this file holds what is common.
 package config
 
 import (
@@ -20,116 +21,18 @@ const (
 	ConfigType = "yaml"
 
 	KeyConfig = "config"
-
-	KeyServerListen = "server.listen"
-
-	KeyElasticsearchURL           = "elasticsearch.url"
-	KeyElasticsearchUsername      = "elasticsearch.username"
-	KeyElasticsearchPassword      = "elasticsearch.password"
-	KeyElasticsearchSessionsIndex = "elasticsearch.sessions_index"
-	KeyElasticsearchPlacesIndex   = "elasticsearch.places_index"
-	KeyElasticsearchNeedsIndex    = "elasticsearch.needs_index"
-	KeyElasticsearchTimeout       = "elasticsearch.timeout"
-
-	KeyIngestPlacesFile    = "ingest.places_file"
-	KeyIngestSessionizeURL = "ingest.sessionize_url"
-	KeyIngestConcurrency   = "ingest.concurrency"
-	KeyIngestTimeout       = "ingest.timeout"
-	KeyIngestFetchTimeout  = "ingest.fetch_timeout"
-	KeyIngestSkipDetails   = "ingest.skip_details"
-	KeyIngestBatch         = "ingest.batch"
-	KeyIngestESTimeout     = "ingest.es_timeout"
-
-	KeyVenueNeedsFile = "venue.needs_file"
-
-	KeyTelemetryOTLPEndpoint = "telemetry.otlp_endpoint"
-	KeyTelemetryServiceName  = "telemetry.service_name"
-
-	KeyQRBaseURL = "qr.base_url"
 )
 
-// Defaults is every setting's value when nothing else sets it; one place, read by --help too.
-var Defaults = map[string]any{
-	KeyServerListen:               ":8080",
-	KeyElasticsearchURL:           "http://localhost:9200",
-	KeyElasticsearchUsername:      "elastic",
-	KeyElasticsearchPassword:      "",
-	KeyElasticsearchSessionsIndex: "sessions",
-	KeyElasticsearchPlacesIndex:   "places",
-	KeyElasticsearchNeedsIndex:    "needs",
-	KeyElasticsearchTimeout:       15 * time.Second,
-	KeyIngestPlacesFile:           "data/venue/places.yaml",
-	KeyIngestSessionizeURL:        "https://sessionize.com/api/v2/uo948i5p/view/markdown",
-	KeyIngestConcurrency:          8,
-	KeyIngestTimeout:              10 * time.Minute,
-	KeyIngestFetchTimeout:         30 * time.Second,
-	KeyIngestSkipDetails:          false,
-	KeyIngestBatch:                50,
-	KeyIngestESTimeout:            5 * time.Minute,
-	KeyVenueNeedsFile:             "data/venue/needs.yaml",
-	KeyTelemetryOTLPEndpoint:      "",
-	KeyTelemetryServiceName:       "widedoor",
-	KeyQRBaseURL:                  "https://widedoor.cnh.auroq.com",
-}
+// Defaults is every setting's value when nothing else sets it; one map, assembled from the areas, read by --help too.
+var Defaults = merge(serverDefaults, elasticsearchDefaults, ingestDefaults, venueDefaults, telemetryDefaults, qrDefaults)
 
 // secret keys never become flags and are never printed.
 var secret = map[string]bool{KeyElasticsearchPassword: true}
-
-// Server is what the HTTP server needs.
-type Server interface {
-	Listen() string
-}
-
-// Elasticsearch is what the search adapter needs.
-type Elasticsearch interface {
-	URL() string
-	Username() string
-	Password() string
-	SessionsIndex() string
-	PlacesIndex() string
-	NeedsIndex() string
-	Timeout() time.Duration
-}
-
-// Venue is what both serve and ingest need to know about the curated vocabulary.
-type Venue interface {
-	NeedsFile() string
-}
-
-// Ingest is what the ingest run needs.
-type Ingest interface {
-	PlacesFile() string
-	SessionizeURL() string
-	Concurrency() int
-	Timeout() time.Duration
-	FetchTimeout() time.Duration
-	SkipDetails() bool
-	Batch() int
-	ESTimeout() time.Duration
-}
-
-// Telemetry is what the OpenTelemetry setup needs.
-type Telemetry interface {
-	OTLPEndpoint() string
-	ServiceName() string
-}
-
-// QR is what the code renderer needs: the public address the codes open.
-type QR interface {
-	BaseURL() string
-}
 
 // Configuration hands each layer the slice it needs.
 type Configuration struct {
 	v *viper.Viper
 }
-
-func (c *Configuration) Server() Server               { return server{c.v} }
-func (c *Configuration) Elasticsearch() Elasticsearch { return elasticsearch{c.v} }
-func (c *Configuration) Ingest() Ingest               { return ingest{c.v} }
-func (c *Configuration) Telemetry() Telemetry         { return telemetry{c.v} }
-func (c *Configuration) Venue() Venue                 { return venueCfg{c.v} }
-func (c *Configuration) QR() QR                       { return qr{c.v} }
 
 // New prepares a viper with defaults, the environment and the config file search path, reading nothing yet.
 func New() *viper.Viper {
@@ -213,40 +116,15 @@ func sortedKeys() []string {
 	return keys
 }
 
-type server struct{ v *viper.Viper }
-
-func (s server) Listen() string { return s.v.GetString(KeyServerListen) }
-
-type elasticsearch struct{ v *viper.Viper }
-
-func (e elasticsearch) URL() string            { return e.v.GetString(KeyElasticsearchURL) }
-func (e elasticsearch) Username() string       { return e.v.GetString(KeyElasticsearchUsername) }
-func (e elasticsearch) Password() string       { return e.v.GetString(KeyElasticsearchPassword) }
-func (e elasticsearch) SessionsIndex() string  { return e.v.GetString(KeyElasticsearchSessionsIndex) }
-func (e elasticsearch) PlacesIndex() string    { return e.v.GetString(KeyElasticsearchPlacesIndex) }
-func (e elasticsearch) NeedsIndex() string     { return e.v.GetString(KeyElasticsearchNeedsIndex) }
-func (e elasticsearch) Timeout() time.Duration { return e.v.GetDuration(KeyElasticsearchTimeout) }
-
-type ingest struct{ v *viper.Viper }
-
-func (i ingest) PlacesFile() string          { return i.v.GetString(KeyIngestPlacesFile) }
-func (i ingest) SessionizeURL() string       { return i.v.GetString(KeyIngestSessionizeURL) }
-func (i ingest) Concurrency() int            { return i.v.GetInt(KeyIngestConcurrency) }
-func (i ingest) Timeout() time.Duration      { return i.v.GetDuration(KeyIngestTimeout) }
-func (i ingest) FetchTimeout() time.Duration { return i.v.GetDuration(KeyIngestFetchTimeout) }
-func (i ingest) SkipDetails() bool           { return i.v.GetBool(KeyIngestSkipDetails) }
-func (i ingest) Batch() int                  { return i.v.GetInt(KeyIngestBatch) }
-func (i ingest) ESTimeout() time.Duration    { return i.v.GetDuration(KeyIngestESTimeout) }
-
-type telemetry struct{ v *viper.Viper }
-
-func (t telemetry) OTLPEndpoint() string { return t.v.GetString(KeyTelemetryOTLPEndpoint) }
-func (t telemetry) ServiceName() string  { return t.v.GetString(KeyTelemetryServiceName) }
-
-type venueCfg struct{ v *viper.Viper }
-
-func (c venueCfg) NeedsFile() string { return c.v.GetString(KeyVenueNeedsFile) }
-
-type qr struct{ v *viper.Viper }
-
-func (q qr) BaseURL() string { return q.v.GetString(KeyQRBaseURL) }
+func merge(areas ...map[string]any) map[string]any {
+	out := map[string]any{}
+	for _, area := range areas {
+		for k, d := range area {
+			if _, dup := out[k]; dup {
+				panic("config: key defaulted twice: " + k)
+			}
+			out[k] = d
+		}
+	}
+	return out
+}
