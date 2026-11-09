@@ -1,6 +1,6 @@
 # 54. Acceptance tests cover the product promise, as a table of question, place and expected answer
 
-**Open. Filed 2026-11-09 by Aria (issue #54). Nobody's call: the rows are read off the live app and the organiser's page, nothing in them is a design choice.**
+**Done 2026-11-09 (PR #62, issue #54). Filed 2026-11-09 by Aria. Nobody's call: the rows are read off the live app and the organiser's page; the quick picks that answer the wrong kind from a room are reported on the issue, not written into the table.**
 
 Depends on: 009, 036
 
