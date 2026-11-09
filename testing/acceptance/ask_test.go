@@ -9,16 +9,12 @@ import (
 
 type answer struct {
 	Summary string `json:"summary"`
-	Here    struct {
-		Asked string `json:"asked"`
-		Room  string `json:"room"`
-		Venue string `json:"venue"`
-		Level string `json:"level"`
-	} `json:"here"`
-	Places []struct {
+	Here    here   `json:"here"`
+	Places  []struct {
 		ID       string `json:"id"`
 		Kind     string `json:"kind"`
 		Verified bool   `json:"verified"`
+		Side     string `json:"side"`
 	} `json:"places"`
 	Sessions []struct {
 		Title string `json:"title"`
@@ -29,6 +25,15 @@ type answer struct {
 			Effect string `json:"effect"`
 		} `json:"applied"`
 	} `json:"profile"`
+}
+
+type here struct {
+	Asked string `json:"asked"`
+	Room  string `json:"room"`
+	Venue string `json:"venue"`
+	Level string `json:"level"`
+	Side  string `json:"side"`
+	Via   string `json:"via"`
 }
 
 func ask(t *testing.T, question, from string) answer {

@@ -21,8 +21,16 @@ import (
 type Store interface {
 	// Ping reports whether the backend answers at all; it is the readiness probe's question and is never traced.
 	Ping(ctx context.Context) error
-	// LocateRoom resolves what an attendee typed as their location to a known room, or returns an empty Here.
-	LocateRoom(ctx context.Context, asked string) (Here, error)
+	// LocateRoom resolves a room named exactly as the schedule names it, or returns an empty Here.
+	LocateRoom(ctx context.Context, name string) (Here, error)
+	// LocateRoomFuzzy resolves a misspelt or partial room name, or returns an empty Here.
+	LocateRoomFuzzy(ctx context.Context, asked string) (Here, error)
+	// LocateAlias resolves a phrase people use for a place ("where I registered", "the 100 S side"), or returns an empty Here.
+	LocateAlias(ctx context.Context, phrase string) (Here, error)
+	// LocateSession resolves a session title to the room it is in, preferring one that ended just before now, or returns an empty Here.
+	LocateSession(ctx context.Context, title string, now time.Time) (Here, error)
+	// LocateNearby resolves a free description to the place whose content it most resembles, or returns an empty Here when nothing is close.
+	LocateNearby(ctx context.Context, phrase string) (Here, error)
 	// FindPlaces returns access features matching the question, best first, never rooms;
 	// when kind is not empty, only places of that kind.
 	FindPlaces(ctx context.Context, question, kind string) ([]Place, error)
@@ -47,9 +55,17 @@ type Service struct {
 	Needs  []Need
 	Tracer trace.TracerProvider
 	Meter  metric.MeterProvider
+	Now    func() time.Time
 
 	once sync.Once
 	inst *instruments
+}
+
+func (s *Service) now() time.Time {
+	if s.Now == nil {
+		return time.Now()
+	}
+	return s.Now()
 }
 
 const maxPlaces = 5
@@ -59,22 +75,23 @@ func (s *Service) Ready(ctx context.Context) error {
 	return s.Store.Ping(ctx)
 }
 
-// Locate resolves what the attendee typed as their location to a known room.
+// Locate resolves what the attendee said about where they are to a known place, trying each rule in order.
 func (s *Service) Locate(ctx context.Context, asked string) (Here, error) {
 	asked = strings.TrimSpace(asked)
 	if asked == "" {
 		return Here{}, nil
 	}
-	if byID, ok := s.Store.(IDLocator); ok && looksLikeID(asked) {
-		here, err := step(ctx, s.tracer(), "ask.LocatePlace", func(ctx context.Context) (Here, error) { return byID.LocatePlace(ctx, asked) })
-		if err != nil || here.Venue != "" {
-			here.Asked = asked
-			return here, err
+	for _, r := range s.rules(asked) {
+		here, err := step(ctx, s.tracer(), "ask."+r.span, r.find)
+		if err != nil {
+			return Here{Asked: asked}, err
+		}
+		if here.Venue != "" {
+			here.Asked, here.Via = asked, r.via
+			return here, nil
 		}
 	}
-	here, err := step(ctx, s.tracer(), "ask.LocateRoom", func(ctx context.Context) (Here, error) { return s.Store.LocateRoom(ctx, asked) })
-	here.Asked = asked
-	return here, err
+	return Here{Asked: asked}, nil
 }
 
 // Ask finds places and sessions for the question and ranks places by nearness to here.
@@ -156,6 +173,8 @@ func RankByNearness(places []Place, here Here) []Place {
 	}
 	tier := func(p Place) int {
 		switch {
+		case here.Side != "" && p.Side == here.Side:
+			return -1
 		case p.Venue == here.Venue && p.Level != "" && p.Level == here.Level:
 			return 0
 		case p.Venue == here.Venue:
@@ -198,11 +217,18 @@ func summarise(a Answer) string {
 	if p.Level != "" {
 		where += ", " + p.Level
 	}
+	if p.Side != "" {
+		where += ", " + p.Side + " side"
+	}
 	if p.Near != "" {
 		where += ", " + strings.TrimRight(p.Near, ".")
 	}
 	sentence := fmt.Sprintf("%s: %s.", p.Name, where)
 	switch {
+	case a.Here.Side != "" && p.Side != "" && p.Side == a.Here.Side:
+		sentence += " Same side of the building as you."
+	case a.Here.Side != "" && p.Side != "":
+		sentence += fmt.Sprintf(" You are on the %s side, this door is on the %s side.", a.Here.Side, p.Side)
 	case a.Here.Venue == "" || a.Here.Level == "":
 	case p.Venue == a.Here.Venue && p.Level == a.Here.Level:
 		sentence += " Same level as you, no stairs or elevator."
