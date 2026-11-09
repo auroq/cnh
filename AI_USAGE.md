@@ -28,7 +28,7 @@ This file is the disclosure the hackathon rules ask for, and [ADR 0007](docs/adr
 
 After the first commit, every change goes through a pull request.
 `main` is protected: a PR merges only when the `docs`, `manifests`, `architecture` and `Gitar` CI checks pass and Gitar has posted an approving review against [`.gitar/config/approve.md`](.gitar/config/approve.md) ([ADR 0009](docs/adr/0009-gitar-approval-is-the-merge-gate.md)).
-Until 15:00 MT the `Gitar` status check alone was required, and it reported SUCCESS even when Gitar requested changes (PR 18), so `main` was merging on CI alone; the approving review is what makes Gitar's verdict the gate.
+Until 13:40 MT the `Gitar` status check alone was required, and it reported SUCCESS even when Gitar requested changes (PR 18), so `main` was merging on CI alone; the approving review is what makes Gitar's verdict the gate.
 The agent opens the PR and arms GitHub auto-merge, so a PR merges without a human reading it, on the strength of CI and Gitar's approval.
 A PR Gitar does not approve stays blocked until its findings are answered or Aria approves it by hand.
 Aria chose this on 2026-11-09 so that one person could spend the day building rather than clicking merge, and accepted that Gitar's review and the CI checks are the gate.
@@ -42,6 +42,6 @@ Gitar's auto-apply may also push fixes to a PR branch; those commits are Gitar's
 
 ## Other services
 
-- Gitar reviews pull requests and, since 15:00 MT, approves them against [`.gitar/config/approve.md`](.gitar/config/approve.md); its auto-apply is off and it changes code only when asked (sponsor track).
+- Gitar reviews pull requests and, since 13:40 MT, approves them against [`.gitar/config/approve.md`](.gitar/config/approve.md); its auto-apply is off and it changes code only when asked (sponsor track).
 - Dash0 and Radar analyse telemetry and cluster state with their own AI features (sponsor tracks).
 - Elasticsearch's `semantic_text` field uses Elastic's ELSER model for semantic search (sponsor track).

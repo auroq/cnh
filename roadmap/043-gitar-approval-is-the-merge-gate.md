@@ -1,6 +1,6 @@
 # 43. Gitar's approval is the merge gate
 
-**Open. Filed 2026-11-09, during Ring 4, by Aria. Aria's call: auto-approve on in Gitar's dashboard, Gitar's own auto-merge off, a human approval as the fallback.**
+**Done 2026-11-09 (PR #45, protection set by Aria, evidence in docs/demo, issue #43). Filed 2026-11-09, during Ring 3, by Aria. Aria's call: auto-approve on in Gitar's dashboard, Gitar's own auto-merge off, a human approval as the fallback.**
 
 Depends on: 004, 036
 
