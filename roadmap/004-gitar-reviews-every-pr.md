@@ -1,6 +1,6 @@
 # 4. Gitar reviews every PR
 
-**Open. Filed 2026-11-09, from the kickoff plan. Nobody's call: the track defines what it wants.**
+**Done 2026-11-09 (issue #4; rules in .gitar/review and .gitar/rules from Ring 0, every change since through a Gitar-reviewed PR; the "auto-applied CI fix" acceptance was retired when Aria turned auto-apply off at 11:50 MT after it reversed two decisions, and the approval evidence of ADRs 0009 and 0010 stands in its place). Filed 2026-11-09, from the kickoff plan. Nobody's call: the track defines what it wants.**
 
 Depends on: 001
 
