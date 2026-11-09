@@ -36,3 +36,4 @@ Times are Mountain Time on 2026-11-09: coding starts at 11:00, code freezes at 1
 | [083](roadmap/083-bring-your-schedule.md) | paste your Sched export or session titles, kept on your device, so answers know where you are going next | 081 | nobody |
 | [085](roadmap/085-chips-learned-from-what-you-ask.md) | a profile chip is added when a question implies it, said in the open, removable | 063, 066, 081 | nobody |
 | [096](roadmap/096-attendee-reports.md) | attendees verify, dispute and annotate places; shown at once, trusted after a second person agrees | 063 | Aria, the trust rules |
+| [103](roadmap/103-profile-summary-bar-and-side-panel.md) | the profile is a one-line summary bar under the header, a side panel open by default on wide screens, the full panel on `/profile` | 081, 085 | Aria, the layout |

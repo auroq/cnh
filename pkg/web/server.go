@@ -68,6 +68,7 @@ type page struct {
 	Count       string
 	ProfileOpen bool
 	ProfileURL  string
+	EditURL     string
 	Status      string
 	Forgot      bool
 }
