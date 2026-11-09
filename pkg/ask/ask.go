@@ -123,6 +123,12 @@ func (s *Service) answer(ctx context.Context, question, from string) (Answer, er
 	if err != nil {
 		return ans, err
 	}
+	if len(places) == 0 && kind != "" {
+		places, err = step(ctx, s.tracer(), "ask.FindPlaces", func(ctx context.Context) ([]Place, error) { return s.Store.FindPlaces(ctx, question, "") })
+		if err != nil {
+			return ans, err
+		}
+	}
 	ans.Places = RankByNearness(places, here)
 	if len(ans.Places) > maxPlaces {
 		ans.Places = ans.Places[:maxPlaces]
