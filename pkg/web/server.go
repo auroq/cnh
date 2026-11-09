@@ -72,6 +72,7 @@ type page struct {
 	EditURL     string
 	Status      string
 	Forgot      bool
+	PrefsKnown  bool
 }
 
 type kind struct{ Query, Label string }
