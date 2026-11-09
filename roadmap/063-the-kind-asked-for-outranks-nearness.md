@@ -1,6 +1,6 @@
 # 63. The kind the attendee asked for outranks nearness
 
-**Open. Filed 2026-11-09 by Aria (issue #63). Nobody's call: the acceptance table in item 054 showed the bug and the fix is the use case asking its port for the kind it inferred.**
+**Done 2026-11-09 (PR #71, issue #63). Filed 2026-11-09 by Aria. Nobody's call: the acceptance table in item 054 showed the bug and the fix is the use case asking its port for the kind it inferred.**
 
 Depends on: 025, 054
 
