@@ -35,3 +35,4 @@ Times are Mountain Time on 2026-11-09: coding starts at 11:00, code freezes at 1
 | [014](roadmap/014-stretch-the-transcript-source.md) | **stretch:** where transcripts come from | 013 | Aria, the transcript source |
 | [015](roadmap/015-stretch-live-mic-captions.md) | **stretch:** room-anchored large-text captions from a live mic | 014 | nobody |
 | [016](roadmap/016-stretch-search-inside-talks.md) | **stretch:** timestamped transcript search, joined to the schedule | 007, 015 | nobody |
+| [031](roadmap/031-the-architecture-is-written-down-and-enforced.md) | the layers and the import direction written down, enforced in CI, and explained in `docs/architecture.md` | 025 | nobody |
