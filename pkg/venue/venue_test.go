@@ -33,6 +33,18 @@ func TestLoad(t *testing.T) {
 		})
 	})
 
+	t.Run("when a place lists route facts", func(t *testing.T) {
+		places, err := Load(strings.NewReader("places:\n- {id: a, kind: k, name: n, venue: v, source: s, route: [\"Connected at Level 1.\", \"Step-free.\"]}\n"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Run("it should keep them in order", func(t *testing.T) {
+			if len(places) != 1 || strings.Join(places[0].Route, "|") != "Connected at Level 1.|Step-free." {
+				t.Fatalf("got %+v", places)
+			}
+		})
+	})
+
 	t.Run("when two places share an id", func(t *testing.T) {
 		_, err := Load(strings.NewReader("places:\n- {id: a, kind: k, name: n, venue: v, source: s}\n- {id: a, kind: k, name: n, venue: v, source: s}\n"))
 		t.Run("it should fail", func(t *testing.T) {

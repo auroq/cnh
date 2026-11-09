@@ -29,6 +29,7 @@ The shape is fixed by the ADRs:
 - **Review:** every PR after the first commit is reviewed by Gitar against [`.gitar/review/`](.gitar/review/); its approval is advisory and the CI checks are the gate ([ADR 0010](docs/adr/0010-gitar-approval-is-advisory.md)).
 - **Release:** CI and CD are separate workflows; CD builds the image, opens the bump PR, waits for the canary, tests the live site and reverts by PR on failure ([ADR 0008](docs/adr/0008-ci-cd-separation-and-rollback-by-revert.md)).
 - **Types:** `pkg/model` is what the business means, adapter shapes stay private, `pkg/api/v1` is what clients were promised ([ADR 0011](docs/adr/0011-types-live-by-kind.md)).
+- **Distance:** an answer says the level change and the route facts the organiser published, and never a walk time, because a single time assumes a pace and a body that the people this app is for do not share ([ADR 0012](docs/adr/0012-how-we-describe-distance.md)).
 - **Secrets:** Sealed Secrets only ([ADR 0006](docs/adr/0006-sealed-secrets.md)).
 
 ### Observability

@@ -31,10 +31,18 @@ type fakePlaces struct {
 
 func (f fakePlaces) Places() ([]venue.Place, error) { return f.places, f.err }
 
+type fakeNeeds struct {
+	needs []venue.Need
+	err   error
+}
+
+func (f fakeNeeds) Needs() ([]venue.Need, error) { return f.needs, f.err }
+
 type fakeIndexer struct {
 	calls    []string
 	sessions []schedule.Session
 	places   []venue.Place
+	needs    []venue.Need
 	failed   int
 }
 
@@ -52,6 +60,11 @@ func (f *fakeIndexer) IndexPlaces(_ context.Context, p []venue.Place) (Result, e
 	f.places = p
 	return Result{Sent: len(p), Count: len(p)}, nil
 }
+func (f *fakeIndexer) IndexNeeds(_ context.Context, n []venue.Need) (Result, error) {
+	f.calls = append(f.calls, "needs")
+	f.needs = n
+	return Result{Sent: len(n), Count: len(n)}, nil
+}
 
 var quiet = slog.New(slog.NewTextHandler(io.Discard, nil))
 
@@ -63,17 +76,23 @@ func TestRun(t *testing.T) {
 		{ID: "3", Title: "Coat check", Location: "Salt Palace | Level 2 | East Registration"},
 	}
 	curated := []venue.Place{{ID: "quiet-260a", Kind: "quiet-room", Name: "260A", Venue: "Salt Palace", Source: "organiser"}}
+	needs := []venue.Need{{ID: "rest", Name: "somewhere to rest", Phrases: []string{"overwhelmed"}, Kinds: []string{"quiet-room"}}}
 
-	t.Run("when the schedule and the places both load", func(t *testing.T) {
+	t.Run("when the schedule, the places and the needs all load", func(t *testing.T) {
 		src := &fakeSource{sessions: sessions}
 		idx := &fakeIndexer{}
-		rep, err := (&Runner{Source: src, Places: fakePlaces{places: curated}, Indexer: idx, Log: quiet}).Run(ctx)
+		rep, err := (&Runner{Source: src, Places: fakePlaces{places: curated}, Needs: fakeNeeds{needs: needs}, Indexer: idx, Log: quiet}).Run(ctx)
 		if err != nil {
 			t.Fatal(err)
 		}
 		t.Run("it should ensure the indexes before writing", func(t *testing.T) {
-			if len(idx.calls) != 3 || idx.calls[0] != "ensure" || idx.calls[1] != "sessions" || idx.calls[2] != "places" {
+			if len(idx.calls) != 4 || idx.calls[0] != "ensure" || idx.calls[1] != "sessions" || idx.calls[2] != "places" || idx.calls[3] != "needs" {
 				t.Fatalf("calls %v", idx.calls)
+			}
+		})
+		t.Run("it should index every need", func(t *testing.T) {
+			if len(idx.needs) != 1 || rep.Needs.Count != 1 {
+				t.Fatalf("indexed %d needs, report %+v", len(idx.needs), rep.Needs)
 			}
 		})
 		t.Run("it should fetch the session details", func(t *testing.T) {
@@ -100,7 +119,7 @@ func TestRun(t *testing.T) {
 
 	t.Run("when details are skipped", func(t *testing.T) {
 		src := &fakeSource{sessions: sessions}
-		_, err := (&Runner{Source: src, Places: fakePlaces{}, Indexer: &fakeIndexer{}, SkipDetails: true, Log: quiet}).Run(ctx)
+		_, err := (&Runner{Source: src, Places: fakePlaces{}, Needs: fakeNeeds{}, Indexer: &fakeIndexer{}, SkipDetails: true, Log: quiet}).Run(ctx)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -112,7 +131,7 @@ func TestRun(t *testing.T) {
 	})
 
 	t.Run("when the store rejects a document", func(t *testing.T) {
-		rep, _ := (&Runner{Source: &fakeSource{sessions: sessions}, Places: fakePlaces{}, Indexer: &fakeIndexer{failed: 1}, SkipDetails: true, Log: quiet}).Run(ctx)
+		rep, _ := (&Runner{Source: &fakeSource{sessions: sessions}, Places: fakePlaces{}, Needs: fakeNeeds{}, Indexer: &fakeIndexer{failed: 1}, SkipDetails: true, Log: quiet}).Run(ctx)
 		t.Run("it should report the run as failed", func(t *testing.T) {
 			if !rep.Failed() {
 				t.Fatalf("report %+v", rep)
@@ -125,8 +144,9 @@ func TestRun(t *testing.T) {
 		runner *Runner
 		want   string
 	}{
-		{"the schedule cannot be fetched", &Runner{Source: &fakeSource{err: errors.New("503")}, Places: fakePlaces{}, Indexer: &fakeIndexer{}}, "fetch schedule"},
-		{"the places file is broken", &Runner{Source: &fakeSource{sessions: sessions}, Places: fakePlaces{err: errors.New("yaml")}, Indexer: &fakeIndexer{}}, "load places"},
+		{"the schedule cannot be fetched", &Runner{Source: &fakeSource{err: errors.New("503")}, Places: fakePlaces{}, Needs: fakeNeeds{}, Indexer: &fakeIndexer{}}, "fetch schedule"},
+		{"the places file is broken", &Runner{Source: &fakeSource{sessions: sessions}, Places: fakePlaces{err: errors.New("yaml")}, Needs: fakeNeeds{}, Indexer: &fakeIndexer{}}, "load places"},
+		{"the needs file is broken", &Runner{Source: &fakeSource{sessions: sessions}, Places: fakePlaces{}, Needs: fakeNeeds{err: errors.New("yaml")}, Indexer: &fakeIndexer{}}, "load needs"},
 	}
 	for _, c := range cases {
 		t.Run("when "+c.name, func(t *testing.T) {

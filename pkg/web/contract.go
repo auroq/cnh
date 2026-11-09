@@ -18,7 +18,7 @@ func toV1(a model.Answer) v1.AskResponse {
 		for _, p := range a.Places {
 			out.Places = append(out.Places, v1.Place{
 				ID: p.ID, Kind: p.Kind, Name: p.Name, Venue: p.Venue, Level: p.Level, Near: p.Near,
-				Notes: p.Notes, For: p.For, Verified: p.Verified, Source: p.Source,
+				Notes: p.Notes, For: p.For, Route: p.Route, Verified: p.Verified, Source: p.Source,
 			})
 		}
 	}

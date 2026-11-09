@@ -19,13 +19,13 @@ import (
 // ErrDocumentsRejected means the run finished but the store rejected some documents; the job exits 2.
 var ErrDocumentsRejected = errors.New("some documents were rejected by the store")
 
-// NewIngest builds the ingest command: schedule and venue places into the search store.
+// NewIngest builds the ingest command: schedule, venue places and needs into the search store.
 func NewIngest(v *viper.Viper, log *slog.Logger) *cobra.Command {
 	return &cobra.Command{
 		Use:   "ingest",
 		Short: "Fetch the KubeCon schedule and the venue places and index them",
 		Long: `Fetches the KubeCon schedule from Sessionize and indexes it, then indexes the curated
-venue places and the rooms the schedule names. Safe to re-run: documents are keyed by id.`,
+venue places and the rooms the schedule names, then the need vocabulary. Safe to re-run: documents are keyed by id.`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			cfg, err := config.Load(v)
@@ -44,7 +44,8 @@ venue places and the rooms the schedule names. Safe to re-run: documents are key
 			runner := &ingest.Runner{
 				Source:      &sessionize.Client{HTTP: &http.Client{Timeout: in.FetchTimeout()}, IndexURL: in.SessionizeURL(), Concurrency: in.Concurrency()},
 				Places:      venue.File(in.PlacesFile()),
-				Indexer:     &esindex.Indexer{Client: newClientWithTimeout(es, in.ESTimeout()), SessionsIndex: es.SessionsIndex(), PlacesIndex: es.PlacesIndex(), Batch: in.Batch()},
+				Needs:       venue.NeedsFile(cfg.Venue().NeedsFile()),
+				Indexer:     &esindex.Indexer{Client: newClientWithTimeout(es, in.ESTimeout()), SessionsIndex: es.SessionsIndex(), PlacesIndex: es.PlacesIndex(), NeedsIndex: es.NeedsIndex(), Batch: in.Batch()},
 				SkipDetails: in.SkipDetails(),
 				Log:         log,
 			}

@@ -1,6 +1,6 @@
 # 7. The schedule is indexed
 
-**Open. Filed 2026-11-09, from the kickoff plan. Nobody's call: the source is public.**
+**Done 2026-11-09 (PR #18 and the ingest fix in PR #52, issue #7 closed by Aria; 600 sessions and 53 places indexed by the hourly CronJob). Filed 2026-11-09, from the kickoff plan. Nobody's call: the source is public.**
 
 Depends on: 006
 

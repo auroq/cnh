@@ -2,6 +2,7 @@ package ask_test
 
 import (
 	"context"
+	"strings"
 	"testing"
 	"time"
 
@@ -10,23 +11,35 @@ import (
 	"github.com/auroq/cnh/testing/helpers"
 )
 
+func service(t *testing.T) *ask.Service {
+	t.Helper()
+	es := helpers.ESClient(t)
+	places := helpers.NewIndex(t, esindex.PlacesMapping)
+	sessions := helpers.NewIndex(t, esindex.SessionsMapping)
+	needs := helpers.NewIndex(t, esindex.NeedsMapping)
+	helpers.LoadPlaces(t, es, places)
+	helpers.LoadSessions(t, es, sessions)
+	helpers.LoadNeeds(t, es, needs)
+	return &ask.Service{Store: &esindex.Store{Client: es, PlacesIndex: places, SessionsIndex: sessions, NeedsIndex: needs}, Needs: helpers.Needs}
+}
+
+func askFrom(t *testing.T, svc *ask.Service, question, from string) ask.Answer {
+	t.Helper()
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
+	a, err := svc.Ask(ctx, question, from)
+	if err != nil {
+		t.Fatalf("Ask: %v", err)
+	}
+	return a
+}
+
 func TestAsk(t *testing.T) {
 	t.Parallel()
 
 	t.Run("when a room is resolved", func(t *testing.T) {
 		t.Parallel()
-		es := helpers.ESClient(t)
-		places := helpers.NewIndex(t, esindex.PlacesMapping)
-		sessions := helpers.NewIndex(t, esindex.SessionsMapping)
-		helpers.LoadPlaces(t, es, places)
-		helpers.LoadSessions(t, es, sessions)
-		svc := &ask.Service{Store: &esindex.Store{Client: es, PlacesIndex: places, SessionsIndex: sessions}}
-		ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
-		defer cancel()
-		a, err := svc.Ask(ctx, "nearest all-gender restroom", "255 BC")
-		if err != nil {
-			t.Fatalf("Ask: %v", err)
-		}
+		a := askFrom(t, service(t), "nearest all-gender restroom", "255 BC")
 		t.Run("it should resolve 255 BC to Salt Palace Level 2", func(t *testing.T) {
 			if a.Here.Venue != "Salt Palace" || a.Here.Level != "Level 2" {
 				t.Fatalf("here = %+v", a.Here)
@@ -34,6 +47,53 @@ func TestAsk(t *testing.T) {
 		})
 		t.Run("it should put places on its level first", func(t *testing.T) {
 			if len(a.Places) == 0 || a.Places[0].Venue != "Salt Palace" || a.Places[0].Level != "Level 2" {
+				t.Fatalf("places = %+v", a.Places)
+			}
+		})
+	})
+
+	t.Run("when the attendee in 255 BC asks for the nearest elevator", func(t *testing.T) {
+		t.Parallel()
+		a := askFrom(t, service(t), "nearest elevator", "255 BC")
+		t.Run("it should answer the elevator, not the restroom on the same level", func(t *testing.T) {
+			if len(a.Places) == 0 || a.Places[0].ID != "elevators-salt-palace" {
+				t.Fatalf("places = %+v", a.Places)
+			}
+		})
+		t.Run("it should list only elevators", func(t *testing.T) {
+			for _, p := range a.Places {
+				if p.Kind != "elevator" {
+					t.Fatalf("places = %+v", a.Places)
+				}
+			}
+		})
+	})
+
+	t.Run("when the attendee asks where to inject insulin", func(t *testing.T) {
+		t.Parallel()
+		a := askFrom(t, service(t), "where can I inject insulin", "")
+		t.Run("it should offer the nursing room", func(t *testing.T) {
+			if len(a.Places) == 0 || a.Places[0].ID != "nursing-room" {
+				t.Fatalf("places = %+v", a.Places)
+			}
+		})
+		t.Run("it should say first aid staff can help", func(t *testing.T) {
+			if !strings.HasSuffix(a.Summary, "A private room; first aid staff can help.") {
+				t.Fatalf("summary = %q", a.Summary)
+			}
+		})
+	})
+
+	t.Run("when the attendee paraphrases a need in words the vocabulary does not list", func(t *testing.T) {
+		t.Parallel()
+		a := askFrom(t, service(t), "I can't walk up the stairs", "")
+		t.Run("it should understand the need through the semantic needs index", func(t *testing.T) {
+			if a.Need == nil || a.Need.ID != "mobility-accessible" {
+				t.Fatalf("need = %+v, summary = %q", a.Need, a.Summary)
+			}
+		})
+		t.Run("it should offer the elevator because the fixtures have no step-free entrance", func(t *testing.T) {
+			if len(a.Places) == 0 || a.Places[0].Kind != "elevator" {
 				t.Fatalf("places = %+v", a.Places)
 			}
 		})

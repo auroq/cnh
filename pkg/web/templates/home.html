@@ -53,6 +53,7 @@
           <strong>{{.Name}}</strong>
           <span class="where">{{.Venue}}{{if .Level}}, {{.Level}}{{end}}{{if .Near}}, {{.Near}}{{end}}</span>
           {{if .Notes}}<span class="notes">{{.Notes}}</span>{{end}}
+          {{range .Route}}<span class="notes route">{{.}}</span>{{end}}
           {{if .Verified}}<span class="badge ok">Published by the organiser</span>{{else}}<span class="badge warn">Unverified</span>{{end}}
         </li>
         {{end}}

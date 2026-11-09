@@ -40,6 +40,7 @@ type Place struct {
 	Near     string   `json:"near"`
 	Notes    string   `json:"notes,omitempty"`
 	For      []string `json:"for,omitempty"`
+	Route    []string `json:"route,omitempty"`
 	Verified bool     `json:"verified"`
 	Source   string   `json:"source"`
 }

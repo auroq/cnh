@@ -10,9 +10,15 @@ type fakeStore struct {
 	room     Here
 	places   []Place
 	sessions []Session
+	needs    []NeedMatch
+	byKind   map[string][]Place
 	err      error
 	located  []string
 	searched []string
+	guessed  []string
+	kinds    []string
+
+	noneOfAnyKind bool
 }
 
 func (f *fakeStore) Ping(context.Context) error { return f.err }
@@ -22,8 +28,15 @@ func (f *fakeStore) LocateRoom(_ context.Context, asked string) (Here, error) {
 	return f.room, f.err
 }
 
-func (f *fakeStore) FindPlaces(_ context.Context, question string) ([]Place, error) {
+func (f *fakeStore) FindPlaces(_ context.Context, question, kind string) ([]Place, error) {
 	f.searched = append(f.searched, question)
+	f.kinds = append(f.kinds, kind)
+	if kind != "" && f.noneOfAnyKind {
+		return nil, f.err
+	}
+	if f.byKind != nil {
+		return f.byKind[kind], f.err
+	}
 	return f.places, f.err
 }
 
@@ -55,6 +68,11 @@ func TestAsk(t *testing.T) {
 				t.Fatalf("searched %q", store.searched)
 			}
 		})
+		t.Run("it should ask the store for all-gender restrooms only", func(t *testing.T) {
+			if len(store.kinds) != 1 || store.kinds[0] != "all-gender-restroom" {
+				t.Fatalf("kinds %q", store.kinds)
+			}
+		})
 		t.Run("it should put the restroom on the attendee's level first", func(t *testing.T) {
 			if ans.Places[0].ID != outside255.ID {
 				t.Fatalf("first place %s", ans.Places[0].ID)
@@ -64,6 +82,65 @@ func TestAsk(t *testing.T) {
 			want := "All-gender restroom outside 255: Salt Palace, Level 2, Outside room 255. Same level as you, no stairs or elevator. Published by the organiser."
 			if ans.Summary != want {
 				t.Fatalf("\n got %q\nwant %q", ans.Summary, want)
+			}
+		})
+	})
+
+	t.Run("when the attendee in 255 BC asks for the nearest elevator", func(t *testing.T) {
+		elevator := Place{ID: "elevators-salt-palace", Kind: "elevator", Name: "Elevators", Venue: "Salt Palace"}
+		store := &fakeStore{
+			room:   Here{Room: "255 BC", Venue: "Salt Palace", Level: "Level 2"},
+			places: []Place{elevator},
+		}
+		ans, err := (&Service{Store: store}).Ask(ctx, "nearest elevator", "255 BC")
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Run("it should ask the store for elevators only", func(t *testing.T) {
+			if len(store.kinds) != 1 || store.kinds[0] != "elevator" {
+				t.Fatalf("kinds %q", store.kinds)
+			}
+		})
+		t.Run("it should answer the elevator", func(t *testing.T) {
+			if ans.Places[0].ID != elevator.ID {
+				t.Fatalf("first place %s", ans.Places[0].ID)
+			}
+		})
+		t.Run("it should say it is in the same building and that we do not know its level", func(t *testing.T) {
+			want := "Elevators: Salt Palace. Same building, we do not know which level it is on. Unverified: read off a plan, nobody has checked it yet."
+			if ans.Summary != want {
+				t.Fatalf("\n got %q\nwant %q", ans.Summary, want)
+			}
+		})
+	})
+
+	t.Run("when the question names a kind the store has no place for", func(t *testing.T) {
+		store := &fakeStore{places: []Place{outside255}, noneOfAnyKind: true}
+		ans, err := (&Service{Store: store}).Ask(ctx, "nearest elevator", "")
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Run("it should fall back to places of any kind", func(t *testing.T) {
+			if len(store.kinds) != 2 || store.kinds[0] != "elevator" || store.kinds[1] != "" {
+				t.Fatalf("kinds %q", store.kinds)
+			}
+		})
+		t.Run("it should answer the best place of any kind", func(t *testing.T) {
+			if len(ans.Places) == 0 || ans.Places[0].ID != outside255.ID {
+				t.Fatalf("places %+v", ans.Places)
+			}
+		})
+	})
+
+	t.Run("when the question names no kind", func(t *testing.T) {
+		store := &fakeStore{places: []Place{outside255}}
+		_, err := (&Service{Store: store}).Ask(ctx, "sign language", "")
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Run("it should ask the store for places of any kind", func(t *testing.T) {
+			if len(store.kinds) != 1 || store.kinds[0] != "" {
+				t.Fatalf("kinds %q", store.kinds)
 			}
 		})
 	})
@@ -150,4 +227,9 @@ func TestLocate(t *testing.T) {
 			})
 		})
 	}
+}
+
+func (f *fakeStore) FindNeeds(_ context.Context, question string) ([]NeedMatch, error) {
+	f.guessed = append(f.guessed, question)
+	return f.needs, f.err
 }

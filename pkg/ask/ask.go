@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -22,22 +23,28 @@ type Store interface {
 	Ping(ctx context.Context) error
 	// LocateRoom resolves what an attendee typed as their location to a known room, or returns an empty Here.
 	LocateRoom(ctx context.Context, asked string) (Here, error)
-	// FindPlaces returns access features matching the question, best first, never rooms.
-	FindPlaces(ctx context.Context, question string) ([]Place, error)
+	// FindPlaces returns access features matching the question, best first, never rooms;
+	// when kind is not empty, only places of that kind.
+	FindPlaces(ctx context.Context, question, kind string) ([]Place, error)
 	// FindSessions returns schedule sessions matching the question, best first.
 	FindSessions(ctx context.Context, question string) ([]Session, error)
+	// FindNeeds returns the needs whose phrases the question means, best first, with the score the use case thresholds on.
+	FindNeeds(ctx context.Context, question string) ([]NeedMatch, error)
 }
 
 // The domain types live in pkg/model; these names stay so callers read naturally.
 type (
 	Place   = model.Place
+	Need    = model.Need
 	Session = model.Session
 	Here    = model.Here
 	Answer  = model.Answer
 )
 
+// Service answers questions. Needs is the vocabulary that turns what people say into kinds of place.
 type Service struct {
 	Store  Store
+	Needs  []Need
 	Tracer trace.TracerProvider
 	Meter  metric.MeterProvider
 
@@ -82,6 +89,7 @@ func (s *Service) Ask(ctx context.Context, question, from string) (Answer, error
 	ans, err := s.answer(ctx, question, from)
 	kind, verified := topKind(ans)
 	span.SetAttributes(
+		attrNeed.String(needID(ans)),
 		attrHereVenue.String(ans.Here.Venue),
 		attrHereLevel.String(ans.Here.Level),
 		attrPlacesCount.Int(len(ans.Places)),
@@ -117,7 +125,7 @@ func (s *Service) answer(ctx context.Context, question, from string) (Answer, er
 		return ans, nil
 	}
 
-	places, err := step(ctx, s.tracer(), "ask.FindPlaces", func(ctx context.Context) ([]Place, error) { return s.Store.FindPlaces(ctx, question) })
+	places, err := s.placesFor(ctx, &ans, question)
 	if err != nil {
 		return ans, err
 	}
@@ -156,7 +164,20 @@ func RankByNearness(places []Place, here Here) []Place {
 }
 
 // Summarise writes the one-sentence answer a screen reader hears first.
+// When the question was understood as a need, it names the need before the place and ends with the need's note.
 func Summarise(a Answer) string {
+	sentence := summarise(a)
+	if a.Need == nil {
+		return sentence
+	}
+	sentence = "You asked for " + a.Need.Name + ". " + sentence
+	if a.Need.Note != "" && len(a.Places) > 0 {
+		sentence += " " + a.Need.Note
+	}
+	return sentence
+}
+
+func summarise(a Answer) string {
 	if len(a.Places) == 0 && len(a.Sessions) == 0 {
 		return "Nothing matched. Try other words, or ask staff at registration."
 	}
@@ -181,9 +202,12 @@ func Summarise(a Answer) string {
 	case p.Venue == a.Here.Venue && p.Level == a.Here.Level:
 		sentence += " Same level as you, no stairs or elevator."
 	case p.Venue == a.Here.Venue:
-		sentence += fmt.Sprintf(" Same building, you are on %s and it is on %s.", a.Here.Level, orUnknown(p.Level))
+		sentence += " " + levelChange(a.Here.Level, p.Level)
 	default:
 		sentence += fmt.Sprintf(" It is in the %s, you are in the %s.", p.Venue, a.Here.Venue)
+	}
+	for _, fact := range p.Route {
+		sentence += " " + fact
 	}
 	if p.Verified {
 		sentence += " Published by the organiser."
@@ -207,9 +231,33 @@ func looksLikeSessionQuestion(q string) bool {
 	return false
 }
 
-func orUnknown(s string) string {
-	if s == "" {
-		return "an unlisted level"
+// levelChange is the route fact the app can state from the data alone: how many levels, which way, and that it means an elevator or stairs.
+// It never estimates a time, because a time assumes a pace and a body (ADR 0012).
+func levelChange(from, to string) string {
+	if to == "" {
+		return "Same building, we do not know which level it is on."
 	}
-	return s
+	f, okFrom := levelNumber(from)
+	t, okTo := levelNumber(to)
+	if !okFrom || !okTo {
+		return fmt.Sprintf("Same building, you are on %s and it is on %s.", from, to)
+	}
+	n, direction := t-f, "up"
+	if n < 0 {
+		n, direction = -n, "down"
+	}
+	return fmt.Sprintf("Same building, %s %s, by elevator or stairs.", levels(n), direction)
+}
+
+func levelNumber(level string) (int, bool) {
+	n, err := strconv.Atoi(strings.TrimPrefix(level, "Level "))
+	return n, err == nil
+}
+
+func levels(n int) string {
+	words := []string{"", "one level", "two levels", "three levels", "four levels", "five levels"}
+	if n < len(words) {
+		return words[n]
+	}
+	return fmt.Sprintf("%d levels", n)
 }
