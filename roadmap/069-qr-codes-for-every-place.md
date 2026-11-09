@@ -1,6 +1,6 @@
 # 69. QR codes for every room and landmark: scan to tell Wide Door where you are
 
-**Open. Filed 2026-11-09 by Aria (issue #69). Nobody's call: the URL shape, the kinds that get a code and the sheet are all read off the places data that already exists.**
+**Done 2026-11-09 (PR #76, issue #69). Filed 2026-11-09 by Aria. Nobody's call: the URL shape, the kinds that get a code and the sheet are all read off the places data that already exists.**
 
 Depends on: 008, 010
 
