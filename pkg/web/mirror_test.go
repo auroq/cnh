@@ -14,6 +14,9 @@ func TestProfileKnownMarker(t *testing.T) {
 	}{
 		{"the home page is opened with nothing about the attendee", "/", nil, false},
 		{"a question is asked with nothing about the attendee", "/ask?q=coat+check", nil, false},
+		{"the profile page is opened plainly with nothing about the attendee", "/profile", nil, false},
+		{"the profile page is reopened after a chip was kept", "/profile?kept=step-free&prefs=step-free", nil, true},
+		{"the profile page is reopened after a chip was added", "/profile?added=step-free&prefs=step-free", nil, true},
 		{"the page is opened with the profile in the query", "/?prefs=step-free", nil, true},
 		{"the page is opened with an empty profile in the query", "/?prefs=", nil, true},
 		{"the page is opened with the profile cookie", "/", map[string]string{prefsCookie: "step-free"}, true},

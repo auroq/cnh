@@ -143,8 +143,16 @@ func (s *Server) describeProfile(p *page, r *http.Request, prefs model.Preferenc
 // profileKnown says the server rendered the profile from what the browser sent or from an edit it just made,
 // so the browser's own copy must follow the page and never restore over it.
 func profileKnown(r *http.Request) bool {
-	if r.URL.Query().Has(prefsParam) || r.URL.Path == profilePath {
+	q := r.URL.Query()
+	if q.Has(prefsParam) {
 		return true
+	}
+	if r.URL.Path == profilePath {
+		for _, p := range []string{addedParam, keptParam, removedParam, forgotParam} {
+			if q.Has(p) {
+				return true
+			}
+		}
 	}
 	for _, name := range []string{prefsCookie, declinedCookie} {
 		if _, err := r.Cookie(name); err == nil {
