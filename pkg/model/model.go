@@ -5,20 +5,21 @@ import "time"
 
 // Place is somewhere an attendee may need: an access feature, or a room named by the schedule.
 type Place struct {
-	ID       string   `json:"id"`
-	Kind     string   `json:"kind"`
-	Name     string   `json:"name"`
-	Venue    string   `json:"venue"`
-	Level    string   `json:"level"`
-	Near     string   `json:"near"`
-	Notes    string   `json:"notes,omitempty"`
-	For      []string `json:"for,omitempty"`
-	Route    []string `json:"route,omitempty"`
-	Verified bool     `json:"verified"`
-	Source   string   `json:"source"`
-	Aliases  []string `json:"aliases,omitempty"`
-	Side     string   `json:"side,omitempty"`
-	LeadsTo  string   `json:"leads_to,omitempty"`
+	ID       string          `json:"id"`
+	Kind     string          `json:"kind"`
+	Name     string          `json:"name"`
+	Venue    string          `json:"venue"`
+	Level    string          `json:"level"`
+	Near     string          `json:"near"`
+	Notes    string          `json:"notes,omitempty"`
+	For      []string        `json:"for,omitempty"`
+	Route    []string        `json:"route,omitempty"`
+	Verified bool            `json:"verified"`
+	Source   string          `json:"source"`
+	Aliases  []string        `json:"aliases,omitempty"`
+	Side     string          `json:"side,omitempty"`
+	LeadsTo  string          `json:"leads_to,omitempty"`
+	Attendee *AttendeeStatus `json:"attendee,omitempty"`
 }
 
 // Room is a location the schedule names, split into its parts.
@@ -74,3 +75,41 @@ type Answer struct {
 	Places   []Place   `json:"places"`
 	Sessions []Session `json:"sessions"`
 }
+
+// Verdict is what an attendee who stood at a place said about it.
+type Verdict string
+
+const (
+	VerdictWorks          Verdict = "works"
+	VerdictProblem        Verdict = "problem"
+	VerdictNotAsDescribed Verdict = "not-as-described"
+)
+
+// Report is one attendee's word about one place: anonymous, timed, and hideable by a volunteer.
+// Token is the random per-browser id used only to count distinct people and to rate limit; it is never shown.
+type Report struct {
+	ID      string    `json:"id"`
+	PlaceID string    `json:"place_id"`
+	Verdict Verdict   `json:"verdict"`
+	Note    string    `json:"note,omitempty"`
+	At      time.Time `json:"at"`
+	Token   string    `json:"token"`
+	Source  string    `json:"source"`
+	Hidden  bool      `json:"hidden"`
+}
+
+// AttendeeStatus is what live reports add up to for one place.
+// Status is none, verified, problem or disputed; Count is how many distinct attendees said so.
+type AttendeeStatus struct {
+	Status     string    `json:"status"`
+	Count      int       `json:"count,omitempty"`
+	LatestNote string    `json:"latest_note,omitempty"`
+	LatestAt   time.Time `json:"latest_at,omitempty"`
+}
+
+const (
+	StatusNone     = "none"
+	StatusVerified = "verified"
+	StatusProblem  = "problem"
+	StatusDisputed = "disputed"
+)
