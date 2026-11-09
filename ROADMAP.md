@@ -29,9 +29,6 @@ Times are Mountain Time on 2026-11-09: coding starts at 11:00, code freezes at 1
 | --- | --- | --- | --- |
 | [004](roadmap/004-gitar-reviews-every-pr.md) | Gitar review rules in `.gitar/`, every change through a PR, CI fixed by auto-apply | 001 | nobody |
 | [007](roadmap/007-the-schedule-is-indexed.md) | the KubeCon schedule from Sessionize indexed with room and level | 006 | nobody |
-| [008](roadmap/008-the-venue-access-data-model.md) | venue, room and access documents, each fact marked verified or unverified | 006 | Aria, which attributes seed as unverified |
-| [009](roadmap/009-the-ask-api.md) | an API answering "nearest X from here" and free-text questions with hybrid search | 007, 008 | nobody |
-| [010](roadmap/010-a-screen-reader-first-ui.md) | a UI built for screen readers, keyboard, large text and high contrast | 009 | nobody |
 | [011](roadmap/011-telemetry-reaches-dash0.md) | OpenTelemetry traces, metrics and logs from the API and ingest to Dash0 | 009 | nobody |
 | [012](roadmap/012-radar-shows-no-findings.md) | Radar showing no findings on the app namespace, and one SRE story to demo | 005, 009 | nobody |
 | [013](roadmap/013-demo-and-submission.md) | the demo script, README architecture and the submission checklist | 010, 011, 012 | nobody |
