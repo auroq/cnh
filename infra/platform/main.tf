@@ -211,3 +211,31 @@ resource "kubernetes_secret_v1" "otel_demo_dash0" {
     token = data.onepassword_item.dash0[0].credential
   }
 }
+
+resource "helm_release" "metrics_server" {
+  name       = "metrics-server"
+  repository = "https://kubernetes-sigs.github.io/metrics-server"
+  chart      = "metrics-server"
+  version    = var.versions.metrics_server
+  namespace  = "kube-system"
+}
+
+resource "helm_release" "argo_rollouts" {
+  name       = "argo-rollouts"
+  repository = "https://argoproj.github.io/argo-helm"
+  chart      = "argo-rollouts"
+  version    = var.versions.argo_rollouts
+  namespace  = kubernetes_namespace_v1.ns["argocd"].metadata[0].name
+}
+
+resource "helm_release" "sealed_secrets" {
+  name       = "sealed-secrets"
+  repository = "https://bitnami.github.io/sealed-secrets"
+  chart      = "sealed-secrets"
+  version    = var.versions.sealed_secrets
+  namespace  = "kube-system"
+
+  values = [yamlencode({
+    fullnameOverride = "sealed-secrets-controller"
+  })]
+}

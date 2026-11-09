@@ -44,12 +44,14 @@ variable "radar_cluster_id" {
 variable "versions" {
   type = map(string)
   default = {
-    envoy_gateway = "1.10.0"
-    cert_manager  = "v1.21.3"
-    external_dns  = "1.23.0"
-    eck_operator  = "3.5.0"
-    argo_cd       = "10.17.0"
-    dash0         = "0.159.0"
+    envoy_gateway  = "1.10.0"
+    cert_manager   = "v1.21.3"
+    eck_operator   = "3.5.0"
+    argo_cd        = "10.17.0"
+    dash0          = "0.159.0"
+    metrics_server = "3.14.0"
+    argo_rollouts  = "2.43.11"
+    sealed_secrets = "2.22.0"
   }
 }
 
