@@ -1,0 +1,20 @@
+{
+  "name": "wide-door-e2e",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Browser accessibility tests for Wide Door: Playwright drives Chromium against WIDEDOOR_URL and axe-core checks WCAG 2.2 AA",
+  "type": "module",
+  "scripts": {
+    "test": "playwright test",
+    "typecheck": "tsc --noEmit",
+    "install-browsers": "playwright install chromium",
+    "report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.14.0",
+    "@playwright/test": "1.64.1",
+    "@types/node": "24.10.1",
+    "playwright-core": "1.64.1",
+    "typescript": "5.9.3"
+  }
+}

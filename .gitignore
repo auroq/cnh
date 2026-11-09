@@ -7,6 +7,12 @@ crash.log
 *.tfplan
 bin/
 
+# testing/e2e (Playwright): dependencies, browsers and run output stay out of git
+testing/e2e/node_modules/
+testing/e2e/.cache/
+testing/e2e/test-results/
+testing/e2e/playwright-report/
+
 # Claude Code worktrees and session files
 .claude/
 
