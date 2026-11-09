@@ -6,3 +6,9 @@ crash.log
 .kube/
 *.tfplan
 bin/
+
+# Claude Code worktrees and session files
+.claude/
+
+# JetBrains
+.idea/
