@@ -11,6 +11,6 @@ resources:
   - ingest.yaml
 images:
   - name: ghcr.io/auroq/cnh/widedoor
-    newTag: a79508f9bf01ea89f70c0d027316079fb3eb3c8a
+    newTag: 5e8f472a91d9e8716a0567cee67310c779745e80
   - name: ghcr.io/auroq/cnh/ingest
-    newTag: a79508f9bf01ea89f70c0d027316079fb3eb3c8a
+    newTag: 5e8f472a91d9e8716a0567cee67310c779745e80
