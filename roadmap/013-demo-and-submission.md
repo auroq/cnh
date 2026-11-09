@@ -20,12 +20,14 @@ The demo script, in order, one minute per track at most:
 
 ## Submission checklist
 
-- [ ] Repo public, `main` green.
-- [ ] README explains the architecture and lists the tracks entered.
-- [ ] `AI_USAGE.md` complete and every AI-assisted commit has a `Co-Authored-By` trailer.
+- [x] Repo public, `main` green.
+- [x] README explains the architecture and lists the tracks entered.
+- [x] `AI_USAGE.md` complete and every AI-assisted commit has a `Co-Authored-By` trailer.
 - [ ] Demo video recorded and linked from the README.
 - [ ] One project submitted, naming every track.
 - [ ] Teardown of the cluster scheduled for after judging, not before.
+
+The first three were checked by the integrator at 16:40 MT; the video, the submission and the teardown are Aria's.
 
 ## Touches
 
