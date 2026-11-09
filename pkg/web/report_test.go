@@ -222,3 +222,43 @@ func TestReportOnThePage(t *testing.T) {
 		})
 	})
 }
+
+func TestCalloutLabels(t *testing.T) {
+	at := time.Date(2026, 11, 9, 21, 52, 0, 0, time.UTC)
+	page := func(t *testing.T, asker fakeAsker) string {
+		t.Helper()
+		srv := httptest.NewServer(New(asker, slog.New(slog.NewTextHandler(io.Discard, nil))).Handler())
+		t.Cleanup(srv.Close)
+		res, err := http.Get(srv.URL + "/ask?q=nearest+elevator")
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Cleanup(func() { res.Body.Close() })
+		body, _ := io.ReadAll(res.Body)
+		return string(body)
+	}
+	withAttendee := func(status string, count int) fakeAsker {
+		return fakeAsker{answer: ask.Answer{Summary: "Elevators.", Places: []ask.Place{{ID: "elevators-hyatt", Name: "Elevators", Venue: "Hyatt Regency",
+			Attendee: &model.AttendeeStatus{Status: status, Count: count, LatestNote: "door locked", LatestAt: at}}}}}
+	}
+	cases := map[string]struct {
+		asker fakeAsker
+		want  string
+	}{
+		"a place verified by attendees":   {withAttendee(model.StatusVerified, 2), `<span class="badge callout ok"><span class="vh">Verified: </span>Verified by attendees (2).</span>`},
+		"a place with a disputed report":  {withAttendee(model.StatusDisputed, 1), `<span class="badge callout warn"><span class="vh">Warning: </span>Disputed by one attendee at 2:52 pm: door locked.</span>`},
+		"a place with a problem report":   {withAttendee(model.StatusProblem, 1), `<span class="badge callout problem"><span class="vh">Problem reported: </span>Reported 2:52 pm by one attendee: door locked.</span>`},
+		"a place one attendee says works": {withAttendee(model.StatusNone, 1), `<span class="badge callout note"><span class="vh">Note: </span>One attendee says it works; a second confirmation makes it verified.</span>`},
+		"search is down":                  {fakeAsker{err: io.ErrUnexpectedEOF}, `<p role="alert" class="callout problem"><span class="vh">Error: </span>`},
+	}
+	for name, tc := range cases {
+		t.Run("when "+name, func(t *testing.T) {
+			body := page(t, tc.asker)
+			t.Run("it should put a text label first inside the callout", func(t *testing.T) {
+				if !strings.Contains(body, tc.want) {
+					t.Fatalf("%s missing in %s", tc.want, body)
+				}
+			})
+		})
+	}
+}
