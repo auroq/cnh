@@ -58,6 +58,13 @@ func (s *Service) Locate(ctx context.Context, asked string) (Here, error) {
 	if asked == "" {
 		return Here{}, nil
 	}
+	if byID, ok := s.Store.(IDLocator); ok && looksLikeID(asked) {
+		here, err := step(ctx, s.tracer(), "ask.LocatePlace", func(ctx context.Context) (Here, error) { return byID.LocatePlace(ctx, asked) })
+		if err != nil || here.Venue != "" {
+			here.Asked = asked
+			return here, err
+		}
+	}
 	here, err := step(ctx, s.tracer(), "ask.LocateRoom", func(ctx context.Context) (Here, error) { return s.Store.LocateRoom(ctx, asked) })
 	here.Asked = asked
 	return here, err
