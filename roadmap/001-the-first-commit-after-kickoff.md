@@ -1,6 +1,6 @@
 # 1. The first commit after kickoff
 
-**Open. Filed 2026-11-09, from the kickoff plan. Nobody's call: the contest rules require all three files.**
+**Done 2026-11-09 (b7fa838, issue #1). Filed 2026-11-09, from the kickoff plan. Nobody's call: the contest rules require all three files.**
 
 Depends on: nothing
 

@@ -1,6 +1,6 @@
 # 5. The app namespace is Argo CD managed and Radar clean
 
-**Open. Filed 2026-11-09, from the kickoff plan. Nobody's call: Radar's checks are the spec, see ADR 0005.**
+**Done 2026-11-09 (b7fa838, issue #5; placeholder live at https://widedoor.cnh.auroq.com, Argo CD Synced/Healthy). Filed 2026-11-09, from the kickoff plan. Nobody's call: Radar's checks are the spec, see ADR 0005.**
 
 Depends on: 001
 

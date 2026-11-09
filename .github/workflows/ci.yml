@@ -1,0 +1,61 @@
+name: ci
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  manifests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Render deploy/app with kustomize
+        run: kubectl kustomize deploy/app > /tmp/rendered.yaml
+      - name: Every container has resources, probes and a hardened securityContext
+        run: |
+          python3 - <<'PY'
+          import sys, yaml
+          docs=[d for d in yaml.safe_load_all(open('/tmp/rendered.yaml')) if d]
+          bad=[]
+          for d in docs:
+              if d.get('kind') not in ('Rollout','Deployment','StatefulSet','DaemonSet'): continue
+              name=f"{d['kind']}/{d['metadata']['name']}"
+              spec=d['spec']['template']['spec']
+              if spec.get('automountServiceAccountToken') is not False: bad.append(f"{name}: automountServiceAccountToken")
+              if not spec.get('securityContext',{}).get('runAsNonRoot'): bad.append(f"{name}: runAsNonRoot")
+              for c in spec['containers']:
+                  r=c.get('resources',{})
+                  for k in ('requests','limits'):
+                      for q in ('cpu','memory'):
+                          if not r.get(k,{}).get(q): bad.append(f"{name}/{c['name']}: resources.{k}.{q}")
+                  for p in ('readinessProbe','livenessProbe'):
+                      if not c.get(p): bad.append(f"{name}/{c['name']}: {p}")
+                  sc=c.get('securityContext',{})
+                  if sc.get('allowPrivilegeEscalation') is not False: bad.append(f"{name}/{c['name']}: allowPrivilegeEscalation")
+                  if not sc.get('readOnlyRootFilesystem'): bad.append(f"{name}/{c['name']}: readOnlyRootFilesystem")
+                  if 'ALL' not in sc.get('capabilities',{}).get('drop',[]): bad.append(f"{name}/{c['name']}: capabilities.drop ALL")
+                  if ':' not in c['image'] or c['image'].endswith(':latest'): bad.append(f"{name}/{c['name']}: image tag")
+          print("\n".join(bad) or "all workloads pass")
+          sys.exit(1 if bad else 0)
+          PY
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Every roadmap item has a status on line 3 and the open table matches
+        run: |
+          set -euo pipefail
+          fail=0
+          for f in roadmap/[0-9][0-9][0-9]-*.md; do
+            n=$(basename "$f" | cut -d- -f1)
+            line3=$(sed -n 3p "$f")
+            case "$line3" in
+              "**Open."*|"**Done"*|"**Adjudicated"*) ;;
+              *) echo "$f: line 3 is not a status line"; fail=1 ;;
+            esac
+            listed=$(grep -c "^| \[$n\](roadmap/" ROADMAP.md || true)
+            if [[ "$line3" == "**Open."* && "$listed" -ne 1 ]]; then echo "$f is Open but not in ROADMAP.md's open table"; fail=1; fi
+            if [[ "$line3" != "**Open."* && "$listed" -ne 0 ]]; then echo "$f is not Open but is in ROADMAP.md's open table"; fail=1; fi
+          done
+          exit $fail
