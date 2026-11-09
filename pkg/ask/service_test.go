@@ -15,6 +15,8 @@ type fakeStore struct {
 	searched []string
 }
 
+func (f *fakeStore) Ping(context.Context) error { return f.err }
+
 func (f *fakeStore) LocateRoom(_ context.Context, asked string) (Here, error) {
 	f.located = append(f.located, asked)
 	return f.room, f.err

@@ -76,6 +76,12 @@ spec:
                 secretKeyRef:
                   name: wide-door-es-elastic-user
                   key: elastic
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: OTEL_RESOURCE_ATTRIBUTES
+              value: deployment.environment=cnh,k8s.namespace.name=wide-door,k8s.pod.name=$(POD_NAME),k8s.workload.name=widedoor
           volumeMounts:
             - name: config
               mountPath: /etc/widedoor

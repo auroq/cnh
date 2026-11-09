@@ -46,6 +46,18 @@ func (c *Client) do(ctx context.Context, method, path string, body io.Reader, co
 	return out, res.StatusCode, err
 }
 
+// Ping asks the cluster root for a HEAD and reports whether it answered; it is what a readiness probe needs.
+func (c *Client) Ping(ctx context.Context) error {
+	_, code, err := c.do(ctx, http.MethodHead, "/", nil, "")
+	if err != nil {
+		return err
+	}
+	if code != http.StatusOK {
+		return fmt.Errorf("ping: %d", code)
+	}
+	return nil
+}
+
 // EnsureIndex creates the index with the given body if it does not exist.
 func (c *Client) EnsureIndex(ctx context.Context, name string, body any) error {
 	_, code, err := c.do(ctx, http.MethodHead, "/"+name, nil, "")

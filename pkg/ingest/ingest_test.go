@@ -122,11 +122,11 @@ func TestRun(t *testing.T) {
 
 	cases := []struct {
 		name   string
-		runner Runner
+		runner *Runner
 		want   string
 	}{
-		{"the schedule cannot be fetched", Runner{Source: &fakeSource{err: errors.New("503")}, Places: fakePlaces{}, Indexer: &fakeIndexer{}}, "fetch schedule"},
-		{"the places file is broken", Runner{Source: &fakeSource{sessions: sessions}, Places: fakePlaces{err: errors.New("yaml")}, Indexer: &fakeIndexer{}}, "load places"},
+		{"the schedule cannot be fetched", &Runner{Source: &fakeSource{err: errors.New("503")}, Places: fakePlaces{}, Indexer: &fakeIndexer{}}, "fetch schedule"},
+		{"the places file is broken", &Runner{Source: &fakeSource{sessions: sessions}, Places: fakePlaces{err: errors.New("yaml")}, Indexer: &fakeIndexer{}}, "load places"},
 	}
 	for _, c := range cases {
 		t.Run("when "+c.name, func(t *testing.T) {

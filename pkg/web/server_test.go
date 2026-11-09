@@ -21,6 +21,7 @@ type fakeAsker struct {
 
 func (f fakeAsker) Ask(context.Context, string, string) (ask.Answer, error) { return f.answer, f.err }
 func (f fakeAsker) Locate(context.Context, string) (ask.Here, error)        { return f.answer.Here, f.err }
+func (f fakeAsker) Ready(context.Context) error                             { return f.err }
 
 func get(t *testing.T, a Asker, target string) (*http.Response, string) {
 	t.Helper()

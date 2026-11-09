@@ -16,3 +16,4 @@ data:
       concurrency: 8
     telemetry:
       service_name: widedoor
+      otlp_endpoint: http://dash0-operator-opentelemetry-collector-service.dash0-system.svc.cluster.local:4317

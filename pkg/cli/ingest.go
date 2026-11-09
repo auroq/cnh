@@ -32,6 +32,11 @@ venue places and the rooms the schedule names. Safe to re-run: documents are key
 			if err != nil {
 				return err
 			}
+			log, flush, err := observe(cmd.Context(), cfg.Telemetry(), log)
+			if err != nil {
+				return err
+			}
+			defer flush()
 			in := cfg.Ingest()
 			es := cfg.Elasticsearch()
 			ctx, cancel := context.WithTimeout(cmd.Context(), in.Timeout())

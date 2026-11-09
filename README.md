@@ -29,6 +29,14 @@ The shape is fixed by the ADRs:
 - **Review:** every PR after the first commit is reviewed by Gitar against [`.gitar/review/`](.gitar/review/).
 - **Secrets:** Sealed Secrets only ([ADR 0006](docs/adr/0006-sealed-secrets.md)).
 
+### Observability
+
+The app emits all three OpenTelemetry signals from one adapter, [`pkg/telemetry`](pkg/telemetry), over OTLP gRPC to the Dash0 operator's collector in the cluster; an empty endpoint turns every provider into a noop, which is how tests and local runs stay quiet.
+Traces: every request is a span named for its route (`GET /api/ask`), with an `ask.Ask` span under it that carries the question length, where the attendee stands and what came back, and one child span per Elasticsearch call.
+Metrics: `widedoor.ask.duration`, `widedoor.ask.answers` by the kind of the top place and whether it was verified, and `widedoor.ask.unverified_served`, which counts how many times we told an attendee something nobody had checked on the floor yet; the ingest job reports `widedoor.ingest.sessions_indexed`, `widedoor.ingest.detail_failures` and `widedoor.ingest.duration`.
+Logs: `slog` goes through the `otelslog` bridge, so every request log reaches Dash0 as a log record with the trace and span id it belongs to.
+`widedoor.ask.unverified_served` is the accessibility metric: it is the list of what to go and verify next.
+
 ## Tracks
 
 | track | what Wide Door does for it |
