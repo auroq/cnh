@@ -119,7 +119,7 @@ func (c *Client) Bulk(ctx context.Context, index string, docs []Doc, batch int) 
 		if err != nil {
 			return failed, err
 		}
-		out, code, err := c.do(ctx, http.MethodPost, "/_bulk?refresh=wait_for", bytes.NewReader(body), "application/x-ndjson")
+		out, code, err := c.do(ctx, http.MethodPost, "/_bulk?refresh=false", bytes.NewReader(body), "application/x-ndjson")
 		if err != nil {
 			return failed, err
 		}
@@ -139,6 +139,18 @@ func (c *Client) Bulk(ctx context.Context, index string, docs []Doc, batch int) 
 		}
 	}
 	return failed, nil
+}
+
+// Refresh makes everything written to the index so far visible to search.
+func (c *Client) Refresh(ctx context.Context, index string) error {
+	out, code, err := c.do(ctx, http.MethodPost, "/"+index+"/_refresh", nil, "")
+	if err != nil {
+		return err
+	}
+	if code/100 != 2 {
+		return fmt.Errorf("refresh %s: %d %s", index, code, out)
+	}
+	return nil
 }
 
 // Count returns the document count of an index.

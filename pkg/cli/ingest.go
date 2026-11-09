@@ -44,7 +44,7 @@ venue places and the rooms the schedule names. Safe to re-run: documents are key
 			runner := &ingest.Runner{
 				Source:      &sessionize.Client{HTTP: &http.Client{Timeout: in.FetchTimeout()}, IndexURL: in.SessionizeURL(), Concurrency: in.Concurrency()},
 				Places:      venue.File(in.PlacesFile()),
-				Indexer:     &esindex.Indexer{Client: newClient(es), SessionsIndex: es.SessionsIndex(), PlacesIndex: es.PlacesIndex(), Batch: in.Batch()},
+				Indexer:     &esindex.Indexer{Client: newClientWithTimeout(es, in.ESTimeout()), SessionsIndex: es.SessionsIndex(), PlacesIndex: es.PlacesIndex(), Batch: in.Batch()},
 				SkipDetails: in.SkipDetails(),
 				Log:         log,
 			}

@@ -14,6 +14,7 @@ data:
     ingest:
       places_file: /data/venue/places.yaml
       concurrency: 8
+      es_timeout: 5m
     telemetry:
       service_name: widedoor
       otlp_endpoint: http://dash0-operator-opentelemetry-collector-service.dash0-system.svc.cluster.local:4317

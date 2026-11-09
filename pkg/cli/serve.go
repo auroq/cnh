@@ -70,11 +70,15 @@ func observe(ctx context.Context, cfg config.Telemetry, log *slog.Logger) (*slog
 }
 
 func newClient(es config.Elasticsearch) *esindex.Client {
+	return newClientWithTimeout(es, es.Timeout())
+}
+
+func newClientWithTimeout(es config.Elasticsearch, timeout time.Duration) *esindex.Client {
 	return &esindex.Client{
 		URL:      es.URL(),
 		Username: es.Username(),
 		Password: es.Password(),
-		HTTP:     &http.Client{Timeout: es.Timeout(), Transport: telemetry.Transport("elasticsearch", http.DefaultTransport)},
+		HTTP:     &http.Client{Timeout: timeout, Transport: telemetry.Transport("elasticsearch", http.DefaultTransport)},
 	}
 }
 
