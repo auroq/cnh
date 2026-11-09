@@ -171,7 +171,7 @@ places:
       - Meeting rooms 155, 255 and 355 are stacked on top of each other; the venue says the easiest way to reach them from the Main or South entrances is from the Mezzanine Level (Level 2).
     verified: true
     source: https://www.visitsaltlake.com/salt-palace-convention-center/attend/venue-directory-map/
-    aliases: [West Temple side, West Temple entrance, main entrance, the main doors, the Hyatt side, East Entrance, east doors]
+    aliases: [West Temple side, West Temple entrance, main entrance, the Hyatt side, East Entrance]
     side: West Temple
     leads_to: West Temple and the Hyatt Regency
   - id: entrance-100-south
@@ -184,7 +184,7 @@ places:
     for: [everyone]
     verified: false
     source: floor plan, unverified
-    aliases: [100 S side, 100 South side, 100 South entrance, 100 S entrance, north entrance, north doors]
+    aliases: [100 S side, 100 S entrance, 100 S doors]
     side: 100 South
     leads_to: 100 South
   - id: wheelchair-rental
@@ -270,7 +270,7 @@ places:
     for: [everyone]
     verified: true
     source: https://www.visitsaltlake.com/salt-palace-convention-center/attend/venue-directory-map/
-    aliases: [west entrance, west doors, 300 West side, west side]
+    aliases: [300 West doors, 300 W doors, by the West Lobby, Hall E doors]
     side: West
     leads_to: the west side of the building and the 300 West Lot
   - id: parking-200-south-lot
@@ -361,9 +361,9 @@ places:
     kind: landmark
     name: South Foyer
     venue: Salt Palace
-    level: ""
-    near: Inside the South Entrance on 200 South, by the South Plaza
-    notes: Read off the venue's virtual tour, which has South Foyer and South Plaza Entrance scenes. Not stated in text, so unverified.
+    level: Level 1
+    near: Inside the South Plaza entrance, between the Ballroom and Hall A
+    notes: The floor plan page states that the north and south ballroom foyers provide reception and registration space and that the South Plaza is an outdoor area. The position is read off the drawing.
     for: [everyone]
     verified: false
     source: https://www.imapenterprises.com/saltpalace/virtualtour/index.htm
@@ -372,9 +372,9 @@ places:
     kind: landmark
     name: North Foyer
     venue: Salt Palace
-    level: ""
-    near: Inside the north side entrances, by Hall A, B and C and Hall 1
-    notes: Read off the venue's virtual tour, which has a North Foyer scene. Not stated in text, so unverified.
+    level: Level 1
+    near: Between the Ballroom and rooms 150 and 151, on the far side from the South Foyer
+    notes: The floor plan page states that the north and south ballroom foyers provide reception and registration space. The position is read off the drawing.
     for: [everyone]
     verified: false
     source: https://www.imapenterprises.com/saltpalace/virtualtour/index.htm
@@ -401,3 +401,106 @@ places:
     verified: false
     source: https://www.imapenterprises.com/saltpalace/virtualtour/index.htm
     aliases: [ballroom, the ballroom, grand ballroom, keynote hall, keynote room, main stage]
+  - id: first-aid-north-foyer
+    kind: first-aid
+    name: First aid, North Foyer
+    venue: Salt Palace
+    level: Level 1
+    near: North Foyer, between the Ballroom and room 150
+    notes: Read off the venue's interactive floor plan icon layer. Nobody has checked it on the floor.
+    for: [medical, help]
+    verified: false
+    source: https://www.visitsaltlake.com/salt-palace-convention-center/plan/interactive-floor-plan/
+    aliases: [first aid, medic, medical, nurse, first aid station, I need a medic]
+  - id: first-aid-lower-mezzanine
+    kind: first-aid
+    name: First aid, Lower Mezzanine
+    venue: Salt Palace
+    level: Level 1
+    near: Lower Mezzanine corridor beside Hall 1 to 5, near room 155
+    notes: Read off the venue's interactive floor plan icon layer. Nobody has checked it on the floor.
+    for: [medical, help]
+    verified: false
+    source: https://www.visitsaltlake.com/salt-palace-convention-center/plan/interactive-floor-plan/
+    aliases: [first aid by 155, first aid by the halls, medic by the showcase]
+  - id: security-151
+    kind: security
+    name: Security, by room 151
+    venue: Salt Palace
+    level: Level 1
+    near: Between room 151 and Hall A to E, by the North Foyer
+    notes: Read off the venue's interactive floor plan icon layer. Nobody has checked it on the floor.
+    for: [help, safety]
+    verified: false
+    source: https://www.visitsaltlake.com/salt-palace-convention-center/plan/interactive-floor-plan/
+    aliases: [security, security desk, guard, I feel unsafe]
+  - id: elevators-level-1
+    kind: elevator
+    name: Elevators on Level 1
+    venue: Salt Palace
+    level: Level 1
+    near: South Foyer by the Ballroom, North Foyer by room 150, Lower Mezzanine by room 155, the Hall 1 to 5 concourse, and the West Lobby
+    notes: Five elevator icons on the venue's interactive floor plan. Which levels each one serves is not shown. Nobody has checked them on the floor.
+    for: [mobility]
+    route:
+      - On Level 2 the floor plan shows elevators at East Registration, on the Upper Concourse by room 250, at the Upper Mezzanine by 255 and 257, and at the West Lobby, which line up with the Level 1 icons.
+    verified: false
+    source: https://www.visitsaltlake.com/salt-palace-convention-center/plan/interactive-floor-plan/
+    aliases: [lift, lifts, elevator downstairs, elevator on the ground floor, elevator by the ballroom, elevator by the halls]
+  - id: elevators-level-2
+    kind: elevator
+    name: Elevators on Level 2
+    venue: Salt Palace
+    level: Level 2
+    near: East Registration, Upper Concourse by room 250, Upper Mezzanine by rooms 255 and 257, and the West Lobby
+    notes: Four elevator icons on the venue's interactive floor plan. Nobody has checked them on the floor. The one by 255 and 257 is the nearest to the all-gender restroom outside 255 and to the quiet rooms 260A and 260B.
+    for: [mobility]
+    verified: false
+    source: https://www.visitsaltlake.com/salt-palace-convention-center/plan/interactive-floor-plan/
+    aliases: [elevator upstairs, elevator on the mezzanine, elevator by 255, elevator by registration, elevator by the quiet room]
+  - id: escalators-level-1
+    kind: escalator
+    name: Escalators between Level 1 and Level 2
+    venue: Salt Palace
+    level: Level 1
+    near: South Foyer by the Ballroom, North Foyer by rooms 150 and 151, Lower Mezzanine by room 155, and the West Lobby
+    notes: Escalator icons on both floor plans line up at these four points. Nobody has checked them on the floor.
+    for: [everyone]
+    route:
+      - The Level 2 floor plan shows the matching escalators at East Registration, on the Upper Concourse by 250 and 251, at the Upper Mezzanine by 255, and at the West Lobby.
+    verified: false
+    source: https://www.visitsaltlake.com/salt-palace-convention-center/plan/interactive-floor-plan/
+    aliases: [escalator, escalators, moving stairs, stairs up to the mezzanine]
+  - id: restrooms-level-1
+    kind: restroom
+    name: Restrooms on Level 1
+    venue: Salt Palace
+    level: Level 1
+    near: Along the Hall A to E concourse, in the South Foyer, in the North Foyer, along the Hall 1 to 5 concourse, in the Lower Mezzanine, and in the West Lobby
+    notes: Restroom icons on the venue's interactive floor plan. All-gender or gendered not stated. Single-occupancy or multi-stall not stated. Wheelchair accessible not stated. Changing table not stated. Adult changing table not stated.
+    for: [restroom]
+    verified: false
+    source: https://www.visitsaltlake.com/salt-palace-convention-center/plan/interactive-floor-plan/
+    aliases: [bathroom, toilet, washroom, loo, the toilets downstairs, restroom by the halls]
+  - id: restrooms-level-2
+    kind: restroom
+    name: Restrooms on Level 2
+    venue: Salt Palace
+    level: Level 2
+    near: East Registration by room 251, the Upper Mezzanine by rooms 255 and 257, and the West Lobby corridor
+    notes: Restroom icons on the venue's interactive floor plan. All-gender or gendered not stated. Single-occupancy or multi-stall not stated. Wheelchair accessible not stated. Changing table not stated. Adult changing table not stated.
+    for: [restroom]
+    verified: false
+    source: https://www.visitsaltlake.com/salt-palace-convention-center/plan/interactive-floor-plan/
+    aliases: [the toilets upstairs, bathroom on the mezzanine, restroom by registration, washroom upstairs]
+  - id: visitor-center-level-2
+    kind: info-desk
+    name: Visit Salt Lake Visitors' Center and gift shop
+    venue: Salt Palace
+    level: Level 2
+    near: East Registration, by the West Temple entrance doors
+    notes: The floor plan page states that Level 2 has a large sunlit lobby that leads to the Business Center, the Visit Salt Lake Visitors' Center, the gift shop and meeting rooms. The position is read off the drawing.
+    for: [help]
+    verified: false
+    source: https://www.visitsaltlake.com/salt-palace-convention-center/plan/interactive-floor-plan/
+    aliases: [visitor center, visitors center, gift shop, tourist information, business center]

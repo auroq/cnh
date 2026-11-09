@@ -13,7 +13,7 @@ Extraction method: `tools/venue-extract/extract.py` fetches the text pages and t
 | directory | https://www.visitsaltlake.com/salt-palace-convention-center/attend/venue-directory-map/ | text, by the script |
 | parking | https://www.visitsaltlake.com/salt-palace-convention-center/attend/parking-information/ | text, by the script |
 | tour | https://www.imapenterprises.com/saltpalace/virtualtour/index.htm | scene labels from its `script.js`, by the script; the panoramas themselves were not viewed |
-| floor plan | https://www.visitsaltlake.com/salt-palace-convention-center/plan/interactive-floor-plan/ | not read; the CDN returns Access Denied to a non-browser fetch and the browser pass was not done before the hard stop |
+| floor plan | https://www.visitsaltlake.com/salt-palace-convention-center/plan/interactive-floor-plan/ | the CDN returns Access Denied to a non-browser fetch, so Levels 1 and 2 were read in Claude in Chrome with the icon layer on; Level 3 was not opened |
 
 ## Facts
 
@@ -35,9 +35,24 @@ Extraction method: `tools/venue-extract/extract.py` fetches the text pages and t
 | The 200 South Lot is nearest the South Entrance and the 300 West Lot is nearest the West entrances | parking-200-south-lot, parking-300-west-lot | parking, directory | inferred from the street names | |
 | The tour has scenes named West Lobby, West Lobby Entrance, South Foyer, South Plaza Entrance, North Foyer, Entrance Foyer, Main Entrance, East Registration, Ballroom, 255 Foyer, 355 Foyer, Lower Mezzanine, Lower Mezzanine Entrance, Upper Mezzanine, Lower Concourse, Upper Concourse, Hall A B and C, Hall 1, Hall 4 and 5, Hall E, Room 255, Level 1, Level 2, Level 3 | west-lobby, south-foyer, north-foyer, east-registration, grand-ballroom | tour | inferred; a scene label is not a statement about position or access | |
 
+## Floor plan, Levels 1 and 2
+
+| fact | place id | status | OSM attribute |
+| --- | --- | --- | --- |
+| The north and south ballroom foyers provide reception and registration space; the South Plaza is an outdoor area | south-foyer, north-foyer | verified, stated in the Level 1 caption | |
+| Level 2 has a large sunlit lobby that leads to the Business Center, the Visit Salt Lake Visitors' Center, the gift shop and meeting rooms | visitor-center-level-2, mezzanine-level-2 | verified, stated in the Level 2 caption | level=2 |
+| First aid icons at the North Foyer and at the Lower Mezzanine by room 155 | first-aid-north-foyer, first-aid-lower-mezzanine | inferred from icons | emergency=first_aid |
+| Security icon between room 151 and Hall A to E | security-151 | inferred from icons | |
+| Elevator icons on Level 1 at South Foyer, North Foyer, Lower Mezzanine, the Hall 1 to 5 concourse and West Lobby; on Level 2 at East Registration, Upper Concourse by 250, Upper Mezzanine by 255 and 257, and West Lobby | elevators-level-1, elevators-level-2 | inferred from icons; levels served not shown | highway=elevator |
+| Escalator icons on both levels at South Foyer, North Foyer, Lower and Upper Mezzanine, and West Lobby | escalators-level-1 | inferred from icons | conveying=yes |
+| Entrance icons on Level 1 at South Plaza (two), the north end of Hall A to E, the Lower Mezzanine east side (two) and West Lobby (two); on Level 2 at East Registration (two) | entrance-200-south, entrance-west-temple, entrance-west, entrance-100-south | inferred from icons; step-free not shown | entrance=yes, wheelchair=unknown |
+| Parking icons at the north end of Hall A to E and at the West Lobby | parking-300-west-lot | inferred from icons | |
+| Restroom icons along both hall concourses, in both foyers, at the Lower Mezzanine and West Lobby, at East Registration, and by 255 and 257 | restrooms-level-1, restrooms-level-2 | inferred from icons; no attribute stated | |
+
 ## Restrooms
 
 Neither text page mentions a restroom, so no restroom attribute was extracted from the venue.
+The floor plan shows restroom icons only, so `restrooms-level-1` and `restrooms-level-2` carry every attribute as not stated.
 The organiser's list of all-gender restrooms stays as it was, with its own source.
 For every restroom the fields Aria asked for are not stated by the venue: all-gender or gendered, single-occupancy or multi-stall, wheelchair accessible, changing table, adult changing table.
 
