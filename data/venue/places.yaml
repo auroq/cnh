@@ -107,6 +107,7 @@ places:
     for: [help, mobility]
     verified: true
     source: https://sessionize.com/api/v2/uo948i5p/view/markdown
+    aliases: [registration, where I registered, where everyone registered, badge pick-up, badge pickup, the registration desk, check-in]
   - id: coat-check-east
     kind: coat-check
     name: Coat and bag check
@@ -116,6 +117,7 @@ places:
     for: [help]
     verified: true
     source: https://sessionize.com/api/v2/uo948i5p/view/markdown
+    aliases: [coat check, the coat check, bag check, east registration]
   - id: community-hub-grand-j
     kind: community-hub
     name: Community Hub and Merge Forward gatherings
@@ -126,6 +128,44 @@ places:
     for: [community, deaf, queer, bipoc, women]
     verified: true
     source: https://sessionize.com/api/v2/uo948i5p/view/markdown
+    aliases: [community hub, the community hub, merge forward]
+  - id: solutions-showcase
+    kind: landmark
+    name: Solutions Showcase
+    venue: Salt Palace
+    level: Level 1
+    near: Halls A-C and 1-5
+    notes: The sponsor booths and the expo floor. An all-gender restroom is in the Amber Hive Zone.
+    for: [everyone]
+    verified: true
+    source: https://sessionize.com/api/v2/uo948i5p/view/markdown
+    aliases: [sponsor booths, the sponsor booths, the showcase, solutions showcase, expo hall, the expo, vendor hall]
+  - id: entrance-west-temple
+    kind: entrance
+    name: Main entrance, West Temple
+    venue: Salt Palace
+    level: ""
+    near: Doors on West Temple, the Hyatt Regency side
+    notes: Seeded as unverified from the floor plan. Whether this door is step-free has not been checked.
+    for: [everyone]
+    verified: false
+    source: floor plan, unverified
+    aliases: [West Temple side, West Temple entrance, main entrance, the main doors, the Hyatt side]
+    side: West Temple
+    leads_to: West Temple and the Hyatt Regency
+  - id: entrance-100-south
+    kind: entrance
+    name: 100 South entrance
+    venue: Salt Palace
+    level: ""
+    near: Doors on 100 South
+    notes: Seeded as unverified from the floor plan. Whether this door is step-free has not been checked.
+    for: [everyone]
+    verified: false
+    source: floor plan, unverified
+    aliases: [100 S side, 100 South side, 100 South entrance, 100 S entrance]
+    side: 100 South
+    leads_to: 100 South
   - id: wheelchair-rental
     kind: mobility-equipment
     name: Wheelchair and scooter rental
@@ -175,3 +215,6 @@ places:
     for: [mobility]
     verified: false
     source: floor plan, unverified
+    aliases: [200 South entrance, 200 S side, 200 South side, 200 S entrance, step-free entrance]
+    side: 200 South
+    leads_to: 200 South and the 200 South Lot

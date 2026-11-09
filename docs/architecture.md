@@ -50,7 +50,7 @@ flowchart LR
 
 | port | declared by | implemented by | why it exists |
 | --- | --- | --- | --- |
-| `ask.Store` (`LocateRoom`, `FindPlaces`, `FindSessions`) | `pkg/ask` | `esindex.Store` | the use case asks for rooms, places and sessions in its own words; the query language stays in the adapter, and `Ask` is tested with a ten-line fake |
+| `ask.Store` (`LocateRoom`, `LocateRoomFuzzy`, `LocateAlias`, `LocateSession`, `LocateNearby`, `FindPlaces`, `FindSessions`) | `pkg/ask` | `esindex.Store` | the use case asks for rooms, places and sessions in its own words, and `Locate` tries the lookups in a fixed order (exact room, alias, session title, fuzzy room, semantic); the query language stays in the adapter, and `Ask` is tested with a ten-line fake |
 | `web.Asker` (`Ask`, `Locate`) | `pkg/web` | `ask.Service` | the page needs answers, not a search engine; handler tests pass a fake |
 | `ingest.Source` (`Index`, `Describe`) | `pkg/ingest` | `sessionize.Client` | where the schedule comes from; a fake returns three sessions in the tests |
 | `ingest.Places` (`Places`) | `pkg/ingest` | `venue.File` | where the curated features come from |

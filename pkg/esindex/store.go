@@ -3,6 +3,9 @@ package esindex
 import (
 	"context"
 	"encoding/json"
+	"strings"
+	"time"
+	"unicode"
 
 	"github.com/auroq/cnh/pkg/ask"
 )
@@ -45,12 +48,65 @@ func (s *Store) Ping(ctx context.Context) error {
 	return s.Client.Ping(ctx)
 }
 
-func (s *Store) LocateRoom(ctx context.Context, asked string) (ask.Here, error) {
-	hits, err := s.searchPlaces(ctx, locateQuery(asked))
+func (s *Store) LocateRoom(ctx context.Context, name string) (ask.Here, error) {
+	return s.firstPlace(ctx, roomQuery(map[string]any{"match_phrase": map[string]any{"name": name}}))
+}
+
+func (s *Store) LocateRoomFuzzy(ctx context.Context, asked string) (ask.Here, error) {
+	return s.firstPlace(ctx, roomQuery(map[string]any{"bool": map[string]any{
+		"should": []any{
+			map[string]any{"match": map[string]any{"name": map[string]any{"query": asked, "fuzziness": "AUTO", "operator": "and"}}},
+			map[string]any{"match": map[string]any{"near": asked}},
+		},
+		"minimum_should_match": 1,
+	}}))
+}
+
+// LocateAlias matches the meaningful words of what was said against the phrases people use for a place;
+// filler such as "the", "I'm at" and "just left" is dropped first, so "the 100 S side" finds the alias "100 S side".
+func (s *Store) LocateAlias(ctx context.Context, phrase string) (ask.Here, error) {
+	words := meaningful(phrase)
+	if words == "" {
+		return ask.Here{}, nil
+	}
+	return s.firstPlace(ctx, map[string]any{"size": 1, "query": map[string]any{
+		"match": map[string]any{"aliases": map[string]any{"query": words, "operator": "and"}},
+	}})
+}
+
+// LocateSession finds the session whose title has every meaningful word said, preferring the one that ended closest to now.
+func (s *Store) LocateSession(ctx context.Context, title string, now time.Time) (ask.Here, error) {
+	words := meaningful(title)
+	if words == "" {
+		return ask.Here{}, nil
+	}
+	raw, err := s.Client.Search(ctx, s.sessions(), map[string]any{"size": 1, "query": map[string]any{"bool": map[string]any{
+		"must":   []any{map[string]any{"match": map[string]any{"title": map[string]any{"query": words, "operator": "and"}}}},
+		"should": []any{map[string]any{"distance_feature": map[string]any{"field": "end", "origin": now.UTC().Format(time.RFC3339), "pivot": "30m"}}},
+	}}})
+	if err != nil {
+		return ask.Here{}, err
+	}
+	hits, err := sources[ask.Session](raw)
 	if err != nil || len(hits) == 0 {
 		return ask.Here{}, err
 	}
-	return ask.Here{Room: hits[0].Name, Venue: hits[0].Venue, Level: hits[0].Level}, nil
+	return ask.Here{Room: hits[0].Room, Venue: hits[0].Venue, Level: hits[0].Level}, nil
+}
+
+// LocateNearby asks the semantic field which place the words describe, and answers only when the match is a confident one.
+func (s *Store) LocateNearby(ctx context.Context, phrase string) (ask.Here, error) {
+	return s.firstPlace(ctx, map[string]any{"size": 1, "min_score": nearbyMinScore, "query": map[string]any{
+		"semantic": map[string]any{"field": "content", "query": phrase},
+	}})
+}
+
+func (s *Store) firstPlace(ctx context.Context, body any) (ask.Here, error) {
+	hits, err := s.searchPlaces(ctx, body)
+	if err != nil || len(hits) == 0 {
+		return ask.Here{}, err
+	}
+	return ask.Here{Room: hits[0].Name, Venue: hits[0].Venue, Level: hits[0].Level, Side: hits[0].Side}, nil
 }
 
 // LocatePlace resolves a place id, as a door code carries it, to where that place is; any kind, not only rooms.
@@ -59,7 +115,7 @@ func (s *Store) LocatePlace(ctx context.Context, id string) (ask.Here, error) {
 	if err != nil || len(hits) == 0 {
 		return ask.Here{}, err
 	}
-	return ask.Here{Room: hits[0].Name, Venue: hits[0].Venue, Level: hits[0].Level}, nil
+	return ask.Here{Room: hits[0].Name, Venue: hits[0].Venue, Level: hits[0].Level, Side: hits[0].Side}, nil
 }
 
 func (s *Store) FindPlaces(ctx context.Context, question, kind string) ([]ask.Place, error) {
@@ -86,21 +142,29 @@ func (s *Store) searchPlaces(ctx context.Context, body any) ([]ask.Place, error)
 	return sources[ask.Place](raw)
 }
 
-func locateQuery(asked string) map[string]any {
-	return map[string]any{
-		"size": 1,
-		"query": map[string]any{
-			"bool": map[string]any{
-				"filter": []any{roomsOnly},
-				"should": []any{
-					map[string]any{"match_phrase": map[string]any{"name": map[string]any{"query": asked, "boost": 3}}},
-					map[string]any{"match": map[string]any{"name": map[string]any{"query": asked, "fuzziness": "AUTO", "operator": "and"}}},
-					map[string]any{"match": map[string]any{"near": asked}},
-				},
-				"minimum_should_match": 1,
-			},
-		},
+func roomQuery(match any) map[string]any {
+	return map[string]any{"size": 1, "query": map[string]any{"bool": map[string]any{"filter": []any{roomsOnly}, "must": []any{match}}}}
+}
+
+const nearbyMinScore = 8.0
+
+var filler = map[string]bool{}
+
+func init() {
+	for _, w := range strings.Fields("a an and are as at be but by for if in into is it no not of on or such that the their then there these they this to was will with i im m am my me we you just got left came coming out from near here where outside inside now right") {
+		filler[w] = true
 	}
+}
+
+// meaningful lowercases, splits on anything that is not a letter or digit, and drops the filler words.
+func meaningful(s string) string {
+	var out []string
+	for _, w := range strings.FieldsFunc(strings.ToLower(s), func(r rune) bool { return !unicode.IsLetter(r) && !unicode.IsDigit(r) }) {
+		if !filler[w] {
+			out = append(out, w)
+		}
+	}
+	return strings.Join(out, " ")
 }
 
 func hybrid(q string, fields []string, size int, filter, mustNot any) map[string]any {

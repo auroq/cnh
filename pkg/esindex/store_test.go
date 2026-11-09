@@ -102,6 +102,12 @@ func TestLocateRoom(t *testing.T) {
 				t.Fatalf("query %s", b)
 			}
 		})
+		t.Run("it should match the whole name as a phrase, without fuzziness", func(t *testing.T) {
+			b, _ := json.Marshal(got.body["query"].(map[string]any)["bool"].(map[string]any)["must"])
+			if string(b) != `[{"match_phrase":{"name":"255 bc"}}]` {
+				t.Fatalf("must %s", b)
+			}
+		})
 		t.Run("it should return the room with its venue and level", func(t *testing.T) {
 			if here.Room != "255 BC" || here.Venue != "Salt Palace" || here.Level != "Level 2" {
 				t.Fatalf("got %+v", here)
