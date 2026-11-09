@@ -50,6 +50,7 @@ type page struct {
 	Question string
 	From     string
 	Answer   *ask.Answer
+	Scanned  *ask.Here
 	Error    string
 	Kinds    []kind
 }
@@ -107,6 +108,16 @@ func (s *Server) home(w http.ResponseWriter, r *http.Request) {
 	q := strings.TrimSpace(r.URL.Query().Get("q"))
 	from := strings.TrimSpace(r.URL.Query().Get("from"))
 	p := page{Title: "Wide Door", Question: q, From: from, Kinds: quickKinds}
+	if q == "" && from != "" {
+		ctx, cancel := context.WithTimeout(r.Context(), askTimeout)
+		defer cancel()
+		if here, err := s.ask.Locate(ctx, from); err != nil {
+			s.log.ErrorContext(ctx, "locate", "err", err.Error())
+		} else if here.Room != "" {
+			p.Scanned = &here
+			p.From = here.Room
+		}
+	}
 	if q != "" {
 		ctx, cancel := context.WithTimeout(r.Context(), askTimeout)
 		defer cancel()

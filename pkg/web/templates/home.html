@@ -14,11 +14,12 @@
   <p class="lede">Ask where things are at KubeCon. Answers say the building, the level, and whether anyone has checked them.</p>
 </header>
 <main id="main">
+  {{if .Scanned}}<p class="here scanned">You scanned the code at <strong>{{.Scanned.Room}}</strong>, {{.Scanned.Venue}}{{if .Scanned.Level}} {{.Scanned.Level}}{{end}}. <a href="#from">Change where you are</a></p>{{end}}
   <form action="/ask" method="get" role="search" aria-describedby="how">
     <p id="how" class="how">Two boxes. The first is what you need. The second is the room you are in or near, so the answer can say whether you need stairs or an elevator.</p>
     <div class="field">
       <label for="q">What do you need?</label>
-      <input id="q" name="q" type="search" value="{{.Question}}" autocomplete="off" enterkeyhint="search" placeholder="nearest all-gender restroom" required>
+      <input id="q" name="q" type="search" value="{{.Question}}" autocomplete="off" enterkeyhint="search"{{if .Scanned}} autofocus{{end}} placeholder="nearest all-gender restroom" required>
     </div>
     <div class="field">
       <label for="from">Where are you? <span class="opt">(optional, a room name)</span></label>
