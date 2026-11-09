@@ -53,12 +53,16 @@ func (s *Store) LocateRoom(ctx context.Context, asked string) (ask.Here, error) 
 	return ask.Here{Room: hits[0].Name, Venue: hits[0].Venue, Level: hits[0].Level}, nil
 }
 
-func (s *Store) FindPlaces(ctx context.Context, question string) ([]ask.Place, error) {
-	return s.searchPlaces(ctx, hybrid(question, placeFields, 10, roomsOnly))
+func (s *Store) FindPlaces(ctx context.Context, question, kind string) ([]ask.Place, error) {
+	var onlyKind any
+	if kind != "" {
+		onlyKind = map[string]any{"term": map[string]any{"kind": kind}}
+	}
+	return s.searchPlaces(ctx, hybrid(question, placeFields, 10, onlyKind, roomsOnly))
 }
 
 func (s *Store) FindSessions(ctx context.Context, question string) ([]ask.Session, error) {
-	raw, err := s.Client.Search(ctx, s.sessions(), hybrid(question, sessionFields, 5, nil))
+	raw, err := s.Client.Search(ctx, s.sessions(), hybrid(question, sessionFields, 5, nil, nil))
 	if err != nil {
 		return nil, err
 	}
@@ -90,12 +94,12 @@ func locateQuery(asked string) map[string]any {
 	}
 }
 
-func hybrid(q string, fields []string, size int, mustNot any) map[string]any {
+func hybrid(q string, fields []string, size int, filter, mustNot any) map[string]any {
 	lexical := map[string]any{"multi_match": map[string]any{"query": q, "fields": fields, "fuzziness": "AUTO"}}
 	semantic := map[string]any{"semantic": map[string]any{"field": "content", "query": q}}
-	if mustNot != nil {
-		lexical = map[string]any{"bool": map[string]any{"must": lexical, "must_not": mustNot}}
-		semantic = map[string]any{"bool": map[string]any{"must": semantic, "must_not": mustNot}}
+	if filter != nil || mustNot != nil {
+		lexical = narrowed(lexical, filter, mustNot)
+		semantic = narrowed(semantic, filter, mustNot)
 	}
 	return map[string]any{
 		"size": size,
@@ -109,6 +113,17 @@ func hybrid(q string, fields []string, size int, mustNot any) map[string]any {
 			},
 		},
 	}
+}
+
+func narrowed(must, filter, mustNot any) map[string]any {
+	b := map[string]any{"must": must}
+	if filter != nil {
+		b["filter"] = []any{filter}
+	}
+	if mustNot != nil {
+		b["must_not"] = mustNot
+	}
+	return map[string]any{"bool": b}
 }
 
 func sources[T any](raw json.RawMessage) ([]T, error) {
