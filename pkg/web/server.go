@@ -34,11 +34,12 @@ type Asker interface {
 }
 
 type Server struct {
-	ask    Asker
-	tmpl   *template.Template
-	log    *slog.Logger
-	tracer trace.TracerProvider
-	meter  metric.MeterProvider
+	ask      Asker
+	reporter Reporter
+	tmpl     *template.Template
+	log      *slog.Logger
+	tracer   trace.TracerProvider
+	meter    metric.MeterProvider
 
 	once               sync.Once
 	chipCounter        metric.Int64Counter
@@ -60,6 +61,8 @@ type page struct {
 	Answer      *ask.Answer
 	Scanned     *ask.Here
 	Error       string
+	Reported    string
+	CanReport   bool
 	Kinds       []kind
 	Prefs       string
 	Chips       []chip
@@ -92,7 +95,7 @@ const (
 func New(a Asker, log *slog.Logger, opts ...Option) *Server {
 	s := &Server{
 		ask:    a,
-		tmpl:   template.Must(template.New("").Funcs(template.FuncMap{"clock": clock, "location": readableLocation, "when": when, "distance": distance}).ParseFS(assets, "templates/*.html")),
+		tmpl:   template.Must(template.New("").Funcs(template.FuncMap{"clock": clock, "location": readableLocation, "when": when, "distance": distance, "attendee": ask.AttendeeSentence, "attendeeBadge": attendeeBadge, "report": reportFor}).ParseFS(assets, "templates/*.html")),
 		log:    log,
 		tracer: otel.GetTracerProvider(),
 	}
@@ -111,6 +114,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /profile", s.home)
 	mux.HandleFunc("POST /profile", s.profile)
 	mux.HandleFunc("GET /api/ask", s.apiAsk)
+	mux.HandleFunc("POST /report", s.report)
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, _ *http.Request) { fmt.Fprintln(w, "ok") })
 	mux.HandleFunc("GET /readyz", s.ready)
 	mux.Handle("GET /static/", http.FileServerFS(assets))
@@ -125,7 +129,7 @@ func (s *Server) home(w http.ResponseWriter, r *http.Request) {
 	q := strings.TrimSpace(r.URL.Query().Get("q"))
 	from := strings.TrimSpace(r.URL.Query().Get("from"))
 	prefs := s.preferences(w, r)
-	p := page{Title: "Wide Door", Question: q, From: from, Kinds: quickKinds}
+	p := page{Title: "Wide Door", Question: q, From: from, Kinds: quickKinds, Reported: reportMessage(r.URL.Query().Get("reported")), CanReport: s.reporter != nil}
 	if q == "" && from != "" {
 		ctx, cancel := context.WithTimeout(r.Context(), askTimeout)
 		defer cancel()

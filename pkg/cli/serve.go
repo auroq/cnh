@@ -16,6 +16,7 @@ import (
 	"github.com/auroq/cnh/pkg/ask"
 	"github.com/auroq/cnh/pkg/config"
 	"github.com/auroq/cnh/pkg/esindex"
+	"github.com/auroq/cnh/pkg/reports"
 	"github.com/auroq/cnh/pkg/telemetry"
 	"github.com/auroq/cnh/pkg/venue"
 	"github.com/auroq/cnh/pkg/web"
@@ -43,11 +44,26 @@ func NewServe(v *viper.Viper, log *slog.Logger) *cobra.Command {
 			if err != nil {
 				return err
 			}
+			blocked, err := venue.BlockedWordsFile(cfg.Venue().BlockedWordsFile()).Words()
+			if err != nil {
+				return err
+			}
 			store := newStore(cfg.Elasticsearch())
-			handler := web.New(&ask.Service{Store: store, Needs: needs}, log).Handler()
+			reportStore := newReports(cfg.Elasticsearch())
+			if err := ensureReports(cmd.Context(), reportStore, cfg.Elasticsearch().Timeout()); err != nil {
+				log.Error("reports index", "err", err.Error())
+			}
+			reporter := &reports.Service{Store: reportStore, BlockedWords: blocked}
+			handler := web.New(&ask.Service{Store: store, Needs: needs, Status: reporter}, log, web.WithReporter(reporter)).Handler()
 			return serve(cmd.Context(), cfg.Server(), handler, log)
 		},
 	}
+}
+
+func ensureReports(ctx context.Context, store *esindex.Reports, timeout time.Duration) error {
+	ctx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+	return store.EnsureIndex(ctx)
 }
 
 // observe installs the OpenTelemetry providers for cfg and returns the logger that reaches them,

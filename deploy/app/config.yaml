@@ -12,12 +12,14 @@ data:
       sessions_index: sessions
       places_index: places
       needs_index: needs
+      reports_index: reports
     ingest:
       places_file: /data/venue/places.yaml
       concurrency: 8
       es_timeout: 5m
     venue:
       needs_file: /data/venue/needs.yaml
+      blocked_words_file: /data/venue/blocked-words.txt
     telemetry:
       service_name: widedoor
       otlp_endpoint: http://dash0-operator-opentelemetry-collector-service.dash0-system.svc.cluster.local:4317

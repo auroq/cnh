@@ -13,6 +13,7 @@ const (
 	KeyElasticsearchSessionsIndex = "elasticsearch.sessions_index"
 	KeyElasticsearchPlacesIndex   = "elasticsearch.places_index"
 	KeyElasticsearchNeedsIndex    = "elasticsearch.needs_index"
+	KeyElasticsearchReportsIndex  = "elasticsearch.reports_index"
 	KeyElasticsearchTimeout       = "elasticsearch.timeout"
 )
 
@@ -23,6 +24,7 @@ var elasticsearchDefaults = map[string]any{
 	KeyElasticsearchSessionsIndex: "sessions",
 	KeyElasticsearchPlacesIndex:   "places",
 	KeyElasticsearchNeedsIndex:    "needs",
+	KeyElasticsearchReportsIndex:  "reports",
 	KeyElasticsearchTimeout:       15 * time.Second,
 }
 
@@ -34,6 +36,7 @@ type Elasticsearch interface {
 	SessionsIndex() string
 	PlacesIndex() string
 	NeedsIndex() string
+	ReportsIndex() string
 	Timeout() time.Duration
 }
 
@@ -47,4 +50,5 @@ func (e elasticsearch) Password() string       { return e.v.GetString(KeyElastic
 func (e elasticsearch) SessionsIndex() string  { return e.v.GetString(KeyElasticsearchSessionsIndex) }
 func (e elasticsearch) PlacesIndex() string    { return e.v.GetString(KeyElasticsearchPlacesIndex) }
 func (e elasticsearch) NeedsIndex() string     { return e.v.GetString(KeyElasticsearchNeedsIndex) }
+func (e elasticsearch) ReportsIndex() string   { return e.v.GetString(KeyElasticsearchReportsIndex) }
 func (e elasticsearch) Timeout() time.Duration { return e.v.GetDuration(KeyElasticsearchTimeout) }

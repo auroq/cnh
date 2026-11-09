@@ -1,0 +1,37 @@
+{{define "attendee_status"}}{{if .Attendee}}{{with attendee .}}<span class="badge {{attendeeBadge $}}">{{.}}</span>{{end}}{{end}}{{end}}
+
+{{define "report_form"}}
+<details class="report">
+  <summary>Were you here? Tell other attendees</summary>
+  <form method="post" action="/report" aria-describedby="report-how-{{.Place.ID}}">
+    <input type="hidden" name="place" value="{{.Place.ID}}">
+    <input type="hidden" name="q" value="{{.Question}}">
+    <input type="hidden" name="from" value="{{.From}}">
+    <p id="report-how-{{.Place.ID}}" class="how">No name, no account. A random id in a cookie on this device is used only to limit repeat reports and to count distinct people; it is never shown.</p>
+    <fieldset>
+      <legend>What did you find at {{.Place.Name}}?</legend>
+      <div class="choice">
+        <input type="radio" id="verdict-works-{{.Place.ID}}" name="verdict" value="works" required>
+        <label for="verdict-works-{{.Place.ID}}">Works as described</label>
+      </div>
+      <div class="choice">
+        <input type="radio" id="verdict-problem-{{.Place.ID}}" name="verdict" value="problem">
+        <label for="verdict-problem-{{.Place.ID}}">Problem, such as a locked door, out of order, or blocked</label>
+      </div>
+      <div class="choice">
+        <input type="radio" id="verdict-not-{{.Place.ID}}" name="verdict" value="not-as-described">
+        <label for="verdict-not-{{.Place.ID}}">Not as described</label>
+      </div>
+    </fieldset>
+    <div class="field">
+      <label for="note-{{.Place.ID}}">What should others know? <span class="opt">(required for a problem or not as described, 10 to 280 characters, no links)</span></label>
+      <textarea id="note-{{.Place.ID}}" name="note" rows="2" maxlength="280" placeholder="ramp is there but the door is locked"></textarea>
+    </div>
+    <div class="hp" aria-hidden="true">
+      <label for="website-{{.Place.ID}}">Leave this field empty</label>
+      <input type="text" id="website-{{.Place.ID}}" name="website" tabindex="-1" autocomplete="off">
+    </div>
+    <button type="submit">Send report</button>
+  </form>
+</details>
+{{end}}

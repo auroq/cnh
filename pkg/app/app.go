@@ -16,7 +16,7 @@ import (
 func Main() int {
 	log := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	v := config.New()
-	root := cli.NewRoot(v, cli.NewServe(v, log), cli.NewIngest(v, log), cli.NewQR(v, log))
+	root := cli.NewRoot(v, cli.NewServe(v, log), cli.NewIngest(v, log), cli.NewQR(v, log), cli.NewReports(v, log))
 	err := root.ExecuteContext(context.Background())
 	switch {
 	case err == nil:
