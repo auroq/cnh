@@ -1,6 +1,8 @@
 # 16. Stretch: search inside talks
 
-**Open. Filed 2026-11-09, from the kickoff plan. Nobody's call once item 014 is decided.**
+**Adjudicated 2026-11-09: won't do. Aria's call: the product became venue access shaped by need and verified by attendees; transcript search is a different product.**
+
+"Which sessions have captions or an interpreter" lives on as a session data field (item 072 and the captions-asl chip of item 081), not as a transcript pipeline.
 
 Depends on: 007, 015
 

@@ -1,6 +1,8 @@
 # 14. Stretch: the transcript source
 
-**Open. Filed 2026-11-09, from the kickoff plan. Aria's call: where transcripts come from, and whether the stretch starts at all.**
+**Adjudicated 2026-11-09: won't do. Aria's call: the product became venue access shaped by need and verified by attendees; transcript search is a different product.**
+
+"Which sessions have captions or an interpreter" lives on as a session data field (item 072 and the captions-asl chip of item 081), not as a transcript pipeline.
 
 Depends on: 013
 
