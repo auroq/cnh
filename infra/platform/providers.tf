@@ -6,19 +6,19 @@ data "onepassword_vault" "cnh" {
 
 data "onepassword_item" "do_token" {
   vault = data.onepassword_vault.cnh.uuid
-  title = "DigitalOcean API"
+  title = "Digital Ocean"
 }
 
 data "onepassword_item" "dash0" {
   count = var.enable_dash0 ? 1 : 0
   vault = data.onepassword_vault.cnh.uuid
-  title = "Dash0 API"
+  title = "Dash0 API Token CNH"
 }
 
 data "onepassword_item" "radar" {
   count = var.enable_radar ? 1 : 0
   vault = data.onepassword_vault.cnh.uuid
-  title = "Radar Connect"
+  title = "Radar API CNH"
 }
 
 provider "digitalocean" {

@@ -28,7 +28,7 @@ AI use: this repo was written with Claude Code (Anthropic) pairing with me.
 Nothing secret is in this repo or on a command line.
 Terraform reads tokens from a dedicated 1Password vault (`CNH`) through the `1Password/onepassword` provider.
 The service-account token for that vault lives gpg-encrypted in `pass` and reaches processes only through `secret-run`.
-Expected vault items: `DigitalOcean API`, `Dash0 API`, `Radar Connect` (API Credential, field `credential`); `cnh-tfstate` is created by `bootstrap/`.
+Expected vault items: `Digital Ocean`, `Dash0 API Token CNH`, `Radar API CNH` (API Credential, field `credential`); `cnh-tfstate` is created by `bootstrap/`.
 
 ## Use
 
