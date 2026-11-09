@@ -23,13 +23,13 @@ EOF
 # model helpers: pkg/venue, pkg/schedule, pkg/agenda; import pkg/model only
 # usecase: declare ports; import model packages only
 # adapter: implement ports; import model and use case packages, never a controller
-# web: the HTTP controller; imports pkg/ask, pkg/model and pkg/api/v1, and is the only importer of pkg/api/v1
+# web: the HTTP controller; imports pkg/ask, pkg/reports, pkg/model and pkg/api/v1, and is the only importer of pkg/api/v1
 # wiring: pkg/cli, pkg/app, cmd/*; import anything under pkg/; nobody imports them
 layer_of() {
   case "$1" in
     pkg/model|pkg/api/v1|pkg/config) echo core ;;
     pkg/venue|pkg/schedule|pkg/agenda) echo model ;;
-    pkg/ask|pkg/ingest) echo usecase ;;
+    pkg/ask|pkg/ingest|pkg/reports) echo usecase ;;
     pkg/esindex|pkg/sessionize|pkg/telemetry|pkg/qr) echo adapter ;;
     pkg/web) echo web ;;
     pkg/cli|pkg/app|cmd/*) echo wiring ;;
@@ -39,7 +39,7 @@ layer_of() {
 
 is_core()    { [[ "$1" == pkg/model || "$1" == pkg/api/v1 || "$1" == pkg/config ]]; }
 is_model()   { [[ "$1" == pkg/venue || "$1" == pkg/schedule || "$1" == pkg/agenda ]]; }
-is_usecase() { [[ "$1" == pkg/ask || "$1" == pkg/ingest ]]; }
+is_usecase() { [[ "$1" == pkg/ask || "$1" == pkg/ingest || "$1" == pkg/reports ]]; }
 
 allowed() {
   local from_layer="$1" to="$2"
@@ -51,7 +51,7 @@ allowed() {
     model) [[ "$to" == pkg/model ]] ;;
     usecase) is_core "$to" || is_model "$to" ;;
     adapter) is_core "$to" || is_model "$to" || is_usecase "$to" ;;
-    web) [[ "$to" == pkg/ask || "$to" == pkg/model || "$to" == pkg/api/v1 ]] ;;
+    web) [[ "$to" == pkg/ask || "$to" == pkg/reports || "$to" == pkg/model || "$to" == pkg/api/v1 ]] ;;
     wiring) [[ "$to" == pkg/* ]] ;;
     *) return 1 ;;
   esac

@@ -42,6 +42,7 @@
   </form>
 
   <section id="answer" aria-live="polite" aria-atomic="true" tabindex="-1">
+    {{if .Reported}}<p class="reported" role="status">{{.Reported}}</p>{{end}}
     {{if .Error}}
       <h2>Something went wrong</h2>
       <p role="alert">{{.Error}}</p>
@@ -63,18 +64,22 @@
           {{if .Notes}}<span class="notes">{{.Notes}}</span>{{end}}
           {{range .Route}}<span class="notes route">{{.}}</span>{{end}}
           {{if .Verified}}<span class="badge ok">Published by the organiser</span>{{else}}<span class="badge warn">Unverified</span>{{end}}
+          {{template "attendee_status" .}}
+          {{if $.CanReport}}{{template "report_form" (report $ .)}}{{end}}
         </li>
         {{end}}
       </ol>
       {{end}}
 
       {{if .Answer.Sessions}}
-      <h3>Sessions</h3>
+      <h3>Sessions matching your question</h3>
       <ol class="results">
         {{range .Answer.Sessions}}
         <li>
           <strong><a href="{{.URL}}" rel="noopener">{{.Title}}</a></strong>
+          <span class="when">{{when .}}</span>
           <span class="where">{{clock .Start}} to {{clock .End}}, {{location .Location}}</span>
+          {{with distance .Distance}}<span class="distance">{{.}}</span>{{end}}
           {{if .Speakers}}<span class="notes">{{range $i, $s := .Speakers}}{{if $i}}, {{end}}{{$s}}{{end}}</span>{{end}}
         </li>
         {{end}}

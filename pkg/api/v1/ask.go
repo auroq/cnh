@@ -13,6 +13,9 @@ type AskResponse struct {
 	Sessions []Session `json:"sessions"`
 	Profile  *Profile  `json:"profile,omitempty"`
 	Schedule *Schedule `json:"schedule,omitempty"`
+
+	// SessionsShownBecause is one of question_about_sessions, title_match or none; absent in responses recorded before it existed.
+	SessionsShownBecause string `json:"sessions_shown_because,omitempty"`
 }
 
 // Schedule is present only when the question carried sched: the attendee's next session, the one just left,
@@ -57,6 +60,11 @@ type Place struct {
 	Source   string   `json:"source"`
 	Side     string   `json:"side,omitempty"`
 	LeadsTo  string   `json:"leads_to,omitempty"`
+
+	AttendeeStatus string     `json:"attendee_status,omitempty"`
+	ReportCount    int        `json:"report_count,omitempty"`
+	LatestNote     string     `json:"latest_note,omitempty"`
+	LatestAt       *time.Time `json:"latest_at,omitempty"`
 }
 
 type Session struct {
@@ -70,6 +78,11 @@ type Session struct {
 	Venue    string    `json:"venue"`
 	Level    string    `json:"level"`
 	Room     string    `json:"room"`
+
+	// State is upcoming, running or ended; StartsInMinutes is set while upcoming; Distance is same_level, same_building, other_building or unknown.
+	State           string `json:"state,omitempty"`
+	StartsInMinutes int    `json:"starts_in_minutes,omitempty"`
+	Distance        string `json:"distance,omitempty"`
 }
 
 // Error is the body of a non-2xx response.

@@ -1,0 +1,11 @@
+# One word or phrase per line that a "Were you here?" note may not contain, matched case-insensitively.
+# Keep it to spam and harassment; a note is about a place, not a person.
+# Volunteers can hide a report that slips through with `widedoor reports hide <id>`.
+kill yourself
+kys
+casino
+viagra
+crypto giveaway
+free bitcoin
+click here
+buy now

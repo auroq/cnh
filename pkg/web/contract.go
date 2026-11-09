@@ -12,14 +12,21 @@ func toV1(a model.Answer) v1.AskResponse {
 		Question: a.Question,
 		Here:     v1.Here{Asked: a.Here.Asked, Room: a.Here.Room, Venue: a.Here.Venue, Level: a.Here.Level, Side: a.Here.Side, Via: a.Here.Via},
 		Summary:  a.Summary,
+
+		SessionsShownBecause: a.SessionsShownBecause,
 	}
 	if a.Places != nil {
 		out.Places = make([]v1.Place, 0, len(a.Places))
 		for _, p := range a.Places {
-			out.Places = append(out.Places, v1.Place{
+			place := v1.Place{
 				ID: p.ID, Kind: p.Kind, Name: p.Name, Venue: p.Venue, Level: p.Level, Near: p.Near,
 				Notes: p.Notes, For: p.For, Route: p.Route, Verified: p.Verified, Source: p.Source, Side: p.Side, LeadsTo: p.LeadsTo,
-			})
+			}
+			if st := p.Attendee; st != nil {
+				at := st.LatestAt
+				place.AttendeeStatus, place.ReportCount, place.LatestNote, place.LatestAt = st.Status, st.Count, st.LatestNote, &at
+			}
+			out.Places = append(out.Places, place)
 		}
 	}
 	if a.Sessions != nil {
@@ -52,5 +59,6 @@ func sessionV1(s model.Session) v1.Session {
 	return v1.Session{
 		ID: s.ID, Title: s.Title, URL: s.URL, Speakers: s.Speakers, Start: s.Start, End: s.End,
 		Location: s.Location, Venue: s.Venue, Level: s.Level, Room: s.Room,
+		State: s.State, StartsInMinutes: s.StartsInMinutes, Distance: s.Distance,
 	}
 }

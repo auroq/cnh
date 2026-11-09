@@ -84,6 +84,21 @@ func TestPage(t *testing.T) {
 			}
 		})
 	})
+
+	t.Run("when the answer lists the Hyatt elevators", func(t *testing.T) {
+		t.Parallel()
+		body := page(t, "nearest elevator", "Hyatt lobby")
+		t.Run("it should offer a Were you here form that posts without JavaScript", func(t *testing.T) {
+			if !strings.Contains(body, `<form method="post" action="/report"`) {
+				t.Fatal("page has no report form")
+			}
+		})
+		t.Run("it should label the works-as-described radio", func(t *testing.T) {
+			if !strings.Contains(body, `<label for="verdict-works-elevators-hyatt">Works as described</label>`) {
+				t.Fatal("page has no labelled radio for elevators-hyatt")
+			}
+		})
+	})
 }
 
 func TestAPIShape(t *testing.T) {
@@ -93,8 +108,8 @@ func TestAPIShape(t *testing.T) {
 		t.Parallel()
 		var a map[string]json.RawMessage
 		helpers.GetJSON(t, "/api/ask", helpers.Query("q", "nearest all-gender restroom", "from", "255 BC"), &a)
-		t.Run("it should have question, here, summary, places and sessions", func(t *testing.T) {
-			want := []string{"here", "places", "question", "sessions", "summary"}
+		t.Run("it should have question, here, summary, places, sessions and why sessions are shown", func(t *testing.T) {
+			want := []string{"here", "places", "question", "sessions", "sessions_shown_because", "summary"}
 			if got := keysOf(t, mustRaw(t, a)); strings.Join(got, ",") != strings.Join(want, ",") {
 				t.Fatalf("keys = %v", got)
 			}
@@ -106,13 +121,19 @@ func TestAPIShape(t *testing.T) {
 		})
 		t.Run("it should describe a place with the documented fields", func(t *testing.T) {
 			got := keysOf(t, firstOf(t, a["places"]))
-			if !within(got, []string{"id", "kind", "name", "venue", "level", "near", "notes", "for", "verified", "source"}) {
+			if !within(got, []string{"id", "kind", "name", "venue", "level", "near", "notes", "for", "verified", "source", "attendee_status", "report_count", "latest_note", "latest_at"}) {
 				t.Fatalf("place keys = %v", got)
 			}
 		})
+	})
+
+	t.Run("when I ask the JSON API about sign language", func(t *testing.T) {
+		t.Parallel()
+		var a map[string]json.RawMessage
+		helpers.GetJSON(t, "/api/ask", helpers.Query("q", "sign language"), &a)
 		t.Run("it should describe a session with the documented fields", func(t *testing.T) {
 			got := keysOf(t, firstOf(t, a["sessions"]))
-			if !within(got, []string{"id", "title", "url", "speakers", "start", "end", "location", "venue", "level", "room"}) {
+			if !within(got, []string{"id", "title", "url", "speakers", "start", "end", "location", "venue", "level", "room", "state", "starts_in_minutes", "distance"}) {
 				t.Fatalf("session keys = %v", got)
 			}
 		})

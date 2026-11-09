@@ -8,6 +8,10 @@ flowchart LR
     attendee([Attendee with a screen reader]) -->|HTTP| web[pkg/web<br/>controller]
     web -->|Asker port| ask{{pkg/ask<br/>use case: Locate, Ask, KindOf, NeedOf, RankByNearness, Summarise}}
     ask -->|Store port| esstore[pkg/esindex.Store<br/>adapter]
+    web -->|Reporter port| reports{{pkg/reports<br/>use case: Submit, StatusFor, Derive}}
+    ask -->|Status port| reports
+    reports -->|Store port| esreports[pkg/esindex.Reports<br/>adapter]
+    esreports --> es
     esstore -->|hybrid query, RRF| es[(Elasticsearch<br/>ECK, in cluster)]
     ingest{{pkg/ingest<br/>use case: Run}} -->|Source port| sz[pkg/sessionize<br/>adapter]
     sz -->|markdown| sessionize([Sessionize schedule])
@@ -34,6 +38,7 @@ flowchart LR
 | package | layer | what it is for |
 | --- | --- | --- |
 | `pkg/ask` | use case, and the model types | answers "where is the nearest X from here": resolves the room, infers the kind of place asked for, asks the store for that kind, ranks by level then building, writes the one sentence a screen reader hears first |
+| `pkg/reports` | use case | takes "Were you here?" reports: validates the verdict and note, rate limits per token and per IP, stores through its `Store`, and derives each place's attendee status (a problem shows at once, two different attendees make it verified, six hours and it is forgotten) |
 | `pkg/ingest` | use case | fills the store: fetches the schedule through its `Source`, loads the curated places through `Places`, writes both through `Indexer`, and reports what was rejected |
 | `pkg/model` | model | `Place`, `Room`, `Session`, `Here`, `Need`, `Answer`, `Preferences` (the profile chips and their encoding) and `Applied`: what the business means, spoken by every port |
 | `pkg/api/v1` | contract | the frozen JSON of `/api/ask`; a wire change is a `v2` |
@@ -55,6 +60,9 @@ flowchart LR
 | port | declared by | implemented by | why it exists |
 | --- | --- | --- | --- |
 | `ask.Store` (`LocateRoom`, `LocateRoomFuzzy`, `LocateAlias`, `LocateSession`, `LocateNearby`, `FindPlaces`, `FindSessions`, `FindNeeds`) | `pkg/ask` | `esindex.Store` | the use case asks for rooms, places, sessions and the need a paraphrase means, in its own words, and `Locate` tries the lookups in a fixed order (exact room, alias, session title, fuzzy room, semantic); the query language stays in the adapter, and `Ask` is tested with a ten-line fake |
+| `ask.Status` (`StatusFor`) | `pkg/ask` | `reports.Service` | the answer says what attendees reported about each place in the same breath as verified or unverified; nil means nobody can report yet |
+| `reports.Store` (`Save`, `Since`, `PlaceKind`) | `pkg/reports` | `esindex.Reports` | the reports index and the place lookup, in the use case's words; tested with a ten-line fake |
+| `web.Reporter` (`Submit`) | `pkg/web` | `reports.Service` | the form hands over a submission and gets back a reason it can turn into a sentence; handler tests pass a fake |
 | `web.Asker` (`Ask`, `Locate`) | `pkg/web` | `ask.Service` | the page needs answers, not a search engine; handler tests pass a fake |
 | `ingest.Source` (`Index`, `Describe`) | `pkg/ingest` | `sessionize.Client` | where the schedule comes from; a fake returns three sessions in the tests |
 | `ingest.Places` (`Places`) | `pkg/ingest` | `venue.File` | where the curated features come from |
@@ -73,6 +81,7 @@ That is the whole trick: dependencies point at interfaces owned by the caller, s
 | --- | --- |
 | `widedoor serve` | `esindex.Client` into `esindex.Store`, into `ask.Service`, into `web.New`, behind an `http.Server` on `server.listen` |
 | `widedoor ingest` | `sessionize.Client` as `Source`, `venue.File` as `Places`, `venue.NeedsFile` as `Needs`, `esindex.Indexer` as `Indexer`, into `ingest.Runner.Run`; exit 2 when the store rejected documents |
+| `widedoor reports` | `esindex.Reports` into `list` (recent reports, newest first, never the token) and `hide ID` (stops a report counting) for volunteers |
 | `widedoor qr` | `venue.File` and the rooms `sessionize.Client` names, into `qr.Codes.Write`: one SVG and PNG per place under `--out`, and `sheet.html` with `--sheet` |
 
 One binary, one image; the Rollout runs it with `serve`, the CronJob with `ingest`.
@@ -89,6 +98,7 @@ Settings come from flags, then `WIDEDOOR_*` environment variables, then `/etc/wi
 | a setting's name, default or where it is read from | `pkg/config/config.go`; in the cluster, `deploy/app/config.yaml` |
 | the curated places or how "nearest" knows levels | `data/venue/places.yaml`, `pkg/venue` |
 | the page, the form, the live region, the CSS | `pkg/web` |
+| the "Were you here?" form, the `wd_id` cookie, the sentence after a report | `pkg/web/report.go`, `pkg/web/templates/report.html`; the trust rules are `reports.Derive`, the wording is `ask.AttendeeSentence`, the blocked words are `data/venue/blocked-words.txt` |
 | the profile chips, the cookie, what a chip does to an answer | `pkg/model/preferences.go` (the chips), `pkg/web/profile.go` (the panel and the cookie), `pkg/ask` (the effects, one hook after `KindOf`) |
 | the pasted schedule, the `wd_sched` cookie, the next and just-left lines, the assumed location | `pkg/agenda` (the parser and the rules), `pkg/esindex/schedule.go` (title matching: exact, then fuzzy with most of the words), `pkg/ask/schedule.go` (`AskScheduled`, the one hook that assumes the room just left), `pkg/web/schedule.go` (the `/schedule` form and the cookie) |
 | a field in the JSON API, or what a type means | `pkg/api/v1` (the promise), `pkg/model` (the meaning), the adapter (the storage) |

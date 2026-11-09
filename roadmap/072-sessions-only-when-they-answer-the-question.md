@@ -1,6 +1,6 @@
 # 72. Sessions appear only when they answer the question, and say when and how far they are
 
-**Open. Filed 2026-11-09 by Aria, p2 (demoted from p1 at 15:00 MT). Nobody's call once item 075 decides the distance wording.**
+**Done 2026-11-09 (PR #99, issue #72). Filed by Aria, p2. The time window is applied in the use case after the relevance search, and the distance line carries tier words only until item 075 decides the wording.**
 
 Depends on: 063, 075
 
