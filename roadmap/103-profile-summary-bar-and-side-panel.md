@@ -1,6 +1,6 @@
 # 103. The profile is a summary bar under the header on every page, a side panel open by default on wide screens, and the full panel on `/profile`
 
-**Open. Filed 2026-11-09 by Aria (issue #103). Aria's call: she set the layout.**
+**Done 2026-11-09 (PR #108, issue #103). Aria set the layout: bar under the header, aside after main, sticky column at 60rem, not shown below it, full panel on `/profile`.**
 
 Depends on: 081, 085
 
