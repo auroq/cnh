@@ -9,3 +9,8 @@ resources:
   - widedoor.yaml
   - elasticsearch.yaml
   - ingest.yaml
+images:
+  - name: ghcr.io/auroq/cnh/widedoor
+    newTag: a79508f9bf01ea89f70c0d027316079fb3eb3c8a
+  - name: ghcr.io/auroq/cnh/ingest
+    newTag: a79508f9bf01ea89f70c0d027316079fb3eb3c8a
