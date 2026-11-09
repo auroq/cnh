@@ -97,7 +97,9 @@ func TestTypedAccessors(t *testing.T) {
 			{"telemetry endpoint", cfg.Telemetry().OTLPEndpoint(), "http://collector:4318"},
 			{"telemetry service name default", cfg.Telemetry().ServiceName(), "widedoor"},
 			{"elasticsearch needs index default", cfg.Elasticsearch().NeedsIndex(), "needs"},
+			{"elasticsearch reports index default", cfg.Elasticsearch().ReportsIndex(), "reports"},
 			{"venue needs file", cfg.Venue().NeedsFile(), "/data/venue/needs.yaml"},
+			{"venue blocked words file default", cfg.Venue().BlockedWordsFile(), "data/venue/blocked-words.txt"},
 		}
 		for _, c := range checks {
 			t.Run("it should expose "+c.name+" through its interface", func(t *testing.T) {

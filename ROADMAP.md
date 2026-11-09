@@ -35,3 +35,4 @@ Times are Mountain Time on 2026-11-09: coding starts at 11:00, code freezes at 1
 | [079](roadmap/079-routes-not-just-destinations.md) | **after the event:** routes with obstacles, as steps in words and on a map | 068, 075, 081 | Aria, the next project |
 | [083](roadmap/083-bring-your-schedule.md) | paste your Sched export or session titles, kept on your device, so answers know where you are going next | 081 | nobody |
 | [085](roadmap/085-chips-learned-from-what-you-ask.md) | a profile chip is added when a question implies it, said in the open, removable | 063, 066, 081 | nobody |
+| [096](roadmap/096-attendee-reports.md) | attendees verify, dispute and annotate places; shown at once, trusted after a second person agrees | 063 | Aria, the trust rules |

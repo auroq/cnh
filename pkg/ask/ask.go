@@ -54,6 +54,7 @@ type (
 type Service struct {
 	Store  Store
 	Needs  []Need
+	Status Status
 	Tracer trace.TracerProvider
 	Meter  metric.MeterProvider
 	Now    func() time.Time
@@ -155,6 +156,7 @@ func (s *Service) answer(ctx context.Context, question, from string, prefs Prefe
 	if len(ans.Places) > maxPlaces {
 		ans.Places = ans.Places[:maxPlaces]
 	}
+	s.attach(ctx, ans.Places)
 
 	if err := s.sessionsFor(ctx, &ans, question); err != nil {
 		return ans, err
@@ -244,6 +246,9 @@ func summarise(a Answer) string {
 		sentence += " Published by the organiser."
 	} else {
 		sentence += " Unverified: read off a plan, nobody has checked it yet."
+	}
+	if attendee := AttendeeSentence(p); attendee != "" {
+		sentence += " " + attendee
 	}
 	return sentence
 }
