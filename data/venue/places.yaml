@@ -165,11 +165,13 @@ places:
     venue: Salt Palace
     level: ""
     near: Doors on West Temple, the Hyatt Regency side
-    notes: Seeded as unverified from the floor plan. Whether this door is step-free has not been checked.
+    notes: The venue names this the East Entrance from West Temple, one of the two main street entrances. Whether this door is step-free is not stated (OSM wheelchair unknown).
     for: [everyone]
-    verified: false
-    source: floor plan, unverified
-    aliases: [West Temple side, West Temple entrance, main entrance, the main doors, the Hyatt side]
+    route:
+      - Meeting rooms 155, 255 and 355 are stacked on top of each other; the venue says the easiest way to reach them from the Main or South entrances is from the Mezzanine Level (Level 2).
+    verified: true
+    source: https://www.visitsaltlake.com/salt-palace-convention-center/attend/venue-directory-map/
+    aliases: [West Temple side, West Temple entrance, main entrance, the main doors, the Hyatt side, East Entrance, east doors]
     side: West Temple
     leads_to: West Temple and the Hyatt Regency
   - id: entrance-100-south
@@ -178,11 +180,11 @@ places:
     venue: Salt Palace
     level: ""
     near: Doors on 100 South
-    notes: Seeded as unverified from the floor plan. Whether this door is step-free has not been checked.
+    notes: Seeded as unverified from the floor plan. The venue states there are entrances on the North side of the building but does not name the street, so the 100 South name is inferred. Whether this door is step-free has not been checked.
     for: [everyone]
     verified: false
     source: floor plan, unverified
-    aliases: [100 S side, 100 South side, 100 South entrance, 100 S entrance]
+    aliases: [100 S side, 100 South side, 100 South entrance, 100 S entrance, north entrance, north doors]
     side: 100 South
     leads_to: 100 South
   - id: wheelchair-rental
@@ -200,10 +202,12 @@ places:
     name: Accessible parking
     venue: Salt Palace
     level: ""
-    near: 200 South Lot and 300 West Lot
+    near: 200 South Lot and 300 West Lot, both underground garages open 24 hours
+    notes: The venue states accessible parking is available in both lots (OSM wheelchair yes). The number of spaces is not published.
     for: [mobility]
     verified: true
-    source: https://events.linuxfoundation.org/kubecon-cloudnativecon-north-america/attend/venue-travel/
+    source: https://www.visitsaltlake.com/salt-palace-convention-center/attend/parking-information/
+    aliases: [accessible parking, disabled parking, handicap parking, ADA parking, where can I park]
   - id: elevators-salt-palace
     kind: elevator
     name: Elevators between Salt Palace levels
@@ -232,10 +236,168 @@ places:
     venue: Salt Palace
     level: ""
     near: 200 South entrance, where registration is
-    notes: Seeded as unverified. Accessible parking is in the 200 South Lot, which suggests this is the accessible entrance, but nobody has checked.
+    notes: Seeded as unverified. The venue names the South Entrance from 200 South as a main entrance and puts accessible parking in the 200 South Lot, which suggests this is the accessible entrance, but step-free is not stated (OSM wheelchair unknown).
     for: [mobility]
+    route:
+      - Meeting rooms 155, 255 and 355 are stacked on top of each other; the venue says the easiest way to reach them from the Main or South entrances is from the Mezzanine Level (Level 2).
     verified: false
     source: floor plan, unverified
     aliases: [200 South entrance, 200 S side, 200 South side, 200 S entrance, step-free entrance]
     side: 200 South
     leads_to: 200 South and the 200 South Lot
+  - id: entrance-200-south
+    kind: entrance
+    name: South Entrance, 200 South
+    venue: Salt Palace
+    level: ""
+    near: Doors on 200 South, the 200 South Lot side
+    notes: The venue names this the South Entrance from 200 South, one of the two main street entrances. Whether this door is step-free is not stated (OSM wheelchair unknown).
+    for: [everyone]
+    route:
+      - Meeting rooms 155, 255 and 355 are stacked on top of each other; the venue says the easiest way to reach them from the Main or South entrances is from the Mezzanine Level (Level 2).
+    verified: true
+    source: https://www.visitsaltlake.com/salt-palace-convention-center/attend/venue-directory-map/
+    aliases: [South Entrance, south doors, 200 South entrance, 200 S entrance, 200 South side, the parking side]
+    side: 200 South
+    leads_to: 200 South and the 200 South Lot
+  - id: entrance-west
+    kind: entrance
+    name: West side entrances
+    venue: Salt Palace
+    level: ""
+    near: West side of the building, towards 300 West and the 300 West Lot
+    notes: The venue states there are entrances on the West side but does not name them or say whether they are step-free (OSM wheelchair unknown).
+    for: [everyone]
+    verified: true
+    source: https://www.visitsaltlake.com/salt-palace-convention-center/attend/venue-directory-map/
+    aliases: [west entrance, west doors, 300 West side, west side]
+    side: West
+    leads_to: the west side of the building and the 300 West Lot
+  - id: parking-200-south-lot
+    kind: parking
+    name: 200 South Lot
+    venue: Salt Palace
+    level: ""
+    near: Underground garage under the south side, nearest the South Entrance on 200 South
+    notes: Automated underground garage open 24 hours. Two vehicle entrances. Accessible parking available (OSM wheelchair yes). Managed by ABM Parking Services, 385-468-2197.
+    for: [mobility, everyone]
+    route:
+      - Enter off 200 South between West Temple and 200 West, or off 200 West just south of the dock entrance.
+    verified: true
+    source: https://www.visitsaltlake.com/salt-palace-convention-center/attend/parking-information/
+    aliases: [200 South Lot, 200 S lot, south garage, south parking, the parking garage on 200 South]
+  - id: parking-300-west-lot
+    kind: parking
+    name: 300 West Lot
+    venue: Salt Palace
+    level: ""
+    near: Underground garage under the west side, nearest the West side entrances
+    notes: Automated underground garage open 24 hours. Two vehicle entrances. Accessible parking available (OSM wheelchair yes). Managed by ABM Parking Services, 385-468-2197.
+    for: [mobility, everyone]
+    route:
+      - Enter off 300 West between 100 South and South Temple, or off 100 South past the Japanese Garden.
+    verified: true
+    source: https://www.visitsaltlake.com/salt-palace-convention-center/attend/parking-information/
+    aliases: [300 West Lot, 300 W lot, west garage, west parking, the parking garage on 300 West]
+  - id: bike-racks
+    kind: parking
+    name: Bicycle racks
+    venue: Salt Palace
+    level: ""
+    near: In both parking garages and at various places outside the building
+    for: [everyone, cyclists]
+    verified: true
+    source: https://www.visitsaltlake.com/salt-palace-convention-center/attend/parking-information/
+    aliases: [bike racks, bike parking, where do I lock my bike, bicycle parking]
+  - id: mezzanine-level-2
+    kind: landmark
+    name: Mezzanine Level
+    venue: Salt Palace
+    level: Level 2
+    near: The 200-numbered meeting rooms, East Registration and the coat check
+    notes: The venue calls Level 2 the Mezzanine. Meeting rooms are numbered by floor; the lower level rooms begin with 1, the Mezzanine rooms begin with 2, and only the northwest part of the building has a third floor meeting room.
+    for: [everyone]
+    route:
+      - Meeting rooms 155, 255 and 355 are stacked on top of each other; the venue says the easiest way to reach them from the Main or South entrances is from the Mezzanine Level (Level 2).
+    verified: true
+    source: https://www.visitsaltlake.com/salt-palace-convention-center/attend/venue-directory-map/
+    aliases: [mezzanine, the mezzanine, upstairs, level 2, second floor, the 200 rooms]
+  - id: room-stack-155-255-355
+    kind: landmark
+    name: Rooms 155, 255 and 355
+    venue: Salt Palace
+    level: ""
+    near: Stacked on top of each other on Levels 1, 2 and 3 in the northwest part of the building
+    notes: The all-gender restroom outside 255 and the 255 Foyer are on the Level 2 member of this stack.
+    for: [everyone]
+    route:
+      - Meeting rooms 155, 255 and 355 are stacked on top of each other; the venue says the easiest way to reach them from the Main or South entrances is from the Mezzanine Level (Level 2).
+    verified: true
+    source: https://www.visitsaltlake.com/salt-palace-convention-center/attend/venue-directory-map/
+    aliases: [155, 255, 355, the 55 rooms, the stacked rooms, 255 foyer, 355 foyer]
+  - id: exhibit-halls
+    kind: landmark
+    name: Exhibit halls A to E and 1 to 5
+    venue: Salt Palace
+    level: Level 1
+    near: The ten exhibit halls that hold the Solutions Showcase
+    notes: The venue states there are 10 exhibit halls, five running north to south labelled A through E and five running east to west numbered 1 through 5.
+    for: [everyone]
+    verified: true
+    source: https://www.visitsaltlake.com/salt-palace-convention-center/attend/venue-directory-map/
+    aliases: [exhibit halls, the halls, hall A, hall B, hall C, hall D, hall E, hall 1, hall 2, hall 3, hall 4, hall 5]
+  - id: west-lobby
+    kind: landmark
+    name: West Lobby
+    venue: Salt Palace
+    level: ""
+    near: The lobby inside the west side entrances, by Hall E and Halls 4 and 5
+    notes: Read off the venue's virtual tour, which has a West Lobby and a West Lobby Entrance scene. Not stated in text, so unverified.
+    for: [everyone]
+    verified: false
+    source: https://www.imapenterprises.com/saltpalace/virtualtour/index.htm
+    aliases: [west lobby, the west lobby, west foyer]
+  - id: south-foyer
+    kind: landmark
+    name: South Foyer
+    venue: Salt Palace
+    level: ""
+    near: Inside the South Entrance on 200 South, by the South Plaza
+    notes: Read off the venue's virtual tour, which has South Foyer and South Plaza Entrance scenes. Not stated in text, so unverified.
+    for: [everyone]
+    verified: false
+    source: https://www.imapenterprises.com/saltpalace/virtualtour/index.htm
+    aliases: [south foyer, the south foyer, south lobby, south plaza]
+  - id: north-foyer
+    kind: landmark
+    name: North Foyer
+    venue: Salt Palace
+    level: ""
+    near: Inside the north side entrances, by Hall A, B and C and Hall 1
+    notes: Read off the venue's virtual tour, which has a North Foyer scene. Not stated in text, so unverified.
+    for: [everyone]
+    verified: false
+    source: https://www.imapenterprises.com/saltpalace/virtualtour/index.htm
+    aliases: [north foyer, the north foyer, north lobby]
+  - id: east-registration
+    kind: landmark
+    name: East Registration
+    venue: Salt Palace
+    level: Level 2
+    near: Mezzanine Level, the West Temple side, where the coat and bag check is
+    notes: The organiser puts the coat check at East Registration on Level 2. The venue's virtual tour has an East Registration scene. The position is read off the tour, so unverified.
+    for: [everyone, help]
+    verified: false
+    source: https://www.imapenterprises.com/saltpalace/virtualtour/index.htm
+    aliases: [east registration, east reg, registration upstairs, the registration area on the mezzanine]
+  - id: grand-ballroom
+    kind: landmark
+    name: Grand Ballroom
+    venue: Salt Palace
+    level: Level 1
+    near: Grand Ballroom A to J, Level 1, where the keynotes and the Community Hub are
+    notes: The organiser's schedule puts sessions and the Community Hub in Grand Ballroom rooms on Level 1. The venue's virtual tour has a Ballroom scene. The position is read off the tour, so unverified.
+    for: [everyone]
+    verified: false
+    source: https://www.imapenterprises.com/saltpalace/virtualtour/index.htm
+    aliases: [ballroom, the ballroom, grand ballroom, keynote hall, keynote room, main stage]
