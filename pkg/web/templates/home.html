@@ -58,12 +58,14 @@
       {{end}}
 
       {{if .Answer.Sessions}}
-      <h3>Sessions</h3>
+      <h3>Sessions matching your question</h3>
       <ol class="results">
         {{range .Answer.Sessions}}
         <li>
           <strong><a href="{{.URL}}" rel="noopener">{{.Title}}</a></strong>
+          <span class="when">{{when .}}</span>
           <span class="where">{{clock .Start}} to {{clock .End}}, {{location .Location}}</span>
+          {{with distance .Distance}}<span class="distance">{{.}}</span>{{end}}
           {{if .Speakers}}<span class="notes">{{range $i, $s := .Speakers}}{{if $i}}, {{end}}{{$s}}{{end}}</span>{{end}}
         </li>
         {{end}}

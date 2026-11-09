@@ -12,6 +12,8 @@ func toV1(a model.Answer) v1.AskResponse {
 		Question: a.Question,
 		Here:     v1.Here{Asked: a.Here.Asked, Room: a.Here.Room, Venue: a.Here.Venue, Level: a.Here.Level},
 		Summary:  a.Summary,
+
+		SessionsShownBecause: a.SessionsShownBecause,
 	}
 	if a.Places != nil {
 		out.Places = make([]v1.Place, 0, len(a.Places))
@@ -28,6 +30,7 @@ func toV1(a model.Answer) v1.AskResponse {
 			out.Sessions = append(out.Sessions, v1.Session{
 				ID: s.ID, Title: s.Title, URL: s.URL, Speakers: s.Speakers, Start: s.Start, End: s.End,
 				Location: s.Location, Venue: s.Venue, Level: s.Level, Room: s.Room,
+				State: s.State, StartsInMinutes: s.StartsInMinutes, Distance: s.Distance,
 			})
 		}
 	}

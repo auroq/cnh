@@ -11,6 +11,9 @@ type AskResponse struct {
 	Summary  string    `json:"summary"`
 	Places   []Place   `json:"places"`
 	Sessions []Session `json:"sessions"`
+
+	// SessionsShownBecause is one of question_about_sessions, title_match or none; absent in responses recorded before it existed.
+	SessionsShownBecause string `json:"sessions_shown_because,omitempty"`
 }
 
 type Here struct {
@@ -44,6 +47,11 @@ type Session struct {
 	Venue    string    `json:"venue"`
 	Level    string    `json:"level"`
 	Room     string    `json:"room"`
+
+	// State is upcoming, running or ended; StartsInMinutes is set while upcoming; Distance is same_level, same_building, other_building or unknown.
+	State           string `json:"state,omitempty"`
+	StartsInMinutes int    `json:"starts_in_minutes,omitempty"`
+	Distance        string `json:"distance,omitempty"`
 }
 
 // Error is the body of a non-2xx response.
