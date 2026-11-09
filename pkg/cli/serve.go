@@ -17,6 +17,7 @@ import (
 	"github.com/auroq/cnh/pkg/config"
 	"github.com/auroq/cnh/pkg/esindex"
 	"github.com/auroq/cnh/pkg/telemetry"
+	"github.com/auroq/cnh/pkg/venue"
 	"github.com/auroq/cnh/pkg/web"
 )
 
@@ -38,8 +39,12 @@ func NewServe(v *viper.Viper, log *slog.Logger) *cobra.Command {
 				return err
 			}
 			defer flush()
+			needs, err := venue.NeedsFile(cfg.Venue().NeedsFile()).Needs()
+			if err != nil {
+				return err
+			}
 			store := newStore(cfg.Elasticsearch())
-			handler := web.New(&ask.Service{Store: store}, log).Handler()
+			handler := web.New(&ask.Service{Store: store, Needs: needs}, log).Handler()
 			return serve(cmd.Context(), cfg.Server(), handler, log)
 		},
 	}
@@ -87,6 +92,7 @@ func newStore(es config.Elasticsearch) *esindex.Store {
 		Client:        newClient(es),
 		PlacesIndex:   es.PlacesIndex(),
 		SessionsIndex: es.SessionsIndex(),
+		NeedsIndex:    es.NeedsIndex(),
 	}
 }
 

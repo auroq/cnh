@@ -28,6 +28,7 @@ const (
 	KeyElasticsearchPassword      = "elasticsearch.password"
 	KeyElasticsearchSessionsIndex = "elasticsearch.sessions_index"
 	KeyElasticsearchPlacesIndex   = "elasticsearch.places_index"
+	KeyElasticsearchNeedsIndex    = "elasticsearch.needs_index"
 	KeyElasticsearchTimeout       = "elasticsearch.timeout"
 
 	KeyIngestPlacesFile    = "ingest.places_file"
@@ -38,6 +39,8 @@ const (
 	KeyIngestSkipDetails   = "ingest.skip_details"
 	KeyIngestBatch         = "ingest.batch"
 	KeyIngestESTimeout     = "ingest.es_timeout"
+
+	KeyVenueNeedsFile = "venue.needs_file"
 
 	KeyTelemetryOTLPEndpoint = "telemetry.otlp_endpoint"
 	KeyTelemetryServiceName  = "telemetry.service_name"
@@ -53,6 +56,7 @@ var Defaults = map[string]any{
 	KeyElasticsearchPassword:      "",
 	KeyElasticsearchSessionsIndex: "sessions",
 	KeyElasticsearchPlacesIndex:   "places",
+	KeyElasticsearchNeedsIndex:    "needs",
 	KeyElasticsearchTimeout:       15 * time.Second,
 	KeyIngestPlacesFile:           "data/venue/places.yaml",
 	KeyIngestSessionizeURL:        "https://sessionize.com/api/v2/uo948i5p/view/markdown",
@@ -62,6 +66,7 @@ var Defaults = map[string]any{
 	KeyIngestSkipDetails:          false,
 	KeyIngestBatch:                50,
 	KeyIngestESTimeout:            5 * time.Minute,
+	KeyVenueNeedsFile:             "data/venue/needs.yaml",
 	KeyTelemetryOTLPEndpoint:      "",
 	KeyTelemetryServiceName:       "widedoor",
 	KeyQRBaseURL:                  "https://widedoor.cnh.auroq.com",
@@ -82,7 +87,13 @@ type Elasticsearch interface {
 	Password() string
 	SessionsIndex() string
 	PlacesIndex() string
+	NeedsIndex() string
 	Timeout() time.Duration
+}
+
+// Venue is what both serve and ingest need to know about the curated vocabulary.
+type Venue interface {
+	NeedsFile() string
 }
 
 // Ingest is what the ingest run needs.
@@ -117,6 +128,7 @@ func (c *Configuration) Server() Server               { return server{c.v} }
 func (c *Configuration) Elasticsearch() Elasticsearch { return elasticsearch{c.v} }
 func (c *Configuration) Ingest() Ingest               { return ingest{c.v} }
 func (c *Configuration) Telemetry() Telemetry         { return telemetry{c.v} }
+func (c *Configuration) Venue() Venue                 { return venueCfg{c.v} }
 func (c *Configuration) QR() QR                       { return qr{c.v} }
 
 // New prepares a viper with defaults, the environment and the config file search path, reading nothing yet.
@@ -212,6 +224,7 @@ func (e elasticsearch) Username() string       { return e.v.GetString(KeyElastic
 func (e elasticsearch) Password() string       { return e.v.GetString(KeyElasticsearchPassword) }
 func (e elasticsearch) SessionsIndex() string  { return e.v.GetString(KeyElasticsearchSessionsIndex) }
 func (e elasticsearch) PlacesIndex() string    { return e.v.GetString(KeyElasticsearchPlacesIndex) }
+func (e elasticsearch) NeedsIndex() string     { return e.v.GetString(KeyElasticsearchNeedsIndex) }
 func (e elasticsearch) Timeout() time.Duration { return e.v.GetDuration(KeyElasticsearchTimeout) }
 
 type ingest struct{ v *viper.Viper }
@@ -229,6 +242,10 @@ type telemetry struct{ v *viper.Viper }
 
 func (t telemetry) OTLPEndpoint() string { return t.v.GetString(KeyTelemetryOTLPEndpoint) }
 func (t telemetry) ServiceName() string  { return t.v.GetString(KeyTelemetryServiceName) }
+
+type venueCfg struct{ v *viper.Viper }
+
+func (c venueCfg) NeedsFile() string { return c.v.GetString(KeyVenueNeedsFile) }
 
 type qr struct{ v *viper.Viper }
 

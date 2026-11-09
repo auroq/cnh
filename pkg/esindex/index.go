@@ -10,11 +10,12 @@ import (
 	"github.com/auroq/cnh/pkg/venue"
 )
 
-// Indexer owns the index mappings and the document shapes; the ingest only hands it sessions and places.
+// Indexer owns the index mappings and the document shapes; the ingest only hands it sessions, places and needs.
 type Indexer struct {
 	Client        *Client
 	SessionsIndex string
 	PlacesIndex   string
+	NeedsIndex    string
 	Batch         int
 	Now           func() time.Time
 }
@@ -46,7 +47,10 @@ func (x *Indexer) EnsureIndexes(ctx context.Context) error {
 	if err := x.Client.EnsureIndex(ctx, x.sessions(), SessionsMapping); err != nil {
 		return err
 	}
-	return x.Client.EnsureIndex(ctx, x.places(), PlacesMapping)
+	if err := x.Client.EnsureIndex(ctx, x.places(), PlacesMapping); err != nil {
+		return err
+	}
+	return x.Client.EnsureIndex(ctx, x.needs(), NeedsMapping)
 }
 
 func (x *Indexer) IndexSessions(ctx context.Context, sessions []schedule.Session) (ingest.Result, error) {

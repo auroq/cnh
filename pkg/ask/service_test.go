@@ -7,13 +7,17 @@ import (
 )
 
 type fakeStore struct {
-	room          Here
-	places        []Place
-	sessions      []Session
-	err           error
-	located       []string
-	searched      []string
-	kinds         []string
+	room     Here
+	places   []Place
+	sessions []Session
+	needs    []NeedMatch
+	byKind   map[string][]Place
+	err      error
+	located  []string
+	searched []string
+	guessed  []string
+	kinds    []string
+
 	noneOfAnyKind bool
 }
 
@@ -29,6 +33,9 @@ func (f *fakeStore) FindPlaces(_ context.Context, question, kind string) ([]Plac
 	f.kinds = append(f.kinds, kind)
 	if kind != "" && f.noneOfAnyKind {
 		return nil, f.err
+	}
+	if f.byKind != nil {
+		return f.byKind[kind], f.err
 	}
 	return f.places, f.err
 }
@@ -220,4 +227,9 @@ func TestLocate(t *testing.T) {
 			})
 		})
 	}
+}
+
+func (f *fakeStore) FindNeeds(_ context.Context, question string) ([]NeedMatch, error) {
+	f.guessed = append(f.guessed, question)
+	return f.needs, f.err
 }

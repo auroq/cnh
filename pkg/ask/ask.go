@@ -27,18 +27,23 @@ type Store interface {
 	FindPlaces(ctx context.Context, question, kind string) ([]Place, error)
 	// FindSessions returns schedule sessions matching the question, best first.
 	FindSessions(ctx context.Context, question string) ([]Session, error)
+	// FindNeeds returns the needs whose phrases the question means, best first, with the score the use case thresholds on.
+	FindNeeds(ctx context.Context, question string) ([]NeedMatch, error)
 }
 
 // The domain types live in pkg/model; these names stay so callers read naturally.
 type (
 	Place   = model.Place
+	Need    = model.Need
 	Session = model.Session
 	Here    = model.Here
 	Answer  = model.Answer
 )
 
+// Service answers questions. Needs is the vocabulary that turns what people say into kinds of place.
 type Service struct {
 	Store  Store
+	Needs  []Need
 	Tracer trace.TracerProvider
 	Meter  metric.MeterProvider
 
@@ -83,6 +88,7 @@ func (s *Service) Ask(ctx context.Context, question, from string) (Answer, error
 	ans, err := s.answer(ctx, question, from)
 	kind, verified := topKind(ans)
 	span.SetAttributes(
+		attrNeed.String(needID(ans)),
 		attrHereVenue.String(ans.Here.Venue),
 		attrHereLevel.String(ans.Here.Level),
 		attrPlacesCount.Int(len(ans.Places)),
@@ -118,16 +124,9 @@ func (s *Service) answer(ctx context.Context, question, from string) (Answer, er
 		return ans, nil
 	}
 
-	kind := KindOf(question)
-	places, err := step(ctx, s.tracer(), "ask.FindPlaces", func(ctx context.Context) ([]Place, error) { return s.Store.FindPlaces(ctx, question, kind) })
+	places, err := s.placesFor(ctx, &ans, question)
 	if err != nil {
 		return ans, err
-	}
-	if len(places) == 0 && kind != "" {
-		places, err = step(ctx, s.tracer(), "ask.FindPlaces", func(ctx context.Context) ([]Place, error) { return s.Store.FindPlaces(ctx, question, "") })
-		if err != nil {
-			return ans, err
-		}
 	}
 	ans.Places = RankByNearness(places, here)
 	if len(ans.Places) > maxPlaces {
@@ -164,7 +163,20 @@ func RankByNearness(places []Place, here Here) []Place {
 }
 
 // Summarise writes the one-sentence answer a screen reader hears first.
+// When the question was understood as a need, it names the need before the place and ends with the need's note.
 func Summarise(a Answer) string {
+	sentence := summarise(a)
+	if a.Need == nil {
+		return sentence
+	}
+	sentence = "You asked for " + a.Need.Name + ". " + sentence
+	if a.Need.Note != "" && len(a.Places) > 0 {
+		sentence += " " + a.Need.Note
+	}
+	return sentence
+}
+
+func summarise(a Answer) string {
 	if len(a.Places) == 0 && len(a.Sessions) == 0 {
 		return "Nothing matched. Try other words, or ask staff at registration."
 	}

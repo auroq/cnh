@@ -12,6 +12,7 @@ type Store struct {
 	Client        *Client
 	PlacesIndex   string
 	SessionsIndex string
+	NeedsIndex    string
 }
 
 var _ ask.Store = (*Store)(nil)

@@ -1,0 +1,42 @@
+# What people say, mapped to the kinds of place Wide Door can offer.
+# phrases: whole words or word runs an attendee might type; matched case-insensitively after punctuation is dropped.
+# kinds:   the place kinds to offer, in order; the first kind with a known place wins.
+# note:    said with the answer when the place is a stand-in for what was asked.
+needs:
+  - id: mobility-accessible
+    name: a step-free way around
+    phrases: [mobility accessible, wheelchair, can't do stairs, cannot do stairs, no stairs, step free, accessible entrance]
+    kinds: [step-free-entrance, elevator]
+  - id: private-space
+    name: somewhere private
+    phrases: [do my makeup, fix my makeup, change clothes, change my clothes, somewhere private, private]
+    kinds: [all-gender-restroom, quiet-room]
+    note: Single-stall where known.
+  - id: medical-private
+    name: a private place for medication
+    phrases: [insulin, injection, inject, medication, medical, meds]
+    kinds: [nursing-room, first-aid, all-gender-restroom]
+    note: A private room; first aid staff can help.
+  - id: menstrual
+    name: period products
+    phrases: [tampon, tampons, pad, pads, period products, period]
+    kinds: [all-gender-restroom, info-desk]
+    note: Ask at the information desk if the restroom has none.
+  - id: first-aid
+    name: first aid
+    phrases: [first aid, hurt, injured, medic, bleeding]
+    kinds: [first-aid, info-desk]
+    note: Staff at registration know where the first-aid points are.
+  - id: emergency-exit
+    name: the way out
+    phrases: [emergency exit, fire exit, get out, exit, evacuate]
+    kinds: [emergency-exit, step-free-entrance, info-desk]
+    note: In an emergency follow the lit exit signs and staff; this is the nearest entrance we know of.
+  - id: rest
+    name: somewhere to rest
+    phrases: [sit down, rest, quiet, overwhelmed, sensory, lie down, breather]
+    kinds: [quiet-room]
+  - id: help
+    name: help from staff
+    phrases: [staff, help, lost, information, ask someone]
+    kinds: [info-desk]
