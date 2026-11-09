@@ -2,6 +2,7 @@ package ask_test
 
 import (
 	"context"
+	"strings"
 	"testing"
 	"time"
 
@@ -15,9 +16,11 @@ func service(t *testing.T) *ask.Service {
 	es := helpers.ESClient(t)
 	places := helpers.NewIndex(t, esindex.PlacesMapping)
 	sessions := helpers.NewIndex(t, esindex.SessionsMapping)
+	needs := helpers.NewIndex(t, esindex.NeedsMapping)
 	helpers.LoadPlaces(t, es, places)
 	helpers.LoadSessions(t, es, sessions)
-	return &ask.Service{Store: &esindex.Store{Client: es, PlacesIndex: places, SessionsIndex: sessions}}
+	helpers.LoadNeeds(t, es, needs)
+	return &ask.Service{Store: &esindex.Store{Client: es, PlacesIndex: places, SessionsIndex: sessions, NeedsIndex: needs}, Needs: helpers.Needs}
 }
 
 func askFrom(t *testing.T, svc *ask.Service, question, from string) ask.Answer {
@@ -62,6 +65,36 @@ func TestAsk(t *testing.T) {
 				if p.Kind != "elevator" {
 					t.Fatalf("places = %+v", a.Places)
 				}
+			}
+		})
+	})
+
+	t.Run("when the attendee asks where to inject insulin", func(t *testing.T) {
+		t.Parallel()
+		a := askFrom(t, service(t), "where can I inject insulin", "")
+		t.Run("it should offer the nursing room", func(t *testing.T) {
+			if len(a.Places) == 0 || a.Places[0].ID != "nursing-room" {
+				t.Fatalf("places = %+v", a.Places)
+			}
+		})
+		t.Run("it should say first aid staff can help", func(t *testing.T) {
+			if !strings.HasSuffix(a.Summary, "A private room; first aid staff can help.") {
+				t.Fatalf("summary = %q", a.Summary)
+			}
+		})
+	})
+
+	t.Run("when the attendee paraphrases a need in words the vocabulary does not list", func(t *testing.T) {
+		t.Parallel()
+		a := askFrom(t, service(t), "I can't walk up the stairs", "")
+		t.Run("it should understand the need through the semantic needs index", func(t *testing.T) {
+			if a.Need == nil || a.Need.ID != "mobility-accessible" {
+				t.Fatalf("need = %+v, summary = %q", a.Need, a.Summary)
+			}
+		})
+		t.Run("it should offer the elevator because the fixtures have no step-free entrance", func(t *testing.T) {
+			if len(a.Places) == 0 || a.Places[0].Kind != "elevator" {
+				t.Fatalf("places = %+v", a.Places)
 			}
 		})
 	})

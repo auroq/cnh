@@ -16,6 +16,7 @@ const (
 	attrHasLocation    = attribute.Key("has_location")
 	attrAnswered       = attribute.Key("answered")
 	attrKind           = attribute.Key("kind")
+	attrNeed           = attribute.Key("need")
 	attrVerified       = attribute.Key("verified")
 	attrQuestionLength = attribute.Key("question.length")
 	attrHereVenue      = attribute.Key("here.venue")
@@ -66,6 +67,13 @@ func step[T any](ctx context.Context, tracer trace.Tracer, name string, fn func(
 		span.SetStatus(codes.Error, err.Error())
 	}
 	return out, err
+}
+
+func needID(a Answer) string {
+	if a.Need == nil {
+		return ""
+	}
+	return a.Need.ID
 }
 
 // topKind names what the attendee was told first: a place's kind, "session", or "none".

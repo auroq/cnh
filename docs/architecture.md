@@ -6,13 +6,16 @@ The use case in the middle says what it needs; everything around it either asks 
 ```mermaid
 flowchart LR
     attendee([Attendee with a screen reader]) -->|HTTP| web[pkg/web<br/>controller]
-    web -->|Asker port| ask{{pkg/ask<br/>use case: Locate, Ask, RankByNearness, Summarise}}
+    web -->|Asker port| ask{{pkg/ask<br/>use case: Locate, Ask, KindOf, NeedOf, RankByNearness, Summarise}}
     ask -->|Store port| esstore[pkg/esindex.Store<br/>adapter]
     esstore -->|hybrid query, RRF| es[(Elasticsearch<br/>ECK, in cluster)]
     ingest{{pkg/ingest<br/>use case: Run}} -->|Source port| sz[pkg/sessionize<br/>adapter]
     sz -->|markdown| sessionize([Sessionize schedule])
     ingest -->|Places port| venue[pkg/venue<br/>model and loader]
     venue --> yaml([data/venue/places.yaml])
+    ingest -->|Needs port| venue
+    venue --> needs([data/venue/needs.yaml])
+    cli -->|reads needs| venue
     ingest -->|Indexer port| indexer[pkg/esindex.Indexer<br/>adapter]
     indexer --> es
     cli[pkg/cli: serve, ingest<br/>wiring] -.constructs.-> web
@@ -30,9 +33,9 @@ flowchart LR
 | --- | --- | --- |
 | `pkg/ask` | use case, and the model types | answers "where is the nearest X from here": resolves the room, infers the kind of place asked for, asks the store for that kind, ranks by level then building, writes the one sentence a screen reader hears first |
 | `pkg/ingest` | use case | fills the store: fetches the schedule through its `Source`, loads the curated places through `Places`, writes both through `Indexer`, and reports what was rejected |
-| `pkg/model` | model | `Place`, `Room`, `Session`, `Here`, `Answer`: what the business means, spoken by every port |
+| `pkg/model` | model | `Place`, `Room`, `Session`, `Here`, `Need`, `Answer`: what the business means, spoken by every port |
 | `pkg/api/v1` | contract | the frozen JSON of `/api/ask`; a wire change is a `v2` |
-| `pkg/venue` | model helper | the curated access features (`data/venue/places.yaml`) as model places, the rooms derived from the schedule, and the loader that validates them |
+| `pkg/venue` | model helper | the curated access features (`data/venue/places.yaml`) as model places, the need vocabulary (`data/venue/needs.yaml`) as model needs, the rooms derived from the schedule, and the loaders that validate them |
 | `pkg/schedule` | model helper | schedule-wide helpers over `model.Session` |
 | `pkg/config` | model | every setting named once: `Key*` constants, defaults, flag binding, and the typed `Server`, `Elasticsearch`, `Ingest` and `Telemetry` interfaces each layer takes |
 | `pkg/esindex` | adapter | everything Elasticsearch: the HTTP client, `Store` (the hybrid BM25 plus `semantic_text` query fused with RRF, the room lookup, hit parsing) and `Indexer` (both index mappings, document shapes, bulk writes) |
@@ -47,12 +50,13 @@ flowchart LR
 
 | port | declared by | implemented by | why it exists |
 | --- | --- | --- | --- |
-| `ask.Store` (`LocateRoom`, `FindPlaces`, `FindSessions`) | `pkg/ask` | `esindex.Store` | the use case asks for rooms, places and sessions in its own words; the query language stays in the adapter, and `Ask` is tested with a ten-line fake |
+| `ask.Store` (`LocateRoom`, `FindPlaces`, `FindSessions`, `FindNeeds`) | `pkg/ask` | `esindex.Store` | the use case asks for rooms, places, sessions and the need a paraphrase means, in its own words; the query language stays in the adapter, and `Ask` is tested with a ten-line fake |
 | `web.Asker` (`Ask`, `Locate`) | `pkg/web` | `ask.Service` | the page needs answers, not a search engine; handler tests pass a fake |
 | `ingest.Source` (`Index`, `Describe`) | `pkg/ingest` | `sessionize.Client` | where the schedule comes from; a fake returns three sessions in the tests |
 | `ingest.Places` (`Places`) | `pkg/ingest` | `venue.File` | where the curated features come from |
-| `ingest.Indexer` (`EnsureIndexes`, `IndexSessions`, `IndexPlaces`) | `pkg/ingest` | `esindex.Indexer` | the store's write side, so the ingest use case never sees a mapping or a bulk body |
-| `config.Server`, `config.Elasticsearch`, `config.Ingest`, `config.Telemetry` | `pkg/config` | `config.Configuration` over viper | each layer takes the slice of settings it needs; a test passes a struct |
+| `ingest.Needs` (`Needs`) | `pkg/ingest` | `venue.NeedsFile` | where the need vocabulary comes from; `serve` reads the same file for the exact-phrase step |
+| `ingest.Indexer` (`EnsureIndexes`, `IndexSessions`, `IndexPlaces`, `IndexNeeds`) | `pkg/ingest` | `esindex.Indexer` | the store's write side, so the ingest use case never sees a mapping or a bulk body |
+| `config.Server`, `config.Elasticsearch`, `config.Ingest`, `config.Venue`, `config.Telemetry` | `pkg/config` | `config.Configuration` over viper | each layer takes the slice of settings it needs; a test passes a struct |
 
 Each port is declared by the package that uses it, not the one that implements it.
 That is the whole trick: dependencies point at interfaces owned by the caller, so the caller never depends on the callee's implementation.
@@ -62,7 +66,7 @@ That is the whole trick: dependencies point at interfaces owned by the caller, s
 | command | wires |
 | --- | --- |
 | `widedoor serve` | `esindex.Client` into `esindex.Store`, into `ask.Service`, into `web.New`, behind an `http.Server` on `server.listen` |
-| `widedoor ingest` | `sessionize.Client` as `Source`, `venue.File` as `Places`, `esindex.Indexer` as `Indexer`, into `ingest.Runner.Run`; exit 2 when the store rejected documents |
+| `widedoor ingest` | `sessionize.Client` as `Source`, `venue.File` as `Places`, `venue.NeedsFile` as `Needs`, `esindex.Indexer` as `Indexer`, into `ingest.Runner.Run`; exit 2 when the store rejected documents |
 
 One binary, one image; the Rollout runs it with `serve`, the CronJob with `ingest`.
 Settings come from flags, then `WIDEDOOR_*` environment variables, then `/etc/widedoor/config.yaml` (the `widedoor-config` ConfigMap in the cluster), then defaults; the Elasticsearch password only from the environment or the file.
@@ -72,6 +76,7 @@ Settings come from flags, then `WIDEDOOR_*` environment variables, then `/etc/wi
 | you want to change | look in |
 | --- | --- |
 | how answers are ranked, which kind a question asks for, or the sentence a screen reader hears | `pkg/ask` (`KindOf`, `RankByNearness`, `Summarise`) |
+| what a phrase means: which kinds of place to offer for what someone says, and the note that goes with a stand-in | `data/venue/needs.yaml`; the order of the steps is `pkg/ask/need.go` (`placesFor`), the semantic fallback's threshold is `ask.MinNeedScore` |
 | the Elasticsearch query, the retrievers, which fields are searched | `pkg/esindex/store.go` |
 | what is indexed and how it is mapped | `pkg/ingest` (the steps), `pkg/sessionize` (what is fetched), `pkg/esindex/index.go` (mappings and document shapes) |
 | a setting's name, default or where it is read from | `pkg/config/config.go`; in the cluster, `deploy/app/config.yaml` |

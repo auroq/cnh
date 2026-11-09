@@ -26,7 +26,15 @@ var Places = []venue.Place{
 	{ID: "quiet-room-260a", Kind: "quiet-room", Name: "All-attendee quiet room", Venue: "Salt Palace", Level: "Level 2", Near: "Room 260A, Level 2 meeting rooms", Notes: "Open to every attendee. No talking, no interacting, no working inside.", For: []string{"sensory", "rest", "neurodivergent"}, Verified: true, Source: inclusionURL},
 	{ID: "community-hub-grand-j", Kind: "community-hub", Name: "Community Hub and Merge Forward gatherings", Venue: "Salt Palace", Level: "Level 1", Near: "Grand Ballroom J", Notes: "Peer group gatherings, Sign Language Crash Course and Merge Forward sessions meet here on 10 to 12 November.", For: []string{"community", "deaf", "queer", "bipoc", "women"}, Verified: true, Source: sessionizeURL},
 	{ID: "registration-200-south", Kind: "info-desk", Name: "Registration and badge pick-up", Venue: "Salt Palace", Near: "200 South entrance", Notes: "Staff here know the elevator locations, the nursing room and the first-aid points.", For: []string{"help", "mobility"}, Verified: true, Source: sessionizeURL},
+	{ID: "nursing-room", Kind: "nursing-room", Name: "Private nursing room", Venue: "Salt Palace", Near: "Ask at registration or any information desk for the location", Notes: "A private nursing room is available on every event day.", For: []string{"parents", "nursing"}, Verified: true, Source: inclusionURL},
 	{ID: "elevators-salt-palace", Kind: "elevator", Name: "Elevators between Salt Palace levels", Venue: "Salt Palace", Near: "The organiser does not publish elevator positions. Staff at registration and the information desks will point you to the nearest one.", Notes: "Seeded as unverified.", For: []string{"mobility"}, Verified: false, Source: "floor plan, unverified"},
+}
+
+var Needs = []venue.Need{
+	{ID: "mobility-accessible", Name: "a step-free way around", Phrases: []string{"wheelchair", "can't do stairs", "step free"}, Kinds: []string{"step-free-entrance", "elevator"}},
+	{ID: "private-space", Name: "somewhere private", Phrases: []string{"fix my makeup", "change clothes", "somewhere private"}, Kinds: []string{"all-gender-restroom", "quiet-room"}, Note: "Single-stall where known."},
+	{ID: "medical-private", Name: "a private place for medication", Phrases: []string{"insulin", "injection", "inject", "medication"}, Kinds: []string{"nursing-room", "first-aid", "all-gender-restroom"}, Note: "A private room; first aid staff can help."},
+	{ID: "rest", Name: "somewhere to rest", Phrases: []string{"sit down", "rest", "overwhelmed"}, Kinds: []string{"quiet-room"}},
 }
 
 var Sessions = []schedule.Session{
@@ -57,6 +65,14 @@ func LoadPlaces(t *testing.T, es *esindex.Client, index string) {
 	defer cancel()
 	x := &esindex.Indexer{Client: es, PlacesIndex: index}
 	check(t, index, len(Places))(x.IndexPlaces(ctx, Places))
+}
+
+func LoadNeeds(t *testing.T, es *esindex.Client, index string) {
+	t.Helper()
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	defer cancel()
+	x := &esindex.Indexer{Client: es, NeedsIndex: index}
+	check(t, index, len(Needs))(x.IndexNeeds(ctx, Needs))
 }
 
 func LoadSessions(t *testing.T, es *esindex.Client, index string) {
