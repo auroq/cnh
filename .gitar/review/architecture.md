@@ -6,17 +6,18 @@ Quote the line that is broken.
 
 ## Layers
 
-- **Model**: the types the app talks in. `pkg/venue` (places, rooms, the curated file's shape) and the types in `pkg/ask` (`Place`, `Session`, `Here`, `Answer`). Depends on nothing in this module.
-- **Use case**: `pkg/ask`. Declares the ports it consumes (`Store`), orchestrates (`Locate`, `Ask`), ranks and summarises. Imports only the model and the standard library.
-- **Adapters**: `pkg/esindex` (Elasticsearch: `Store` implements `ask.Store`, `Indexer` writes), `pkg/sessionize` (the schedule source), the YAML loader in `pkg/venue`. They implement ports and may import model packages. They never import `pkg/web` or `cmd/*`.
-- **Controllers**: `pkg/web` (HTTP handlers, templates, CSS) and `cmd/*` (`main.go`). They import use cases and adapters and only wire. Nothing imports a controller.
+- **Model**: the types the app talks in. `pkg/venue` (places, rooms, the curated file's shape), `pkg/schedule` (a session), `pkg/config` (every setting, named once, behind per-area interfaces) and the types in `pkg/ask` (`Place`, `Session`, `Here`, `Answer`). Depends on nothing in this module.
+- **Use cases**: `pkg/ask` (declares `Store`; `Locate`, `Ask`, ranking, the summary) and `pkg/ingest` (declares `Source`, `Places`, `Indexer`; `Run`). They import only model packages and the standard library.
+- **Adapters**: `pkg/esindex` (Elasticsearch: `Store` implements `ask.Store`, `Indexer` implements `ingest.Indexer`), `pkg/sessionize` (implements `ingest.Source`), `venue.File` (implements `ingest.Places`). They implement ports and may import model and use case packages for the port types. They never import `pkg/web`, `pkg/cli`, `pkg/app` or `cmd/*`.
+- **Controllers and wiring**: `pkg/web` (HTTP handlers, templates, CSS; imports `pkg/ask` only), `pkg/cli` (the `widedoor` command, `serve`, `ingest`), `pkg/app` (`Main()`), `cmd/widedoor` (`os.Exit(app.Main())`). They import use cases and adapters and only wire. Nothing imports them.
 
 ## Rules
 
 - `pkg/ask` never imports `pkg/esindex`, `pkg/sessionize` or `pkg/web`. If `ask` needs something from outside, it declares an interface for it and the adapter implements it.
 - Every new outbound dependency (a database, an HTTP API, the clock, a file) gets a port declared by the package that consumes it, named for what it does, not what it is. `Store`, not `ElasticsearchClient`.
 - `pkg/web` imports `pkg/ask` only; it declares the `Asker` interface it needs. It does not know what a `Store` is.
-- `cmd/*/main.go` is wiring: read configuration, construct adapters, hand them to use cases, start the server or the job. No branching on business data, no query text, no HTML.
+- `pkg/cli` and `cmd/*/main.go` are wiring: read configuration, construct adapters, hand them to use cases, start the server or the job. No branching on business data, no query text, no HTML.
+- Every setting is a `Key*` constant in `pkg/config` with a default in `Defaults`; a layer takes the `config.Server`, `config.Elasticsearch`, `config.Ingest` or `config.Telemetry` interface it needs, never the whole viper. Secrets are never flags and never logged.
 - A package not listed in `tools/archcheck.sh` fails CI until it is placed in a layer there and described in `docs/architecture.md`.
 - Tests follow the layers: a use case is tested with a fake port, an adapter against a fake of the real thing (`httptest`), a controller with a fake use case. No test crosses two layers except under `testing/`.
 

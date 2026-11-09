@@ -58,6 +58,10 @@ spec:
           labelSelector:
             matchLabels:
               app.kubernetes.io/name: widedoor
+      volumes:
+        - name: config
+          configMap:
+            name: widedoor-config
       containers:
         - name: widedoor
           image: ghcr.io/auroq/cnh/widedoor:main
@@ -65,22 +69,17 @@ spec:
           ports:
             - name: http
               containerPort: 8080
+          args: ["serve"]
           env:
-            - name: LISTEN
-              value: ":8080"
-            - name: ES_URL
-              value: http://wide-door-es-http:9200
-            - name: ES_USERNAME
-              value: elastic
-            - name: ES_PASSWORD
+            - name: WIDEDOOR_ELASTICSEARCH_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: wide-door-es-elastic-user
                   key: elastic
-            - name: PLACES_INDEX
-              value: places
-            - name: ES_INDEX
-              value: sessions
+          volumeMounts:
+            - name: config
+              mountPath: /etc/widedoor
+              readOnly: true
           resources:
             requests:
               cpu: 50m

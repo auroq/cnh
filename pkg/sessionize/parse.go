@@ -8,22 +8,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/auroq/cnh/pkg/schedule"
 	"github.com/auroq/cnh/pkg/venue"
 )
 
-type Session struct {
-	ID          string    `json:"id"`
-	Title       string    `json:"title"`
-	URL         string    `json:"url"`
-	Speakers    []string  `json:"speakers"`
-	Start       time.Time `json:"start"`
-	End         time.Time `json:"end"`
-	Location    string    `json:"location"`
-	Venue       string    `json:"venue"`
-	Level       string    `json:"level,omitempty"`
-	Room        string    `json:"room,omitempty"`
-	Description string    `json:"description,omitempty"`
-}
+// Session is the schedule model; this package only parses into it.
+type Session = schedule.Session
 
 type Detail struct {
 	ID          string
