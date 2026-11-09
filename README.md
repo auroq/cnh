@@ -79,6 +79,7 @@ make help
 
 Infrastructure targets are described in [`infra/`](infra/); the app targets are added as the rings land.
 The Makefile pins `KUBECONFIG` to `./.kube/config`, so its targets only ever talk to this cluster.
+Node 24 for the browser tests; `.nvmrc` pins it.
 
 ### Print the door codes
 

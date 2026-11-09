@@ -41,6 +41,10 @@ type Session struct {
 	Level       string    `json:"level,omitempty"`
 	Room        string    `json:"room,omitempty"`
 	Description string    `json:"description,omitempty"`
+
+	State           string `json:"state,omitempty"`
+	StartsInMinutes int    `json:"starts_in_minutes,omitempty"`
+	Distance        string `json:"distance,omitempty"`
 }
 
 // Here is where the attendee is: a place they described in their own words, resolved to a venue and level.
@@ -66,13 +70,15 @@ type Need struct {
 
 // Answer is what the attendee gets back: a sentence first, then the places and sessions behind it.
 // Need is set when the question was understood as a need rather than a kind of place.
+// SessionsShownBecause says why sessions are listed, or "none" when they were left out on purpose.
 type Answer struct {
-	Question string    `json:"question"`
-	Here     Here      `json:"here"`
-	Summary  string    `json:"summary"`
-	Need     *Need     `json:"need,omitempty"`
-	Places   []Place   `json:"places"`
-	Sessions []Session `json:"sessions"`
-	Applied  []Applied `json:"applied,omitempty"`
-	Learned  []Lesson  `json:"learned,omitempty"`
+	Question             string    `json:"question"`
+	Here                 Here      `json:"here"`
+	Summary              string    `json:"summary"`
+	Need                 *Need     `json:"need,omitempty"`
+	Places               []Place   `json:"places"`
+	Sessions             []Session `json:"sessions"`
+	Applied              []Applied `json:"applied,omitempty"`
+	SessionsShownBecause string    `json:"sessions_shown_because,omitempty"`
+	Learned              []Lesson  `json:"learned,omitempty"`
 }

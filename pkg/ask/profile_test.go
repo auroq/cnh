@@ -14,7 +14,7 @@ func TestAskFor(t *testing.T) {
 	entrance := Place{ID: "step-free-200-south", Kind: "step-free-entrance", Name: "Step-free entrance, 200 South", Venue: "Salt Palace", Level: "Level 1"}
 	showcaseRestroom := Place{ID: "agr-sp-l1-showcase", Kind: "all-gender-restroom", Name: "All-gender restroom, Solutions Showcase", Venue: "Salt Palace", Level: "Level 1", Near: "Solutions Showcase, Amber Hive Zone", Verified: true}
 	quiet := Place{ID: "quiet-room-260a", Kind: "quiet-room", Name: "All-attendee quiet room", Venue: "Salt Palace", Level: "Level 2", Verified: true}
-	talk := Session{ID: "1", Title: "Sign Language Crash Course", Start: time.Date(2026, 11, 11, 20, 30, 0, 0, time.UTC), Location: "Salt Palace | Level 1 | Grand Ballroom J"}
+	talk := Session{ID: "1", Title: "Sign Language Crash Course", Start: time.Date(2026, 11, 11, 20, 30, 0, 0, time.UTC), End: time.Date(2026, 11, 11, 21, 30, 0, 0, time.UTC), Location: "Salt Palace | Level 1 | Grand Ballroom J"}
 
 	cases := []struct {
 		name       string
@@ -50,7 +50,7 @@ func TestAskFor(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run("when the profile says "+c.name, func(t *testing.T) {
-			ans, err := (&Service{Store: c.store}).AskFor(ctx, c.question, "", model.ParsePreferences(c.prefs))
+			ans, err := (&Service{Store: c.store, Now: func() time.Time { return noon }}).AskFor(ctx, c.question, "", model.ParsePreferences(c.prefs))
 			if err != nil {
 				t.Fatal(err)
 			}
