@@ -57,7 +57,7 @@ func TestServer(t *testing.T) {
 			}
 		})
 		t.Run("it should put the summary in the live region", func(t *testing.T) {
-			if !strings.Contains(body, `<p class="summary">`+answered.answer.Summary+"</p>") {
+			if !strings.Contains(body, `<p class="summary t-answer">`+answered.answer.Summary+"</p>") {
 				t.Fatalf("summary missing in %s", body)
 			}
 		})
