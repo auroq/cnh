@@ -34,8 +34,12 @@ func wordsOf(s string) string {
 
 // placesFor runs the inference in order: a kind word in the question, a need phrase, the store's semantic guess, then the plain hybrid search.
 // Kinds are offered one by one until one has a place; when none has, the plain search answers.
-func (s *Service) placesFor(ctx context.Context, ans *Answer, question string) ([]Place, error) {
-	if kind := KindOf(question); kind != "" {
+func (s *Service) placesFor(ctx context.Context, ans *Answer, question string, prefs Preferences) ([]Place, error) {
+	kind := KindOf(question)
+	if kinds := preferredKinds(ans, question, kind, prefs); len(kinds) > 0 {
+		return s.firstOf(ctx, question, kinds...)
+	}
+	if kind != "" {
 		return s.firstOf(ctx, question, kind)
 	}
 	need, ok := NeedOf(question, s.Needs)

@@ -81,12 +81,16 @@ func (s *Service) Locate(ctx context.Context, asked string) (Here, error) {
 // It is also where the question is observed: one span with the question's shape and the answer's,
 // and the metrics that say how often attendees are told something nobody has verified.
 func (s *Service) Ask(ctx context.Context, question, from string) (Answer, error) {
+	return s.ask(ctx, question, from, nil)
+}
+
+func (s *Service) ask(ctx context.Context, question, from string, prefs Preferences) (Answer, error) {
 	start := time.Now()
 	question = strings.TrimSpace(question)
 	ctx, span := s.tracer().Start(ctx, "ask.Ask", trace.WithAttributes(attrQuestionLength.Int(len(question))))
 	defer span.End()
 
-	ans, err := s.answer(ctx, question, from)
+	ans, err := s.answer(ctx, question, from, prefs)
 	kind, verified := topKind(ans)
 	span.SetAttributes(
 		attrNeed.String(needID(ans)),
@@ -114,7 +118,7 @@ func (s *Service) Ask(ctx context.Context, question, from string) (Answer, error
 	return ans, err
 }
 
-func (s *Service) answer(ctx context.Context, question, from string) (Answer, error) {
+func (s *Service) answer(ctx context.Context, question, from string, prefs Preferences) (Answer, error) {
 	here, err := s.Locate(ctx, from)
 	if err != nil {
 		return Answer{}, err
@@ -125,7 +129,7 @@ func (s *Service) answer(ctx context.Context, question, from string) (Answer, er
 		return ans, nil
 	}
 
-	places, err := s.placesFor(ctx, &ans, question)
+	places, err := s.placesFor(ctx, &ans, question, prefs)
 	if err != nil {
 		return ans, err
 	}
@@ -139,6 +143,7 @@ func (s *Service) answer(ctx context.Context, question, from string) (Answer, er
 		return ans, err
 	}
 	ans.Summary = Summarise(ans)
+	shapeSummary(&ans, prefs)
 	return ans, nil
 }
 

@@ -130,6 +130,36 @@ func TestProfile(t *testing.T) {
 		})
 	})
 
+	effects := []struct {
+		prefs, question, from, firstPlace, summaryHas string
+	}{
+		{"step-free", "nearest entrance", "Grand Ballroom J", "step-free-200-south", "no stairs"},
+		{"wheels", "nearest entrance", "", "step-free-200-south", "no stairs"},
+		{"avoid-crowds", "nearest all-gender restroom", "Grand Ballroom J", "agr-sp-l1-showcase", "crowds and noise"},
+	}
+	for _, e := range effects {
+		t.Run("when my profile says "+e.prefs+" and I ask for "+e.question+" "+whereIAm(e.from), func(t *testing.T) {
+			t.Parallel()
+			var a answer
+			helpers.GetJSON(t, "/api/ask", helpers.Query("q", e.question, "from", e.from, "prefs", e.prefs), &a)
+			t.Run("it should answer "+e.firstPlace+" first", func(t *testing.T) {
+				if len(a.Places) == 0 || a.Places[0].ID != e.firstPlace {
+					t.Fatalf("places = %+v", a.Places)
+				}
+			})
+			t.Run("it should say "+e.summaryHas, func(t *testing.T) {
+				if !strings.Contains(strings.ToLower(a.Summary), e.summaryHas) {
+					t.Fatalf("summary = %q", a.Summary)
+				}
+			})
+			t.Run("it should name the chip that changed the answer", func(t *testing.T) {
+				if len(a.Profile.Applied) != 1 || a.Profile.Applied[0].Chip != e.prefs {
+					t.Fatalf("profile = %+v", a.Profile)
+				}
+			})
+		})
+	}
+
 	t.Run("when I ask with no profile", func(t *testing.T) {
 		t.Parallel()
 		status, body := helpers.Get(t, "/api/ask", helpers.Query("q", "nearest quiet room"), "application/json")
