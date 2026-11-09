@@ -117,6 +117,15 @@ func TestParseIndex(t *testing.T) {
 		})
 	})
 
+	t.Run("when a session has a location with more than three parts", func(t *testing.T) {
+		sessions, _ := ParseIndex(strings.NewReader("## Sessions\n\n### Monday, November 9, 2026\n\n- [X](https://s/session/9)\n  9:00 am - 9:30 am · Salt Palace | Level 1 | Solutions Showcase | Halls 5 | Cosmic Canyon Zone\n"))
+		t.Run("it should keep the level and join the rest as the room", func(t *testing.T) {
+			if sessions[0].Level != "Level 1" || sessions[0].Room != "Solutions Showcase, Halls 5, Cosmic Canyon Zone" {
+				t.Fatalf("level=%q room=%q", sessions[0].Level, sessions[0].Room)
+			}
+		})
+	})
+
 	t.Run("when a session is off-site with no level or room", func(t *testing.T) {
 		s := byID["1344383"]
 		t.Run("it should keep the location as the venue", func(t *testing.T) {

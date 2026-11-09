@@ -12,6 +12,7 @@ import (
 
 	"github.com/auroq/cnh/pkg/esindex"
 	"github.com/auroq/cnh/pkg/sessionize"
+	"github.com/auroq/cnh/pkg/venue"
 )
 
 func main() {
@@ -26,7 +27,9 @@ Environment:
   ES_URL          Elasticsearch base URL (default http://localhost:9200)
   ES_USERNAME     basic auth user (default elastic)
   ES_PASSWORD     basic auth password
-  ES_INDEX        target index (default sessions)
+  ES_INDEX        sessions index (default sessions)
+  PLACES_INDEX    places index (default places)
+  PLACES_FILE     venue access YAML (default data/venue/places.yaml)
   SESSIONIZE_URL  markdown index URL (default %s)
 
 Flags:
@@ -78,9 +81,70 @@ Flags:
 	}
 	count, _ := es.Count(ctx, index)
 	log.Info("indexed", "index", index, "sent", len(docs), "failed", failed, "count", count)
-	if failed > 0 {
+
+	pfailed, err := indexPlaces(ctx, es, log, sessions)
+	if err != nil {
+		fatal(log, "index places", err)
+	}
+	if failed+pfailed > 0 {
 		os.Exit(2)
 	}
+}
+
+func indexPlaces(ctx context.Context, es *esindex.Client, log *slog.Logger, sessions []sessionize.Session) (int, error) {
+	index := env("PLACES_INDEX", "places")
+	if err := es.EnsureIndex(ctx, index, placesMapping); err != nil {
+		return 0, err
+	}
+	f, err := os.Open(env("PLACES_FILE", "data/venue/places.yaml"))
+	if err != nil {
+		return 0, err
+	}
+	defer f.Close()
+	places, err := venue.Load(f)
+	if err != nil {
+		return 0, err
+	}
+	locs := make([]string, 0, len(sessions))
+	for _, s := range sessions {
+		locs = append(locs, s.Location)
+	}
+	rooms := venue.RoomsFromLocations(locs)
+	all := append(places, rooms...)
+	docs := make([]esindex.Doc, 0, len(all))
+	for _, p := range all {
+		docs = append(docs, esindex.Doc{ID: p.ID, Body: map[string]any{
+			"id": p.ID, "kind": p.Kind, "name": p.Name, "venue": p.Venue, "level": p.Level,
+			"near": p.Near, "notes": p.Notes, "for": p.For, "verified": p.Verified, "source": p.Source,
+			"content": p.Content(), "ingested_at": time.Now().UTC(),
+		}})
+	}
+	failed, err := es.Bulk(ctx, index, docs, 50)
+	if err != nil {
+		return failed, err
+	}
+	count, _ := es.Count(ctx, index)
+	log.Info("indexed", "index", index, "curated", len(places), "rooms", len(rooms), "failed", failed, "count", count)
+	return failed, nil
+}
+
+var placesMapping = map[string]any{
+	"mappings": map[string]any{
+		"properties": map[string]any{
+			"id":          map[string]any{"type": "keyword"},
+			"kind":        map[string]any{"type": "keyword"},
+			"name":        map[string]any{"type": "text", "fields": map[string]any{"keyword": map[string]any{"type": "keyword"}}},
+			"venue":       map[string]any{"type": "keyword"},
+			"level":       map[string]any{"type": "keyword"},
+			"near":        map[string]any{"type": "text"},
+			"notes":       map[string]any{"type": "text"},
+			"for":         map[string]any{"type": "keyword"},
+			"verified":    map[string]any{"type": "boolean"},
+			"source":      map[string]any{"type": "keyword", "index": false},
+			"content":     map[string]any{"type": "semantic_text"},
+			"ingested_at": map[string]any{"type": "date"},
+		},
+	},
 }
 
 func toDoc(s sessionize.Session) map[string]any {

@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{.Title}}</title>
+<meta name="description" content="Ask the venue where the nearest step-free route, elevator, quiet room, all-gender restroom or session is. Built for screen readers, keyboards and large text.">
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<a class="skip" href="#answer">Skip to the answer</a>
+<header>
+  <h1><a href="/">Wide Door</a></h1>
+  <p class="lede">Ask where things are at KubeCon. Answers say the building, the level, and whether anyone has checked them.</p>
+</header>
+<main id="main">
+  <form action="/ask" method="get" role="search" aria-describedby="how">
+    <p id="how" class="how">Two boxes. The first is what you need. The second is the room you are in or near, so the answer can say whether you need stairs or an elevator.</p>
+    <div class="field">
+      <label for="q">What do you need?</label>
+      <input id="q" name="q" type="search" value="{{.Question}}" autocomplete="off" enterkeyhint="search" placeholder="nearest all-gender restroom" required>
+    </div>
+    <div class="field">
+      <label for="from">Where are you? <span class="opt">(optional, a room name)</span></label>
+      <input id="from" name="from" type="text" value="{{.From}}" autocomplete="off" placeholder="Grand Ballroom J">
+    </div>
+    <button type="submit">Ask</button>
+    <fieldset class="quick">
+      <legend>Or pick one</legend>
+      {{range .Kinds}}<a class="chip" href="/ask?q={{.Query}}&amp;from={{$.From}}">{{.Label}}</a>
+      {{end}}
+    </fieldset>
+  </form>
+
+  <section id="answer" aria-live="polite" aria-atomic="true" tabindex="-1">
+    {{if .Error}}
+      <h2>Something went wrong</h2>
+      <p role="alert">{{.Error}}</p>
+    {{else if .Answer}}
+      <h2>Answer</h2>
+      <p class="summary">{{.Answer.Summary}}</p>
+      {{if .Answer.Here.Room}}<p class="here">You said you are at <strong>{{.Answer.Here.Room}}</strong>, {{.Answer.Here.Venue}}{{if .Answer.Here.Level}}, {{.Answer.Here.Level}}{{end}}.</p>
+      {{else if .Answer.Here.Asked}}<p class="here">We could not find a room called "{{.Answer.Here.Asked}}", so distances are not shown.</p>{{end}}
+
+      {{if .Answer.Places}}
+      <h3>Places</h3>
+      <ol class="results">
+        {{range .Answer.Places}}
+        <li>
+          <strong>{{.Name}}</strong>
+          <span class="where">{{.Venue}}{{if .Level}}, {{.Level}}{{end}}{{if .Near}}, {{.Near}}{{end}}</span>
+          {{if .Notes}}<span class="notes">{{.Notes}}</span>{{end}}
+          {{if .Verified}}<span class="badge ok">Published by the organiser</span>{{else}}<span class="badge warn">Unverified</span>{{end}}
+        </li>
+        {{end}}
+      </ol>
+      {{end}}
+
+      {{if .Answer.Sessions}}
+      <h3>Sessions</h3>
+      <ol class="results">
+        {{range .Answer.Sessions}}
+        <li>
+          <strong><a href="{{.URL}}" rel="noopener">{{.Title}}</a></strong>
+          <span class="where">{{clock .Start}} to {{clock .End}}, {{.Location}}</span>
+          {{if .Speakers}}<span class="notes">{{range $i, $s := .Speakers}}{{if $i}}, {{end}}{{$s}}{{end}}</span>{{end}}
+        </li>
+        {{end}}
+      </ol>
+      {{end}}
+    {{end}}
+  </section>
+</main>
+<footer>
+  <p>Wide Door is a hackathon project by team Curb Cut. Organiser-published facts come from the <a href="https://events.linuxfoundation.org/kubecon-cloudnativecon-north-america/attend/inclusion-accessibility/">KubeCon inclusion and accessibility page</a>; anything marked unverified has not been checked on the floor. <a href="https://github.com/auroq/cnh">Source and data</a>.</p>
+</footer>
+</body>
+</html>
