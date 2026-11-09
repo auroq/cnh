@@ -133,7 +133,7 @@ func TestProfile(t *testing.T) {
 		t.Parallel()
 		body := bodyOf(t, request(t, http.MethodGet, "/", helpers.Query("prefs", "step-free,wheels"), "", ""))
 		t.Run("it should reproduce the chips", func(t *testing.T) {
-			if !strings.Contains(body, removeStepFree) || !strings.Contains(body, "Remove </span><span aria-hidden=\"true\">&#10003; </span>I use a wheelchair or scooter") {
+			if !strings.Contains(body, removeStepFree) || !strings.Contains(body, "Remove </span><span aria-hidden=\"true\">&#10003; </span>Wide doors and ramps") {
 				t.Fatal("chips missing from the page")
 			}
 		})

@@ -84,12 +84,12 @@ test.describe("when JavaScript is off", () => {
   test.describe("and I remove a chip with its button", () => {
     test.beforeEach(async ({ page }) => {
       await page.goto("/profile?prefs=step-free,wheels");
-      await page.getByRole("button", { name: "Remove I use a wheelchair or scooter" }).click();
+      await page.getByRole("button", { name: "Remove Wide doors and ramps" }).click();
       await page.waitForURL(/\/profile\?/);
     });
 
     test("it should no longer list the chip as on", async ({ page }) => {
-      await expect(page.getByRole("button", { name: "Add I use a wheelchair or scooter" })).toBeVisible();
+      await expect(page.getByRole("button", { name: "Add Wide doors and ramps" })).toBeVisible();
     });
 
     test("it should count one thing", async ({ page }) => {
@@ -97,7 +97,7 @@ test.describe("when JavaScript is off", () => {
     });
 
     test("it should say what changed in the live region", async ({ page }) => {
-      await expect(page.locator("[aria-live='polite']")).toContainText("Removed I use a wheelchair or scooter");
+      await expect(page.locator("[aria-live='polite']")).toContainText("Removed Wide doors and ramps");
     });
 
     test("it should keep the chip out of the next page opened with only the cookie", async ({ page }) => {
