@@ -35,7 +35,7 @@ const twoPlaces = `{"hits":{"hits":[
 func TestFindPlaces(t *testing.T) {
 	t.Run("when asked for all-gender restrooms", func(t *testing.T) {
 		store, got := fakeES(t, twoPlaces)
-		places, err := store.FindPlaces(context.Background(), "all-gender restroom")
+		places, err := store.FindPlaces(context.Background(), "all-gender restroom", "")
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -56,9 +56,34 @@ func TestFindPlaces(t *testing.T) {
 				t.Fatalf("rooms excluded %d times, want 2 in %s", n, b)
 			}
 		})
+		t.Run("it should not filter on kind", func(t *testing.T) {
+			b, _ := json.Marshal(got.body)
+			if n := countOf(string(b), `"filter"`); n != 0 {
+				t.Fatalf("filtered %d times, want 0 in %s", n, b)
+			}
+		})
 		t.Run("it should return the hits in Elasticsearch's order", func(t *testing.T) {
 			if len(places) != 2 || places[0].ID != "hyatt" || places[1].ID != "sp-255" {
 				t.Fatalf("got %+v", places)
+			}
+		})
+	})
+
+	t.Run("when asked for elevators by kind", func(t *testing.T) {
+		store, got := fakeES(t, twoPlaces)
+		if _, err := store.FindPlaces(context.Background(), "nearest elevator", "elevator"); err != nil {
+			t.Fatal(err)
+		}
+		t.Run("it should keep only elevators in both retrievers", func(t *testing.T) {
+			b, _ := json.Marshal(got.body)
+			if n := countOf(string(b), `"filter":[{"term":{"kind":"elevator"}}]`); n != 2 {
+				t.Fatalf("kind filtered %d times, want 2 in %s", n, b)
+			}
+		})
+		t.Run("it should still leave rooms out of both retrievers", func(t *testing.T) {
+			b, _ := json.Marshal(got.body)
+			if n := countOf(string(b), `"must_not":{"term":{"kind":"room"}}`); n != 2 {
+				t.Fatalf("rooms excluded %d times, want 2 in %s", n, b)
 			}
 		})
 	})

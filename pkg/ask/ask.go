@@ -22,8 +22,9 @@ type Store interface {
 	Ping(ctx context.Context) error
 	// LocateRoom resolves what an attendee typed as their location to a known room, or returns an empty Here.
 	LocateRoom(ctx context.Context, asked string) (Here, error)
-	// FindPlaces returns access features matching the question, best first, never rooms.
-	FindPlaces(ctx context.Context, question string) ([]Place, error)
+	// FindPlaces returns access features matching the question, best first, never rooms;
+	// when kind is not empty, only places of that kind.
+	FindPlaces(ctx context.Context, question, kind string) ([]Place, error)
 	// FindSessions returns schedule sessions matching the question, best first.
 	FindSessions(ctx context.Context, question string) ([]Session, error)
 }
@@ -117,9 +118,16 @@ func (s *Service) answer(ctx context.Context, question, from string) (Answer, er
 		return ans, nil
 	}
 
-	places, err := step(ctx, s.tracer(), "ask.FindPlaces", func(ctx context.Context) ([]Place, error) { return s.Store.FindPlaces(ctx, question) })
+	kind := KindOf(question)
+	places, err := step(ctx, s.tracer(), "ask.FindPlaces", func(ctx context.Context) ([]Place, error) { return s.Store.FindPlaces(ctx, question, kind) })
 	if err != nil {
 		return ans, err
+	}
+	if len(places) == 0 && kind != "" {
+		places, err = step(ctx, s.tracer(), "ask.FindPlaces", func(ctx context.Context) ([]Place, error) { return s.Store.FindPlaces(ctx, question, "") })
+		if err != nil {
+			return ans, err
+		}
 	}
 	ans.Places = RankByNearness(places, here)
 	if len(ans.Places) > maxPlaces {
