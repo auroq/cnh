@@ -5,4 +5,4 @@ dash0_api_endpoint  = "https://api.us-west-2.aws.dash0.com"
 enable_radar     = true
 radar_cluster_id = "WPcuS8CDZUo"
 
-enable_sandbox = true
+enable_sandbox = false
