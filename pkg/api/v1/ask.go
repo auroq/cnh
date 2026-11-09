@@ -15,6 +15,32 @@ type AskResponse struct {
 
 	// SessionsShownBecause is one of question_about_sessions, title_match or none; absent in responses recorded before it existed.
 	SessionsShownBecause string `json:"sessions_shown_because,omitempty"`
+
+	// Route is present only when where the attendee is and the first place are both on the walking graph; absent in responses recorded before it existed.
+	Route *Route `json:"route,omitempty"`
+}
+
+// Route is the way to the first place as steps and obstacles; it never carries a time.
+type Route struct {
+	From      string     `json:"from"`
+	To        string     `json:"to"`
+	Steps     []Step     `json:"steps"`
+	Obstacles []Obstacle `json:"obstacles,omitempty"`
+	Avoided   []string   `json:"avoided,omitempty"`
+	Amenities []string   `json:"amenities,omitempty"`
+}
+
+type Step struct {
+	Text     string    `json:"text"`
+	Kind     string    `json:"kind"`
+	Obstacle *Obstacle `json:"obstacle,omitempty"`
+	Verified bool      `json:"verified"`
+}
+
+type Obstacle struct {
+	Kind     string `json:"kind"`
+	Text     string `json:"text"`
+	Verified bool   `json:"verified"`
 }
 
 // Profile is present only when the question carried prefs; it says which chips changed the answer and how.

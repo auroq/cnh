@@ -82,6 +82,7 @@ type Answer struct {
 	Applied              []Applied `json:"applied,omitempty"`
 	SessionsShownBecause string    `json:"sessions_shown_because,omitempty"`
 	Learned              []Lesson  `json:"learned,omitempty"`
+	Route                *Route    `json:"route,omitempty"`
 }
 
 // Verdict is what an attendee who stood at a place said about it.

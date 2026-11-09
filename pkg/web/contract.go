@@ -39,6 +39,15 @@ func toV1(a model.Answer) v1.AskResponse {
 			})
 		}
 	}
+	if r := a.Route; r != nil {
+		out.Route = &v1.Route{From: r.From, To: r.To, Steps: make([]v1.Step, 0, len(r.Steps)), Avoided: r.Avoided, Amenities: r.Amenities}
+		for _, st := range r.Steps {
+			out.Route.Steps = append(out.Route.Steps, v1.Step{Text: st.Text, Kind: st.Kind, Obstacle: toV1Obstacle(st.Obstacle), Verified: st.Verified})
+		}
+		for _, o := range r.Obstacles {
+			out.Route.Obstacles = append(out.Route.Obstacles, *toV1Obstacle(&o))
+		}
+	}
 	if a.Applied != nil {
 		out.Profile = &v1.Profile{Applied: make([]v1.Applied, 0, len(a.Applied))}
 		for _, ap := range a.Applied {
@@ -46,4 +55,11 @@ func toV1(a model.Answer) v1.AskResponse {
 		}
 	}
 	return out
+}
+
+func toV1Obstacle(o *model.Obstacle) *v1.Obstacle {
+	if o == nil {
+		return nil
+	}
+	return &v1.Obstacle{Kind: o.Kind, Text: o.Text, Verified: o.Verified}
 }

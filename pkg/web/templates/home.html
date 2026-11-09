@@ -63,6 +63,17 @@
         </li>
         {{end}}
       </ol>
+      {{with .Answer.Route}}
+      <section class="route">
+        <h3>How to get there</h3>
+        <p class="notes">From {{.From}} to {{.To}}. Facts, not minutes: the steps are what the organiser and venue pages state, each marked if nobody has checked it.</p>
+        <ol class="steps">
+          {{range .Steps}}<li>{{.Text}}{{if not .Verified}} <span class="callout warning">Unverified</span>{{end}}{{with .Obstacle}} <span class="callout warning" role="note"><span class="vh">Obstacle: </span>{{.Text}}</span>{{end}}</li>{{end}}
+        </ol>
+        {{if .Avoided}}<p class="notes">This way stays out of: {{range $i, $z := .Avoided}}{{if $i}}, {{end}}{{$z}}{{end}}.</p>{{end}}
+        {{if .Amenities}}<p class="notes">On the way: {{range $i, $a := .Amenities}}{{if $i}}, {{end}}{{$a}}{{end}}.</p>{{end}}
+      </section>
+      {{end}}
       {{end}}
 
       {{if .Answer.Sessions}}

@@ -17,6 +17,7 @@ import (
 	"github.com/auroq/cnh/pkg/config"
 	"github.com/auroq/cnh/pkg/esindex"
 	"github.com/auroq/cnh/pkg/reports"
+	"github.com/auroq/cnh/pkg/route"
 	"github.com/auroq/cnh/pkg/telemetry"
 	"github.com/auroq/cnh/pkg/venue"
 	"github.com/auroq/cnh/pkg/web"
@@ -54,7 +55,15 @@ func NewServe(v *viper.Viper, log *slog.Logger) *cobra.Command {
 				log.Error("reports index", "err", err.Error())
 			}
 			reporter := &reports.Service{Store: reportStore, BlockedWords: blocked}
-			handler := web.New(&ask.Service{Store: store, Needs: needs, Status: reporter}, log, web.WithReporter(reporter)).Handler()
+			asker := &ask.Service{Store: store, Needs: needs, Status: reporter}
+			if file := cfg.Venue().RoutesFile(); file != "" {
+				graph, err := route.File(file).Graph()
+				if err != nil {
+					return err
+				}
+				asker.Router = graph
+			}
+			handler := web.New(asker, log, web.WithReporter(reporter)).Handler()
 			return serve(cmd.Context(), cfg.Server(), handler, log)
 		},
 	}

@@ -42,6 +42,9 @@ Logs: `slog` goes through the `otelslog` bridge, so every request log reaches Da
 The Dash0 dashboard "Wide Door" is a file too: [`deploy/dash0/wide-door.json`](deploy/dash0/wide-door.json) in the Perses format, reviewed like any other change and pushed with `make dashboard` through the Dash0 API by [`tools/dash0-dashboard.sh`](tools/dash0-dashboard.sh), with the token coming from the vault through `secret-run`.
 Its panels are the accessibility story in metrics: ask latency, answers by kind and by whether anyone verified the place, "What volunteers should go verify", profile chips as needs without identities, requests by route and release, and the health of the schedule ingest.
 
+When `venue.routes_file` points at `data/venue/routes.yaml`, an answer whose starting place and first place are both on that hand-written walking graph also carries "How to get there": numbered steps with each stair, escalator or crowd zone called out as an obstacle, marked verified or not like every place.
+The step-free and wide-doors chips keep the route off stairs, and avoid-crowds keeps it out of the Solutions Showcase when another way exists.
+
 ## What we store and why
 
 Nothing about a person.

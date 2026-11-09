@@ -44,6 +44,7 @@ flowchart LR
 | `pkg/api/v1` | contract | the frozen JSON of `/api/ask`; a wire change is a `v2` |
 | `pkg/venue` | model helper | the curated access features (`data/venue/places.yaml`) as model places, the need vocabulary (`data/venue/needs.yaml`) as model needs, the rooms derived from the schedule, and the loaders that validate them |
 | `pkg/schedule` | model helper | schedule-wide helpers over `model.Session` |
+| `pkg/route` | model helper | the walking graph (`data/venue/routes.yaml`) as nodes and edges, and `Shortest`: the fewest-edge way between two nodes under the profile's constraints (no stairs, avoid a zone, an amenity on the way), as plain steps and obstacles, never minutes; `ask` reaches it through its `Router` port and only when `venue.routes_file` is set |
 | `pkg/config` | model | every setting named once: `Key*` constants, defaults, flag binding, and the typed `Server`, `Elasticsearch`, `Ingest` and `Telemetry` interfaces each layer takes |
 | `pkg/esindex` | adapter | everything Elasticsearch: the HTTP client, `Store` (the hybrid BM25 plus `semantic_text` query fused with RRF, the room lookup, hit parsing) and `Indexer` (both index mappings, document shapes, bulk writes) |
 | `pkg/sessionize` | adapter | fetches and parses the public KubeCon schedule from Sessionize's markdown view |

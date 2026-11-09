@@ -2,6 +2,9 @@
 
 **Open. Filed 2026-11-09 by Aria, p3, after the event. Aria's call: this is the next project, not today's.**
 
+Phase 1 landed on 2026-11-09: a hand-written walking graph in `data/venue/routes.yaml`, `pkg/route.Shortest` with no-stairs, avoid-zone and amenity constraints, and text steps with obstacles in the answer behind `venue.routes_file`, no map.
+The epic stays open for the floor map, the full edge set and the other obstacle kinds.
+
 Depends on: 068, 075, 081
 
 Numbered 079 because issue numbers share a sequence with pull requests; the item number equals the issue number.
