@@ -1,5 +1,22 @@
 locals {
   namespaces = toset(["envoy-gateway-system", "gateway", "cert-manager", "elastic-system", "argocd", "dash0-system", "radar"])
+
+  res_small = {
+    requests = { cpu = "50m", memory = "64Mi" }
+    limits   = { cpu = "500m", memory = "256Mi" }
+  }
+  res_medium = {
+    requests = { cpu = "100m", memory = "128Mi" }
+    limits   = { cpu = "1", memory = "512Mi" }
+  }
+  res_large = {
+    requests = { cpu = "250m", memory = "256Mi" }
+    limits   = { cpu = "2", memory = "1Gi" }
+  }
+  ha = {
+    replicas = 2
+    pdb      = { enabled = true, minAvailable = 1 }
+  }
 }
 
 resource "kubernetes_namespace_v1" "ns" {
@@ -30,6 +47,19 @@ resource "helm_release" "envoy_gateway" {
   version    = var.versions.envoy_gateway
   namespace  = kubernetes_namespace_v1.ns["envoy-gateway-system"].metadata[0].name
   wait       = true
+
+  values = [yamlencode({
+    podDisruptionBudget = { minAvailable = 1 }
+    deployment = {
+      replicas = 2
+      envoyGateway = {
+        resources = {
+          requests = { cpu = "100m", memory = "256Mi" }
+          limits   = { cpu = "1", memory = "1Gi" }
+        }
+      }
+    }
+  })]
 }
 
 resource "helm_release" "cert_manager" {
@@ -47,6 +77,20 @@ resource "helm_release" "cert_manager" {
       kind             = "ControllerConfiguration"
       enableGatewayAPI = true
     }
+    replicaCount        = 2
+    podDisruptionBudget = { enabled = true, minAvailable = 1 }
+    resources           = local.res_small
+    webhook = {
+      replicaCount        = 2
+      podDisruptionBudget = { enabled = true, minAvailable = 1 }
+      resources           = local.res_small
+    }
+    cainjector = {
+      replicaCount        = 2
+      podDisruptionBudget = { enabled = true, minAvailable = 1 }
+      resources           = local.res_small
+    }
+    startupapicheck = { resources = local.res_small }
   })]
 
   depends_on = [helm_release.envoy_gateway]
@@ -75,6 +119,11 @@ resource "helm_release" "eck_operator" {
   chart      = "eck-operator"
   version    = var.versions.eck_operator
   namespace  = kubernetes_namespace_v1.ns["elastic-system"].metadata[0].name
+
+  values = [yamlencode({
+    replicaCount        = 2
+    podDisruptionBudget = { enabled = true, minAvailable = 1 }
+  })]
 }
 
 resource "helm_release" "argo_cd" {
@@ -89,6 +138,17 @@ resource "helm_release" "argo_cd" {
     configs = {
       params = { "server.insecure" = true }
     }
+    controller = {
+      resources = local.res_large
+      pdb       = { enabled = true, minAvailable = 1 }
+    }
+    server          = merge(local.ha, { resources = local.res_medium })
+    repoServer      = merge(local.ha, { resources = local.res_medium })
+    applicationSet  = merge(local.ha, { resources = local.res_small })
+    dex             = { resources = local.res_small, pdb = { enabled = true, minAvailable = 1 } }
+    redis           = { resources = local.res_small, pdb = { enabled = true, minAvailable = 1 } }
+    notifications   = { resources = local.res_small, pdb = { enabled = true, minAvailable = 1 } }
+    redisSecretInit = { resources = local.res_small }
   })]
 }
 
@@ -124,6 +184,28 @@ resource "helm_release" "dash0_operator" {
         secretRef = {
           name = kubernetes_secret_v1.dash0[0].metadata[0].name
           key  = "token"
+        }
+      }
+      collectors = {
+        daemonSetCollectorContainerResources = {
+          requests = { cpu = "100m", memory = "500Mi" }
+          limits   = { cpu = "1", memory = "500Mi" }
+        }
+        daemonSetConfigurationReloaderContainerResources = {
+          requests = { cpu = "10m", memory = "12Mi" }
+          limits   = { cpu = "100m", memory = "26Mi" }
+        }
+        daemonSetFileLogOffsetSyncContainerResources = {
+          requests = { cpu = "10m", memory = "32Mi" }
+          limits   = { cpu = "100m", memory = "32Mi" }
+        }
+        deploymentCollectorContainerResources = {
+          requests = { cpu = "100m", memory = "500Mi" }
+          limits   = { cpu = "1", memory = "500Mi" }
+        }
+        deploymentConfigurationReloaderContainerResources = {
+          requests = { cpu = "10m", memory = "12Mi" }
+          limits   = { cpu = "100m", memory = "26Mi" }
         }
       }
     }
@@ -218,6 +300,15 @@ resource "helm_release" "metrics_server" {
   chart      = "metrics-server"
   version    = var.versions.metrics_server
   namespace  = "kube-system"
+
+  values = [yamlencode({
+    replicas            = 2
+    podDisruptionBudget = { enabled = true, minAvailable = 1 }
+    resources = {
+      requests = { cpu = "100m", memory = "200Mi" }
+      limits   = { cpu = "1", memory = "512Mi" }
+    }
+  })]
 }
 
 resource "helm_release" "argo_rollouts" {
@@ -226,6 +317,18 @@ resource "helm_release" "argo_rollouts" {
   chart      = "argo-rollouts"
   version    = var.versions.argo_rollouts
   namespace  = kubernetes_namespace_v1.ns["argocd"].metadata[0].name
+
+  values = [yamlencode({
+    controller = {
+      resources = local.res_medium
+      pdb       = { enabled = true, minAvailable = 1 }
+      readinessProbe = {
+        httpGet             = { path = "/healthz", port = "healthz" }
+        initialDelaySeconds = 10
+        periodSeconds       = 10
+      }
+    }
+  })]
 }
 
 resource "helm_release" "sealed_secrets" {
@@ -237,5 +340,6 @@ resource "helm_release" "sealed_secrets" {
 
   values = [yamlencode({
     fullnameOverride = "sealed-secrets-controller"
+    resources        = local.res_small
   })]
 }
