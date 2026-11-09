@@ -32,22 +32,25 @@ spec:
             runAsGroup: 65532
             seccompProfile:
               type: RuntimeDefault
+          volumes:
+            - name: config
+              configMap:
+                name: widedoor-config
           containers:
             - name: ingest
-              image: ghcr.io/auroq/cnh/ingest:main
+              image: ghcr.io/auroq/cnh/widedoor:main
               imagePullPolicy: Always
+              args: ["ingest"]
               env:
-                - name: ES_URL
-                  value: http://wide-door-es-http:9200
-                - name: ES_USERNAME
-                  value: elastic
-                - name: PLACES_FILE
-                  value: /data/venue/places.yaml
-                - name: ES_PASSWORD
+                - name: WIDEDOOR_ELASTICSEARCH_PASSWORD
                   valueFrom:
                     secretKeyRef:
                       name: wide-door-es-elastic-user
                       key: elastic
+              volumeMounts:
+                - name: config
+                  mountPath: /etc/widedoor
+                  readOnly: true
               resources:
                 requests:
                   cpu: 100m

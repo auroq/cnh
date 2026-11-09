@@ -19,26 +19,33 @@ A package that is not in the layer map fails too: add it to this script and to d
 EOF
 }
 
-# model and use case: import nothing from this module
-# adapter: implement ports; may import the model packages, never a controller
-# controller: wire use cases and adapters; nobody imports a controller
+# model: import nothing from this module
+# usecase: declare ports; import model packages only
+# adapter: implement ports; import model and use case packages, never a controller
+# web: the HTTP controller; imports pkg/ask only
+# wiring: pkg/cli, pkg/app, cmd/*; import anything under pkg/; nobody imports them
 layer_of() {
   case "$1" in
-    pkg/ask|pkg/venue) echo core ;;
+    pkg/venue|pkg/schedule|pkg/config) echo model ;;
+    pkg/ask|pkg/ingest) echo usecase ;;
     pkg/esindex|pkg/sessionize) echo adapter ;;
     pkg/web) echo web ;;
-    cmd/*) echo cmd ;;
+    pkg/cli|pkg/app|cmd/*) echo wiring ;;
     *) echo unknown ;;
   esac
 }
 
+is_model()   { [[ "$1" == pkg/venue || "$1" == pkg/schedule || "$1" == pkg/config ]]; }
+is_usecase() { [[ "$1" == pkg/ask || "$1" == pkg/ingest ]]; }
+
 allowed() {
   local from_layer="$1" to="$2"
   case "$from_layer" in
-    core) return 1 ;;
-    adapter) [[ "$to" == pkg/ask || "$to" == pkg/venue || "$to" == pkg/sessionize ]] ;;
+    model) return 1 ;;
+    usecase) is_model "$to" ;;
+    adapter) is_model "$to" || is_usecase "$to" ;;
     web) [[ "$to" == pkg/ask ]] ;;
-    cmd) [[ "$to" == pkg/* ]] ;;
+    wiring) [[ "$to" == pkg/* ]] ;;
     *) return 1 ;;
   esac
 }
