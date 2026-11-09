@@ -9,6 +9,29 @@ The name comes from the curb-cut effect: access built for disabled people ends u
 - Decisions: [`docs/adr/`](docs/adr/).
 - AI disclosure: [`AI_USAGE.md`](AI_USAGE.md).
 
+## Read this first
+
+- Live app: https://widedoor.cnh.auroq.com
+- Architecture: the section below, then [`docs/architecture.md`](docs/architecture.md).
+- AI disclosure: [`AI_USAGE.md`](AI_USAGE.md).
+- Evidence and the demo map per track: [`docs/demo/README.md`](docs/demo/README.md).
+- Hackathon work: `git log pre-kickoff..`, every commit after the tag [`pre-kickoff`](https://github.com/auroq/cnh/releases/tag/pre-kickoff).
+- What is next: the open table in [`ROADMAP.md`](ROADMAP.md), with routes ([item 079](roadmap/079-routes-not-just-destinations.md), open PR 125) first.
+
+## What it does
+
+- Infers the kind of place a question asks for and the need behind it, so "I need to inject insulin" offers a private room first ([`data/venue/needs.yaml`](data/venue/needs.yaml), items 063 and 066).
+- Takes your location in your own words: a room, a landmark, a street side or the session you just left (item 067).
+- Prints a QR door code per place that opens Wide Door with the location filled in (`widedoor qr`, item 069).
+- Keeps a profile of need chips on your device, learns chips from what you ask, and lets you remove or keep them (items 081, 085, 103, 112).
+- Gives each chip a strength: Must filters and Prefer ranks (PR 124); Must is set only through the `prefs` link today, and the profile page control is still open (item 118).
+- Lets attendees verify, dispute and annotate a place, shown at once and trusted after a second person agrees (`widedoor reports` for volunteers, PR 102, item 096).
+- Takes a pasted schedule, a Sched iCal export or a list of titles, and answers from the room you just left (PR 106, item 083).
+- Shows sessions only when they answer the question (item 072).
+- Describes distance by facts, the level change and the route the organiser published, never a walk time ([ADR 0012](docs/adr/0012-how-we-describe-distance.md)).
+- Sends traces, metrics and logs to Dash0, with the dashboard kept in the repo (items 011 and 089).
+- Routes, step by step under your constraints, are written as phase 1 in open PR 125 and are not merged or in production.
+
 ## Before and during the hackathon
 
 Everything up to the git tag [`pre-kickoff`](https://github.com/auroq/cnh/releases/tag/pre-kickoff) is setup done before the event, which rules 1 and 2 allow: the cluster and the cluster-wide operators in [`infra/`](infra/).
@@ -26,11 +49,24 @@ The shape is fixed by the ADRs:
 - **Schedule:** the public KubeCon NA 2026 schedule from Sessionize, indexed with room and level.
 - **Deploy:** Argo CD syncs [`deploy/`](deploy/) into the `wide-door` namespace; every workload is an Argo Rollouts `Rollout` written to pass Radar's checks ([ADR 0005](docs/adr/0005-radar-clean-manifests-via-argo.md)).
 - **Telemetry:** OpenTelemetry traces, metrics and logs to Dash0 through the Dash0 operator.
-- **Review:** every PR after the first commit is reviewed by Gitar against [`.gitar/review/`](.gitar/review/); its approval is advisory and the CI checks are the gate ([ADR 0010](docs/adr/0010-gitar-approval-is-advisory.md)).
+- **Review:** every PR after the first commit is reviewed by Gitar against [`.gitar/review/`](.gitar/review/); since 15:25 MT an important or critical finding blocks the merge, while its approval stays advisory and no approving review is required ([ADR 0013](docs/adr/0013-gitar-blocks-on-important-findings.md), superseding the blocking half of [ADR 0010](docs/adr/0010-gitar-approval-is-advisory.md)).
 - **Release:** CI and CD are separate workflows; CD builds the image, opens the bump PR, waits for the canary, tests the live site and reverts by PR on failure ([ADR 0008](docs/adr/0008-ci-cd-separation-and-rollback-by-revert.md)).
 - **Types:** `pkg/model` is what the business means, adapter shapes stay private, `pkg/api/v1` is what clients were promised ([ADR 0011](docs/adr/0011-types-live-by-kind.md)).
 - **Distance:** an answer says the level change and the route facts the organiser published, and never a walk time, because a single time assumes a pace and a body that the people this app is for do not share ([ADR 0012](docs/adr/0012-how-we-describe-distance.md)).
 - **Secrets:** Sealed Secrets only ([ADR 0006](docs/adr/0006-sealed-secrets.md)).
+
+### Packages, as a hexagon
+
+- **Model:** `pkg/model` (what the business means), `pkg/api/v1` (what `/api/ask` clients were promised), `pkg/config` (every setting named once); `pkg/venue`, `pkg/schedule` and `pkg/agenda` are model helpers for the curated places, the programme and a pasted schedule.
+- **Use cases:** `pkg/ask` (locate, infer kind and need, rank, summarise), `pkg/reports` (attendee reports and their trust rules), `pkg/ingest` (fill the store).
+- **Adapters:** `pkg/esindex` (Elasticsearch), `pkg/sessionize` (the schedule source), `pkg/qr` (door codes), `pkg/telemetry` (OpenTelemetry to Dash0).
+- **Controller:** `pkg/web` (the HTML page, the forms, `/api/ask`, the probes).
+- **Wiring:** `pkg/cli` (the `serve`, `ingest`, `qr` and `reports` subcommands), `pkg/app`, `cmd/widedoor`.
+- There is no route package on `main`; routes live on open PR 125.
+
+A request: `pkg/web` parses the question, the location and the chips, calls `ask.Service`, which resolves where you are, infers the kind and the need, asks `esindex.Store` for places and sessions (BM25 and `semantic_text` fused with RRF), joins attendee reports from `reports.Service`, and returns a model answer that `pkg/web` renders as HTML or maps onto `pkg/api/v1`.
+
+A change: CI runs on the PR, Gitar reviews it, GitHub auto-merges when the required checks pass; `cd.yml` builds the image tagged with the commit SHA, opens a bump PR that auto-merges, Argo CD syncs and Argo Rollouts runs the canary, the gate runs the Playwright accessibility tests and the acceptance tests against the live site, and on failure a revert PR pins the previous image.
 
 ### Observability
 
@@ -56,6 +92,16 @@ Each chip carries a source, `chosen` or `learned` (a trailing `~` in the encodin
 A question that implies a need adds the chip as learned: asking for an elevator adds step-free only, marked "from your question", announced in the live region, with its own remove button and a "Keep" button that makes it a choice.
 A chip you remove goes into a second cookie, `wd_prefs_no`, so no question adds it back until you add it yourself; "Forget me" clears that too.
 The counter `widedoor.profile.chip_learned`, by `chip`, is the only trace of learning.
+A Must chip carries a trailing `!` (`step-free!`) and is set only through the `prefs` link today.
+Reports use one more cookie, `wd_id`: an anonymous random token per browser (HttpOnly, SameSite=Strict, expires 2026-11-12), used only to rate limit reports and to count two different people agreeing.
+
+| cookie | holds | expires | why |
+| --- | --- | --- | --- |
+| `wd_prefs` | the need chips, learned and Must marks included | end of 2026-11-12 MT | shape each answer without an account |
+| `wd_prefs_no` | chips you removed | end of 2026-11-12 MT | so a question never adds them back |
+| `wd_sched` | matched session ids from a pasted schedule | end of 2026-11-12 MT | next session and the room you just left |
+| `wd_id` | a random token | end of 2026-11-12 UTC | rate limits and two-person agreement on reports |
+
 The schedule works the same way: "Your schedule" takes a pasted Sched iCal export or a list of titles, matches them to the programme in Elasticsearch (exact title first, then the best fuzzy match with most of the words), and keeps only the matched session ids in the `sched` query parameter, the cookie `wd_sched` (same attributes and expiry) and localStorage.
 With a schedule present the page says "Your next session" and "You just left", assumes you are still near the room you just left when no location is given (and says so), and offers the nearest quiet room when three sessions run back to back.
 The only trace is the counter `widedoor.schedule.matched`, a count of matched sessions per paste.
@@ -64,17 +110,18 @@ The only trace is the counter `widedoor.schedule.matched`, a count of matched se
 
 - [`docs/demo/2026-11-09-rollout-abort.md`](docs/demo/2026-11-09-rollout-abort.md): a real canary aborted by Argo Rollouts at two minutes, diagnosed by Radar with the change that caused it.
 - [`docs/demo/2026-11-09-gitar-merge-gate.md`](docs/demo/2026-11-09-gitar-merge-gate.md): Gitar approving PRs on its own, withholding approval from a PR that deleted a test, and why the required review became advisory.
+- [`docs/demo/README.md`](docs/demo/README.md): the index, with five links per track.
 - The pull requests themselves: every change after Ring 0, bumps and reverts included, with Gitar's review on each.
 
 ## Tracks
 
-| track | what Wide Door does for it |
-| --- | --- |
-| Merge Forward, Conferences for Everyone | the whole point: venue access answers for attendees with limited mobility, hearing or vision |
-| Elasticsearch, Find the Right Talk | hybrid search over sessions and venue facts, including captioned and accessible sessions |
-| Dash0, Stop Flying Blind | traces, metrics and logs from the API and the ingest, plus custom accessibility metrics |
-| Radar, AI SRE | a namespace with zero findings from the first commit, and a canary to investigate |
-| Gitar / Sonar, Never Merge Broken | review rules for manifests, Go and accessibility, with auto-apply fixing what it can |
+| track | what Wide Door does for it | evidence |
+| --- | --- | --- |
+| Merge Forward, Conferences for Everyone | venue access answers shaped by need and verified by attendees | the live site, [ADR 0012](docs/adr/0012-how-we-describe-distance.md), PR 102 |
+| Elasticsearch, Find the Right Talk | hybrid BM25 and `semantic_text` search fused with RRF over sessions, places and needs | [`pkg/esindex/store.go`](pkg/esindex/store.go) |
+| Dash0, Stop Flying Blind | traces, metrics and logs from the API and the ingest, accessibility metrics and a dashboard as code | PR 44, [`deploy/dash0/wide-door.json`](deploy/dash0/wide-door.json) |
+| Radar, AI SRE | a Radar-clean namespace and a real aborted canary Radar diagnosed | [`docs/demo/2026-11-09-rollout-abort.md`](docs/demo/2026-11-09-rollout-abort.md) |
+| Gitar / Sonar, Never Merge Broken | review rules, a withheld PR and merges blocked on important findings | [`docs/demo/2026-11-09-gitar-merge-gate.md`](docs/demo/2026-11-09-gitar-merge-gate.md), [ADR 0013](docs/adr/0013-gitar-blocks-on-important-findings.md) |
 
 ## Run it
 
@@ -82,7 +129,9 @@ The only trace is the counter `widedoor.schedule.matched`, a count of matched se
 make help
 ```
 
-Infrastructure targets are described in [`infra/`](infra/); the app targets are added as the rings land.
+Infrastructure targets are described in [`infra/`](infra/).
+The app targets are `build`, `test`, `es-up`, `es-down`, `test-integration`, `test-acceptance`, `test-e2e`, `test-all`, `ingest`, `issues`, `dashboard` and `dashboard-check`.
+The binary is `widedoor` with four subcommands: `serve` (the web app and JSON API), `ingest` (index the schedule, places and needs), `qr` (door codes) and `reports` (`list` and `hide ID` for volunteers).
 The Makefile pins `KUBECONFIG` to `./.kube/config`, so its targets only ever talk to this cluster.
 Node 24 for the browser tests; `.nvmrc` pins it.
 
