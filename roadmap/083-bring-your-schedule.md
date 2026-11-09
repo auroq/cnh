@@ -1,6 +1,6 @@
 # 83. Bring your schedule: paste your Sched export or session titles, kept on your device
 
-**Done 2026-11-09 (PR #TBD, issue #83). Filed 2026-11-09 by Aria, p2. Nobody's call. Left for a follow-up: acceptance rows and the e2e check of the textarea label and the announced results, and a Sched export tried end to end on the floor.**
+**Done 2026-11-09 (PR #106, issue #83). Filed 2026-11-09 by Aria, p2. Nobody's call. Left for a follow-up: acceptance rows and the e2e check of the textarea label and the announced results, and a Sched export tried end to end on the floor.**
 
 Depends on: 081
 
