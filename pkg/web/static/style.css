@@ -40,7 +40,6 @@
 }
 @media (prefers-contrast: more) {
   :root { --muted: var(--fg); --border: var(--fg); }
-  .callout, .badge { background: transparent; color: var(--fg); border: 2px solid currentColor; }
   .results li { border-color: var(--fg); }
 }
 * { box-sizing: border-box; }
@@ -173,3 +172,6 @@ textarea { width: 100%; font: inherit; padding: 0.75rem; border: 2px solid var(-
 .save summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; font-weight: 600; color: var(--accent); text-decoration: underline; }
 .link a { overflow-wrap: anywhere; }
 .copy { min-height: 44px; min-width: 44px; margin-left: 0.5rem; padding: 0.5rem 0.9rem; }
+@media (prefers-contrast: more) {
+  .callout, .badge, .badge.ok, .badge.warn, .badge.problem, .badge.note, .callout.success, .callout.warning, .callout.info, .callout.problem, .callout.note { background: transparent; color: var(--fg); border: 2px solid currentColor; }
+}
