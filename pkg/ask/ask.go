@@ -91,6 +91,7 @@ func (s *Service) Locate(ctx context.Context, asked string) (Here, error) {
 				"should": []any{
 					map[string]any{"match_phrase": map[string]any{"name": map[string]any{"query": here.Asked, "boost": 3}}},
 					map[string]any{"match": map[string]any{"name": map[string]any{"query": here.Asked, "fuzziness": "AUTO", "operator": "and"}}},
+					map[string]any{"match": map[string]any{"near": here.Asked}},
 				},
 				"minimum_should_match": 1,
 			},
