@@ -1,18 +1,18 @@
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: web
+  name: widedoor
 automountServiceAccountToken: false
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: web
+  name: widedoor
   labels:
-    app.kubernetes.io/name: web
+    app.kubernetes.io/name: widedoor
 spec:
   selector:
-    app.kubernetes.io/name: web
+    app.kubernetes.io/name: widedoor
   ports:
     - name: http
       port: 80
@@ -21,15 +21,15 @@ spec:
 apiVersion: argoproj.io/v1alpha1
 kind: Rollout
 metadata:
-  name: web
+  name: widedoor
   labels:
-    app.kubernetes.io/name: web
+    app.kubernetes.io/name: widedoor
 spec:
   replicas: 2
   revisionHistoryLimit: 3
   selector:
     matchLabels:
-      app.kubernetes.io/name: web
+      app.kubernetes.io/name: widedoor
   strategy:
     canary:
       steps:
@@ -38,9 +38,9 @@ spec:
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: web
+        app.kubernetes.io/name: widedoor
     spec:
-      serviceAccountName: web
+      serviceAccountName: widedoor
       automountServiceAccountToken: false
       securityContext:
         runAsNonRoot: true
@@ -55,31 +55,45 @@ spec:
           whenUnsatisfiable: ScheduleAnyway
           labelSelector:
             matchLabels:
-              app.kubernetes.io/name: web
+              app.kubernetes.io/name: widedoor
       containers:
-        - name: web
-          image: hashicorp/http-echo:1.0.0
-          args:
-            - -listen=:8080
-            - -text=Wide Door is being built. Ask again soon.
+        - name: widedoor
+          image: ghcr.io/auroq/cnh/widedoor:main
+          imagePullPolicy: Always
           ports:
             - name: http
               containerPort: 8080
+          env:
+            - name: LISTEN
+              value: ":8080"
+            - name: ES_URL
+              value: http://wide-door-es-http:9200
+            - name: ES_USERNAME
+              value: elastic
+            - name: ES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: wide-door-es-elastic-user
+                  key: elastic
+            - name: PLACES_INDEX
+              value: places
+            - name: ES_INDEX
+              value: sessions
           resources:
             requests:
-              cpu: 10m
-              memory: 16Mi
+              cpu: 50m
+              memory: 64Mi
             limits:
-              cpu: 100m
-              memory: 32Mi
+              cpu: 500m
+              memory: 256Mi
           readinessProbe:
             httpGet:
-              path: /
+              path: /readyz
               port: http
             periodSeconds: 5
           livenessProbe:
             httpGet:
-              path: /
+              path: /healthz
               port: http
             periodSeconds: 10
           securityContext:
@@ -91,17 +105,17 @@ spec:
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
-  name: web
+  name: widedoor
 spec:
   minAvailable: 1
   selector:
     matchLabels:
-      app.kubernetes.io/name: web
+      app.kubernetes.io/name: widedoor
 ---
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
-  name: web
+  name: widedoor
 spec:
   parentRefs:
     - name: public
@@ -111,5 +125,5 @@ spec:
     - widedoor.cnh.auroq.com
   rules:
     - backendRefs:
-        - name: web
+        - name: widedoor
           port: 80
