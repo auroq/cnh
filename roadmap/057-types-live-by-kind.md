@@ -1,6 +1,6 @@
 # 57. Types live by kind: domain model, adapter shapes, and a versioned API contract
 
-**Open. Filed 2026-11-09, during Ring 4, by Aria. Nobody's call: it finishes what items 025 and 031 started.**
+**Done 2026-11-09 (PR #70, issue #57). Filed 2026-11-09, during Ring 4, by Aria. Nobody's call: it finishes what items 025 and 031 started.**
 
 Depends on: 031, 054
 
