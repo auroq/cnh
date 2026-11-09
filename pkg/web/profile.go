@@ -123,6 +123,7 @@ func (s *Server) describeProfile(p *page, r *http.Request, prefs model.Preferenc
 	p.Count = countWords(len(prefs))
 	p.ProfileOpen = r.URL.Path == profilePath
 	p.PrefsKnown = profileKnown(r)
+	p.EditURL = editURL(r, prefs)
 	if len(prefs) > 0 {
 		p.ProfileURL = profileURL(r, prefs)
 	}
@@ -171,6 +172,22 @@ func labelOf(id string) string {
 		}
 	}
 	return id
+}
+
+func editURL(r *http.Request, prefs model.Preferences) string {
+	values := url.Values{}
+	for _, key := range []string{"q", "from"} {
+		if v := strings.TrimSpace(r.URL.Query().Get(key)); v != "" {
+			values.Set(key, v)
+		}
+	}
+	if len(prefs) > 0 {
+		values.Set(prefsParam, prefs.String())
+	}
+	if len(values) == 0 {
+		return profilePath
+	}
+	return profilePath + "?" + values.Encode()
 }
 
 func profileURL(r *http.Request, prefs model.Preferences) string {
