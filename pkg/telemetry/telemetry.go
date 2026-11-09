@@ -133,18 +133,25 @@ func logOptions(endpoint string, hasScheme bool) []otlploggrpc.Option {
 	return []otlploggrpc.Option{otlploggrpc.WithEndpoint(endpoint), otlploggrpc.WithInsecure()}
 }
 
-// Transport wraps an HTTP round tripper so every call to peer becomes a child span named "peer METHOD /path".
+// Transport wraps an HTTP round tripper so every call to peer made inside a trace becomes a child span
+// named "peer METHOD /path". A call with no span in its context, such as a readiness ping, records nothing:
+// outbound calls are only ever children, never roots.
 func Transport(peer string, base http.RoundTripper, opts ...otelhttp.Option) http.RoundTripper {
 	if base == nil {
 		base = http.DefaultTransport
 	}
 	opts = append([]otelhttp.Option{
+		otelhttp.WithFilter(insideTrace),
 		otelhttp.WithSpanNameFormatter(func(_ string, r *http.Request) string {
 			return peer + " " + r.Method + " " + r.URL.Path
 		}),
 		otelhttp.WithSpanOptions(trace.WithAttributes(attribute.String("peer.service", peer))),
 	}, opts...)
 	return otelhttp.NewTransport(base, opts...)
+}
+
+func insideTrace(r *http.Request) bool {
+	return trace.SpanContextFromContext(r.Context()).IsValid()
 }
 
 // Handler returns an slog handler that writes every record to base, with trace_id and span_id added

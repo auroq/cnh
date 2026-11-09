@@ -16,6 +16,8 @@ import (
 
 // Store is what ask needs from a search backend, in the app's own terms.
 type Store interface {
+	// Ping reports whether the backend answers at all; it is the readiness probe's question and is never traced.
+	Ping(ctx context.Context) error
 	// LocateRoom resolves what an attendee typed as their location to a known room, or returns an empty Here.
 	LocateRoom(ctx context.Context, asked string) (Here, error)
 	// FindPlaces returns access features matching the question, best first, never rooms.
@@ -71,6 +73,11 @@ type Service struct {
 }
 
 const maxPlaces = 5
+
+// Ready reports whether the store answers; it records no span, because probes are not traffic.
+func (s *Service) Ready(ctx context.Context) error {
+	return s.Store.Ping(ctx)
+}
 
 // Locate resolves what the attendee typed as their location to a known room.
 func (s *Service) Locate(ctx context.Context, asked string) (Here, error) {

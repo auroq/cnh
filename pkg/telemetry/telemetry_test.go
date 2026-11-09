@@ -161,25 +161,53 @@ func TestTransport(t *testing.T) {
 	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusOK) }))
 	t.Cleanup(upstream.Close)
 
-	t.Run("when Elasticsearch is called through the transport", func(t *testing.T) {
-		client := &http.Client{Transport: Transport("elasticsearch", nil, otelhttp.WithTracerProvider(tp))}
-		res, err := client.Get(upstream.URL + "/places/_search")
+	client := &http.Client{Transport: Transport("elasticsearch", nil, otelhttp.WithTracerProvider(tp))}
+	call := func(t *testing.T, ctx context.Context) {
+		t.Helper()
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, upstream.URL+"/places/_search", nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		res, err := client.Do(req)
 		if err != nil {
 			t.Fatal(err)
 		}
 		res.Body.Close()
+	}
+
+	t.Run("when Elasticsearch is called inside a trace", func(t *testing.T) {
+		recorder.Reset()
+		ctx, parent := tp.Tracer("test").Start(context.Background(), "ask.FindPlaces")
+		call(t, ctx)
+		parent.End()
 		spans := recorder.Ended()
-		if len(spans) != 1 {
-			t.Fatalf("%d spans", len(spans))
+		if len(spans) != 2 {
+			t.Fatalf("%d spans: %v", len(spans), spans)
 		}
+		child := spans[0]
 		t.Run("it should name the span after the peer, the method and the path", func(t *testing.T) {
-			if spans[0].Name() != "elasticsearch GET /places/_search" {
-				t.Fatalf("span %q", spans[0].Name())
+			if child.Name() != "elasticsearch GET /places/_search" {
+				t.Fatalf("span %q", child.Name())
 			}
 		})
 		t.Run("it should tag the span with the peer service", func(t *testing.T) {
-			if !hasAttribute(spans[0].Attributes(), "peer.service", "elasticsearch") {
-				t.Fatalf("attributes %v", spans[0].Attributes())
+			if !hasAttribute(child.Attributes(), "peer.service", "elasticsearch") {
+				t.Fatalf("attributes %v", child.Attributes())
+			}
+		})
+		t.Run("it should make the call a child of the caller's span", func(t *testing.T) {
+			if child.Parent().SpanID() != parent.SpanContext().SpanID() {
+				t.Fatalf("parent %s", child.Parent().SpanID())
+			}
+		})
+	})
+
+	t.Run("when Elasticsearch is pinged outside any trace", func(t *testing.T) {
+		recorder.Reset()
+		call(t, context.Background())
+		t.Run("it should record no span", func(t *testing.T) {
+			if n := len(recorder.Ended()); n != 0 {
+				t.Fatalf("%d spans", n)
 			}
 		})
 	})

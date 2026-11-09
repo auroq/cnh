@@ -41,6 +41,10 @@ func (s *Store) sessions() string {
 	return s.SessionsIndex
 }
 
+func (s *Store) Ping(ctx context.Context) error {
+	return s.Client.Ping(ctx)
+}
+
 func (s *Store) LocateRoom(ctx context.Context, asked string) (ask.Here, error) {
 	hits, err := s.searchPlaces(ctx, locateQuery(asked))
 	if err != nil || len(hits) == 0 {

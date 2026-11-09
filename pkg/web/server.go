@@ -26,6 +26,7 @@ var assets embed.FS
 type Asker interface {
 	Ask(ctx context.Context, question, from string) (ask.Answer, error)
 	Locate(ctx context.Context, asked string) (ask.Here, error)
+	Ready(ctx context.Context) error
 }
 
 type Server struct {
@@ -59,7 +60,6 @@ var quickKinds = []kind{
 const (
 	askTimeout   = 10 * time.Second
 	readyTimeout = 3 * time.Second
-	readyRoom    = "Grand Ballroom J"
 	searchDown   = "The search is not answering right now. Ask staff at registration, and try again in a minute."
 )
 
@@ -128,7 +128,7 @@ func (s *Server) apiAsk(w http.ResponseWriter, r *http.Request) {
 func (s *Server) ready(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), readyTimeout)
 	defer cancel()
-	if _, err := s.ask.Locate(ctx, readyRoom); err != nil {
+	if err := s.ask.Ready(ctx); err != nil {
 		http.Error(w, "search unavailable", http.StatusServiceUnavailable)
 		return
 	}
