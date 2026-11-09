@@ -1,6 +1,6 @@
 # 25. The search port speaks domain terms
 
-**Open. Filed 2026-11-09, during Ring 3, by Aria. Nobody's call: the shape is clean architecture applied to what Ring 2 built.**
+**Done 2026-11-09 (PR #26, issue #25). Filed 2026-11-09, during Ring 3, by Aria. Nobody's call: the shape is clean architecture applied to what Ring 2 built.**
 
 Depends on: 009, 010
 
