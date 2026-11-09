@@ -55,12 +55,6 @@ func TestSetup(t *testing.T) {
 				t.Fatal(err)
 			}
 		})
-		t.Run("it should still install the W3C trace context and baggage propagators", func(t *testing.T) {
-			fields := strings.Join(otel.GetTextMapPropagator().Fields(), " ")
-			if !strings.Contains(fields, "traceparent") || !strings.Contains(fields, "baggage") {
-				t.Fatalf("propagator fields %q", fields)
-			}
-		})
 	})
 
 	t.Run("when an endpoint is configured", func(t *testing.T) {
@@ -101,6 +95,27 @@ func TestSetup(t *testing.T) {
 	})
 }
 
+func TestInstall(t *testing.T) {
+	t.Run("when the providers are installed", func(t *testing.T) {
+		p, err := Setup(context.Background(), settings{"", "widedoor"})
+		if err != nil {
+			t.Fatal(err)
+		}
+		p.Install()
+		fields := strings.Join(otel.GetTextMapPropagator().Fields(), " ")
+		t.Run("it should propagate W3C trace context", func(t *testing.T) {
+			if !strings.Contains(fields, "traceparent") {
+				t.Fatalf("propagator fields %q", fields)
+			}
+		})
+		t.Run("it should propagate W3C baggage", func(t *testing.T) {
+			if !strings.Contains(fields, "baggage") {
+				t.Fatalf("propagator fields %q", fields)
+			}
+		})
+	})
+}
+
 type captureExporter struct{ records []sdklog.Record }
 
 func (c *captureExporter) Export(_ context.Context, records []sdklog.Record) error {
@@ -136,9 +151,14 @@ func TestHandler(t *testing.T) {
 				t.Fatalf("logged %s", buf.String())
 			}
 		})
-		t.Run("it should send the record to OpenTelemetry in the same trace", func(t *testing.T) {
-			if len(exporter.records) != 1 || exporter.records[0].TraceID() != sc.TraceID() {
-				t.Fatalf("exported %d records: %+v", len(exporter.records), exporter.records)
+		t.Run("it should send exactly one record to OpenTelemetry", func(t *testing.T) {
+			if len(exporter.records) != 1 {
+				t.Fatalf("exported %d records", len(exporter.records))
+			}
+		})
+		t.Run("it should keep the record in the same trace", func(t *testing.T) {
+			if len(exporter.records) == 0 || exporter.records[0].TraceID() != sc.TraceID() {
+				t.Fatalf("exported %+v", exporter.records)
 			}
 		})
 	})

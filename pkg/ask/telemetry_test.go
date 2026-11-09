@@ -4,7 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/metric/metricdata"
@@ -12,25 +11,34 @@ import (
 	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 )
 
-func observe(t *testing.T) (*sdkmetric.ManualReader, *tracetest.SpanRecorder) {
+type observed struct {
+	reader   *sdkmetric.ManualReader
+	recorder *tracetest.SpanRecorder
+	tracer   *sdktrace.TracerProvider
+	meter    *sdkmetric.MeterProvider
+}
+
+func observe(t *testing.T) observed {
 	t.Helper()
 	reader := sdkmetric.NewManualReader(sdkmetric.WithTemporalitySelector(func(sdkmetric.InstrumentKind) metricdata.Temporality { return metricdata.DeltaTemporality }))
 	mp := sdkmetric.NewMeterProvider(sdkmetric.WithReader(reader))
-	otel.SetMeterProvider(mp)
 	recorder := tracetest.NewSpanRecorder()
 	tp := sdktrace.NewTracerProvider(sdktrace.WithSpanProcessor(recorder))
-	otel.SetTracerProvider(tp)
 	t.Cleanup(func() {
 		_ = mp.Shutdown(context.Background())
 		_ = tp.Shutdown(context.Background())
 	})
-	return reader, recorder
+	return observed{reader: reader, recorder: recorder, tracer: tp, meter: mp}
 }
 
-func collect(t *testing.T, reader *sdkmetric.ManualReader) map[string]metricdata.Metrics {
+func (o observed) service(store Store) *Service {
+	return &Service{Store: store, Tracer: o.tracer, Meter: o.meter}
+}
+
+func (o observed) collect(t *testing.T) map[string]metricdata.Metrics {
 	t.Helper()
 	var rm metricdata.ResourceMetrics
-	if err := reader.Collect(context.Background(), &rm); err != nil {
+	if err := o.reader.Collect(context.Background(), &rm); err != nil {
 		t.Fatal(err)
 	}
 	out := map[string]metricdata.Metrics{}
@@ -38,6 +46,14 @@ func collect(t *testing.T, reader *sdkmetric.ManualReader) map[string]metricdata
 		for _, m := range sm.Metrics {
 			out[m.Name] = m
 		}
+	}
+	return out
+}
+
+func (o observed) spans() map[string]sdktrace.ReadOnlySpan {
+	out := map[string]sdktrace.ReadOnlySpan{}
+	for _, s := range o.recorder.Ended() {
+		out[s.Name()] = s
 	}
 	return out
 }
@@ -80,13 +96,14 @@ func sumTotal(m metricdata.Metrics) int64 {
 	return total
 }
 
-func TestAskTelemetry(t *testing.T) {
-	reader, recorder := observe(t)
-	ctx := context.Background()
-	unverifiedElevator := Place{ID: "sp-l1-elevator", Kind: "elevator", Name: "Elevator by registration", Venue: "Salt Palace", Level: "Level 1"}
-	verifiedRestroom := Place{ID: "sp-l2-restroom", Kind: "all-gender-restroom", Name: "All-gender restroom outside 255", Venue: "Salt Palace", Level: "Level 2", Verified: true}
-	in255 := Here{Room: "255 BC", Venue: "Salt Palace", Level: "Level 2"}
+var (
+	unverifiedElevator = Place{ID: "sp-l1-elevator", Kind: "elevator", Name: "Elevator by registration", Venue: "Salt Palace", Level: "Level 1"}
+	verifiedRestroom   = Place{ID: "sp-l2-restroom", Kind: "all-gender-restroom", Name: "All-gender restroom outside 255", Venue: "Salt Palace", Level: "Level 2", Verified: true}
+	in255              = Here{Room: "255 BC", Venue: "Salt Palace", Level: "Level 2"}
+)
 
+func TestAskMetrics(t *testing.T) {
+	ctx := context.Background()
 	cases := []struct {
 		name       string
 		store      *fakeStore
@@ -127,11 +144,11 @@ func TestAskTelemetry(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run("when "+c.name, func(t *testing.T) {
-			collect(t, reader)
-			if _, err := (&Service{Store: c.store}).Ask(ctx, c.question, c.from); err != nil {
+			o := observe(t)
+			if _, err := o.service(c.store).Ask(ctx, c.question, c.from); err != nil {
 				t.Fatal(err)
 			}
-			got := collect(t, reader)
+			got := o.collect(t)
 			t.Run("it should record one duration with whether a location and an answer were present", func(t *testing.T) {
 				if n := histogramCount(got["widedoor.ask.duration"], c.duration); n != 1 {
 					t.Fatalf("count %d for %v in %+v", n, c.duration.ToSlice(), got["widedoor.ask.duration"].Data)
@@ -151,38 +168,39 @@ func TestAskTelemetry(t *testing.T) {
 	}
 
 	t.Run("when the question is empty", func(t *testing.T) {
-		collect(t, reader)
-		if _, err := (&Service{Store: &fakeStore{}}).Ask(ctx, "  ", ""); err != nil {
+		o := observe(t)
+		if _, err := o.service(&fakeStore{}).Ask(ctx, "  ", ""); err != nil {
 			t.Fatal(err)
 		}
-		got := collect(t, reader)
+		got := o.collect(t)
 		t.Run("it should not count an answer", func(t *testing.T) {
 			if _, ok := got["widedoor.ask.answers"]; ok {
 				t.Fatalf("recorded %+v", got["widedoor.ask.answers"].Data)
 			}
 		})
 	})
+}
+
+func TestAskSpans(t *testing.T) {
+	ctx := context.Background()
 
 	t.Run("when an attendee in 255 BC asks for the nearest elevator", func(t *testing.T) {
-		recorder.Reset()
-		if _, err := (&Service{Store: &fakeStore{room: in255, places: []Place{unverifiedElevator}}}).Ask(ctx, "nearest elevator", "255 BC"); err != nil {
+		o := observe(t)
+		if _, err := o.service(&fakeStore{room: in255, places: []Place{unverifiedElevator}}).Ask(ctx, "nearest elevator", "255 BC"); err != nil {
 			t.Fatal(err)
 		}
-		spans := map[string]sdktrace.ReadOnlySpan{}
-		for _, s := range recorder.Ended() {
-			spans[s.Name()] = s
-		}
+		spans := o.spans()
 		root, ok := spans["ask.Ask"]
 		if !ok {
-			t.Fatalf("spans %v", names(recorder.Ended()))
+			t.Fatalf("spans %v", names(o.recorder.Ended()))
 		}
-		t.Run("it should record one span per store call under the ask span", func(t *testing.T) {
-			for _, child := range []string{"ask.LocateRoom", "ask.FindPlaces", "ask.FindSessions"} {
+		for _, child := range []string{"ask.LocateRoom", "ask.FindPlaces", "ask.FindSessions"} {
+			t.Run("it should record "+child+" as a child of the ask span", func(t *testing.T) {
 				if s, ok := spans[child]; !ok || s.Parent().SpanID() != root.SpanContext().SpanID() {
-					t.Fatalf("%s missing or not a child of ask.Ask in %v", child, names(recorder.Ended()))
+					t.Fatalf("%s missing or not a child of ask.Ask in %v", child, names(o.recorder.Ended()))
 				}
-			}
-		})
+			})
+		}
 		want := []attribute.KeyValue{
 			attrQuestionLength.Int(len("nearest elevator")),
 			attrHereVenue.String("Salt Palace"),
@@ -198,6 +216,18 @@ func TestAskTelemetry(t *testing.T) {
 				}
 			})
 		}
+	})
+
+	t.Run("when the readiness probe asks whether the store answers", func(t *testing.T) {
+		o := observe(t)
+		if err := o.service(&fakeStore{}).Ready(ctx); err != nil {
+			t.Fatal(err)
+		}
+		t.Run("it should record no span", func(t *testing.T) {
+			if n := len(o.recorder.Ended()); n != 0 {
+				t.Fatalf("%d spans: %v", n, names(o.recorder.Ended()))
+			}
+		})
 	})
 }
 

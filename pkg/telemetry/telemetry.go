@@ -61,10 +61,9 @@ func (p *Providers) Shutdown(ctx context.Context) error {
 	return errors.Join(errs...)
 }
 
-// Setup builds the SDK providers for cfg, installs them as the OpenTelemetry globals, and installs the
-// W3C trace context and baggage propagators. With an empty endpoint every provider is a noop.
+// Setup builds the SDK providers for cfg without touching any global. With an empty endpoint every
+// provider is a noop. Install makes them the OpenTelemetry globals.
 func Setup(ctx context.Context, cfg config.Telemetry) (*Providers, error) {
-	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(propagation.TraceContext{}, propagation.Baggage{}))
 	p := &Providers{Tracer: tracenoop.NewTracerProvider(), Meter: metricnoop.NewMeterProvider(), Logger: lognoop.NewLoggerProvider()}
 	endpoint := strings.TrimSpace(cfg.OTLPEndpoint())
 	if endpoint != "" {
@@ -84,10 +83,16 @@ func Setup(ctx context.Context, cfg config.Telemetry) (*Providers, error) {
 			return nil, err
 		}
 	}
+	return p, nil
+}
+
+// Install makes the providers the OpenTelemetry globals and installs the W3C trace context and
+// baggage propagators, so code that uses the global API, such as otelslog, reaches them.
+func (p *Providers) Install() {
+	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(propagation.TraceContext{}, propagation.Baggage{}))
 	otel.SetTracerProvider(p.Tracer)
 	otel.SetMeterProvider(p.Meter)
 	global.SetLoggerProvider(p.Logger)
-	return p, nil
 }
 
 func (p *Providers) connect(ctx context.Context, endpoint string, res *resource.Resource) error {

@@ -52,6 +52,7 @@ func observe(ctx context.Context, cfg config.Telemetry, log *slog.Logger) (*slog
 	if err != nil {
 		return nil, nil, err
 	}
+	providers.Install()
 	log = slog.New(telemetry.Handler(log.Handler()))
 	endpoint := cfg.OTLPEndpoint()
 	if endpoint == "" {

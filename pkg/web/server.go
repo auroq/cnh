@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
@@ -30,9 +31,18 @@ type Asker interface {
 }
 
 type Server struct {
-	ask  Asker
-	tmpl *template.Template
-	log  *slog.Logger
+	ask    Asker
+	tmpl   *template.Template
+	log    *slog.Logger
+	tracer trace.TracerProvider
+}
+
+// Option adjusts a Server; nil tracing options mean the OpenTelemetry globals.
+type Option func(*Server)
+
+// WithTracerProvider is where request spans go; tests pass an in-memory one.
+func WithTracerProvider(tp trace.TracerProvider) Option {
+	return func(s *Server) { s.tracer = tp }
 }
 
 type page struct {
@@ -63,12 +73,17 @@ const (
 	searchDown   = "The search is not answering right now. Ask staff at registration, and try again in a minute."
 )
 
-func New(a Asker, log *slog.Logger) *Server {
-	return &Server{
-		ask:  a,
-		tmpl: template.Must(template.New("").Funcs(template.FuncMap{"clock": clock, "location": readableLocation}).ParseFS(assets, "templates/*.html")),
-		log:  log,
+func New(a Asker, log *slog.Logger, opts ...Option) *Server {
+	s := &Server{
+		ask:    a,
+		tmpl:   template.Must(template.New("").Funcs(template.FuncMap{"clock": clock, "location": readableLocation}).ParseFS(assets, "templates/*.html")),
+		log:    log,
+		tracer: otel.GetTracerProvider(),
 	}
+	for _, opt := range opts {
+		opt(s)
+	}
+	return s
 }
 
 // Handler is the mux behind one span per request, named for the route pattern that matched;
@@ -81,7 +96,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, _ *http.Request) { fmt.Fprintln(w, "ok") })
 	mux.HandleFunc("GET /readyz", s.ready)
 	mux.Handle("GET /static/", http.FileServerFS(assets))
-	return otelhttp.NewHandler(s.logged(mux), "widedoor", otelhttp.WithFilter(notProbe))
+	return otelhttp.NewHandler(s.logged(mux), "widedoor", otelhttp.WithFilter(notProbe), otelhttp.WithTracerProvider(s.tracer))
 }
 
 func notProbe(r *http.Request) bool {

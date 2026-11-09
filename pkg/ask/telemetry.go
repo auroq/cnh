@@ -1,25 +1,16 @@
 package ask
 
 import (
+	"context"
+
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/metric"
+	"go.opentelemetry.io/otel/trace"
 )
 
 const scope = "github.com/auroq/cnh/pkg/ask"
-
-var (
-	tracer = otel.Tracer(scope)
-	meter  = otel.Meter(scope)
-
-	askDuration, _ = meter.Float64Histogram("widedoor.ask.duration",
-		metric.WithUnit("ms"),
-		metric.WithDescription("How long answering one question took"))
-	askAnswers, _ = meter.Int64Counter("widedoor.ask.answers",
-		metric.WithDescription("Answers served, by the kind of the top place and whether it was verified"))
-	unverifiedServed, _ = meter.Int64Counter("widedoor.ask.unverified_served",
-		metric.WithDescription("Answers whose top place nobody has verified on the floor yet"))
-)
 
 const (
 	attrHasLocation    = attribute.Key("has_location")
@@ -33,6 +24,49 @@ const (
 	attrSessionsCount  = attribute.Key("sessions.count")
 	attrAnswerVerified = attribute.Key("answer.verified")
 )
+
+type instruments struct {
+	duration         metric.Float64Histogram
+	answers          metric.Int64Counter
+	unverifiedServed metric.Int64Counter
+}
+
+func (s *Service) tracer() trace.Tracer {
+	if s.Tracer == nil {
+		return otel.Tracer(scope)
+	}
+	return s.Tracer.Tracer(scope)
+}
+
+func (s *Service) instruments() *instruments {
+	s.once.Do(func() {
+		mp := s.Meter
+		if mp == nil {
+			mp = otel.GetMeterProvider()
+		}
+		m := mp.Meter(scope)
+		s.inst = &instruments{}
+		s.inst.duration, _ = m.Float64Histogram("widedoor.ask.duration",
+			metric.WithUnit("ms"),
+			metric.WithDescription("How long answering one question took"))
+		s.inst.answers, _ = m.Int64Counter("widedoor.ask.answers",
+			metric.WithDescription("Answers served, by the kind of the top place and whether it was verified"))
+		s.inst.unverifiedServed, _ = m.Int64Counter("widedoor.ask.unverified_served",
+			metric.WithDescription("Answers whose top place nobody has verified on the floor yet"))
+	})
+	return s.inst
+}
+
+func step[T any](ctx context.Context, tracer trace.Tracer, name string, fn func(context.Context) (T, error)) (T, error) {
+	ctx, span := tracer.Start(ctx, name)
+	defer span.End()
+	out, err := fn(ctx)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+	}
+	return out, err
+}
 
 // topKind names what the attendee was told first: a place's kind, "session", or "none".
 func topKind(a Answer) (kind string, verified bool) {
