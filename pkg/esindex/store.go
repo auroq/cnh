@@ -53,6 +53,15 @@ func (s *Store) LocateRoom(ctx context.Context, asked string) (ask.Here, error) 
 	return ask.Here{Room: hits[0].Name, Venue: hits[0].Venue, Level: hits[0].Level}, nil
 }
 
+// LocatePlace resolves a place id, as a door code carries it, to where that place is; any kind, not only rooms.
+func (s *Store) LocatePlace(ctx context.Context, id string) (ask.Here, error) {
+	hits, err := s.searchPlaces(ctx, map[string]any{"size": 1, "query": map[string]any{"term": map[string]any{"id": id}}})
+	if err != nil || len(hits) == 0 {
+		return ask.Here{}, err
+	}
+	return ask.Here{Room: hits[0].Name, Venue: hits[0].Venue, Level: hits[0].Level}, nil
+}
+
 func (s *Store) FindPlaces(ctx context.Context, question string) ([]ask.Place, error) {
 	return s.searchPlaces(ctx, hybrid(question, placeFields, 10, roomsOnly))
 }
