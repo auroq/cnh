@@ -15,3 +15,4 @@ A record is accepted or proposed; a decision that changes gets a new record that
 | [0008](0008-ci-cd-separation-and-rollback-by-revert.md) | CI and CD are separate stages; a post-deploy gate tests the live site; rollback is a revert PR | Accepted |
 | [0009](0009-gitar-approval-is-the-merge-gate.md) | Gitar's approving review, against `.gitar/config/approve.md`, is what lets a PR merge | Superseded by 0010 |
 | [0010](0010-gitar-approval-is-advisory.md) | Gitar's approval is advisory on a single-author repository; the status checks are the gate | Accepted |
+| [0011](0011-types-live-by-kind.md) | types live by kind: `pkg/model`, private adapter shapes, `pkg/api/v1` | Accepted |
