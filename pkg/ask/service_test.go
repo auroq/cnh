@@ -99,8 +99,8 @@ func TestAsk(t *testing.T) {
 				t.Fatalf("first place %s", ans.Places[0].ID)
 			}
 		})
-		t.Run("it should say it is in the same building on an unlisted level", func(t *testing.T) {
-			want := "Elevators: Salt Palace. Same building, you are on Level 2 and it is on an unlisted level. Unverified: read off a plan, nobody has checked it yet."
+		t.Run("it should say it is in the same building and that we do not know its level", func(t *testing.T) {
+			want := "Elevators: Salt Palace. Same building, we do not know which level it is on. Unverified: read off a plan, nobody has checked it yet."
 			if ans.Summary != want {
 				t.Fatalf("\n got %q\nwant %q", ans.Summary, want)
 			}
