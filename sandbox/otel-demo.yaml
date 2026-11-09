@@ -1,0 +1,48 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: otel-demo
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://open-telemetry.github.io/opentelemetry-helm-charts
+    chart: opentelemetry-demo
+    targetRevision: 0.42.6
+    helm:
+      valuesObject:
+        components:
+          frontend-proxy:
+            service:
+              type: ClusterIP
+        opentelemetry-collector:
+          extraEnvs:
+            - name: DASH0_AUTH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: dash0-export
+                  key: token
+          config:
+            exporters:
+              otlp/dash0:
+                endpoint: ${env:DASH0_OTLP_ENDPOINT}
+                headers:
+                  Authorization: Bearer ${env:DASH0_AUTH_TOKEN}
+            service:
+              pipelines:
+                traces:
+                  exporters: [otlp/dash0, debug]
+                metrics:
+                  exporters: [otlp/dash0, debug]
+                logs:
+                  exporters: [otlp/dash0, debug]
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: otel-demo
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

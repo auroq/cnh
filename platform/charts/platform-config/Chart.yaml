@@ -1,0 +1,5 @@
+apiVersion: v2
+name: platform-config
+description: Cluster-wide config objects that need CRDs from other charts (issuer, gateway, routes)
+type: application
+version: 0.1.0

@@ -1,0 +1,5 @@
+domain: cnh.auroq.com
+acmeEmail: ""
+doTokenSecret:
+  name: digitalocean-token
+  namespace: cert-manager

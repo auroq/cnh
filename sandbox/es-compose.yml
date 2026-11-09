@@ -1,0 +1,49 @@
+# Local single-node Elasticsearch + Kibana for learning.
+# ELASTIC_PASSWORD and KIBANA_PASSWORD come from the environment (see README: make sandbox-es-local).
+name: cnh-es
+
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:${ES_VERSION:-9.5.6}
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "true"
+      xpack.security.http.ssl.enabled: "false"
+      xpack.license.self_generated.type: trial
+      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:?set ELASTIC_PASSWORD}
+      ES_JAVA_OPTS: -Xms2g -Xmx2g
+    ports:
+      - 127.0.0.1:9200:9200
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s -u elastic:$$ELASTIC_PASSWORD http://localhost:9200/_cluster/health | grep -qv '\"status\":\"red\"'"]
+      interval: 10s
+      retries: 30
+
+  kibana-setup:
+    image: docker.elastic.co/elasticsearch/elasticsearch:${ES_VERSION:-9.5.6}
+    depends_on:
+      elasticsearch: { condition: service_healthy }
+    environment:
+      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD}
+      KIBANA_PASSWORD: ${KIBANA_PASSWORD:?set KIBANA_PASSWORD}
+    command: >
+      bash -c 'curl -s -u elastic:$$ELASTIC_PASSWORD -H "Content-Type: application/json"
+      http://elasticsearch:9200/_security/user/kibana_system/_password
+      -d "{\"password\":\"$$KIBANA_PASSWORD\"}"'
+    restart: "no"
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:${ES_VERSION:-9.5.6}
+    depends_on:
+      kibana-setup: { condition: service_completed_successfully }
+    environment:
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+      ELASTICSEARCH_USERNAME: kibana_system
+      ELASTICSEARCH_PASSWORD: ${KIBANA_PASSWORD}
+    ports:
+      - 127.0.0.1:5601:5601
+
+volumes:
+  esdata:

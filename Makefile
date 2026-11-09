@@ -1,0 +1,93 @@
+SHELL := bash
+.SHELLFLAGS := -euo pipefail -c
+.DEFAULT_GOAL := help
+
+ROOTS      := bootstrap cluster platform
+OP_TOKEN   := pass:cnh/op-service-account-token
+STATE_USER := op:CNH/cnh-tfstate/username
+STATE_PASS := op:CNH/cnh-tfstate/password
+
+OP  := secret-run --env OP_SERVICE_ACCOUNT_TOKEN=$(OP_TOKEN) --
+TF  := $(OP) secret-run --env AWS_ACCESS_KEY_ID=$(STATE_USER) --env AWS_SECRET_ACCESS_KEY=$(STATE_PASS) -- terraform
+
+export KUBECONFIG := $(CURDIR)/.kube/config
+
+.PHONY: help
+help: ## Show this help
+	@grep -hE '^[a-zA-Z0-9_%-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-22s %s\n", $$1, $$2}'
+	@echo
+	@echo "  ROOT is one of: $(ROOTS)   e.g. make plan-cluster"
+	@echo "  KUBECONFIG is $(KUBECONFIG); it never touches ~/.kube/config"
+
+.PHONY: bootstrap-seed
+bootstrap-seed: ## First run only: create Spaces key + state bucket with local state, then move state into the bucket
+	printf 'terraform {\n  backend "local" {}\n}\n' > bootstrap/zz_seed_override.tf
+	$(OP) terraform -chdir=bootstrap init -upgrade
+	$(OP) terraform -chdir=bootstrap apply -target=onepassword_item.spaces_tfstate -target=digitalocean_project.cnh
+	$(OP) terraform -chdir=bootstrap apply
+	rm bootstrap/zz_seed_override.tf
+	$(TF) -chdir=bootstrap init -migrate-state -force-copy
+	rm -f bootstrap/terraform.tfstate bootstrap/terraform.tfstate.backup
+
+init-%: ## terraform init for ROOT
+	$(TF) -chdir=$* init -upgrade
+
+validate-%: ## terraform validate for ROOT (no credentials needed)
+	terraform -chdir=$* init -backend=false -upgrade >/dev/null
+	terraform -chdir=$* validate
+
+plan-%: ## terraform plan for ROOT
+	$(TF) -chdir=$* plan
+
+apply-%: ## terraform apply for ROOT
+	$(TF) -chdir=$* apply
+
+destroy-%: ## terraform destroy for ROOT
+	$(TF) -chdir=$* destroy
+
+.PHONY: up
+up: init-cluster apply-cluster kubeconfig init-platform apply-platform ## Cluster, kubeconfig, then platform add-ons
+
+.PHONY: kubeconfig
+kubeconfig: ## Write the cluster kubeconfig to .kube/config (mode 600)
+	mkdir -p .kube
+	umask 077; $(TF) -chdir=cluster output -raw kubeconfig > .kube/config
+	kubectl config rename-context "$$(kubectl config current-context)" cnh
+	$(MAKE) --no-print-directory kubectx-merge
+	kubectl get nodes -o wide
+
+.PHONY: kubectx-merge
+kubectx-merge: ## Merge the cnh context into ~/.kube/config (backs it up first) so kubectx/k9s see it
+	cp ~/.kube/config ~/.kube/config.bak-cnh-$$(date +%Y%m%d%H%M%S)
+	KUBECONFIG=$$HOME/.kube/config kubectl config delete-context cnh >/dev/null 2>&1 || true
+	umask 077; KUBECONFIG=$$HOME/.kube/config:$(CURDIR)/.kube/config kubectl config view --flatten > $(CURDIR)/.kube/merged
+	mv $(CURDIR)/.kube/merged ~/.kube/config
+	@echo "cnh added to ~/.kube/config; default is still $$(KUBECONFIG=$$HOME/.kube/config kubectl config current-context). Run 'make use-cnh' to switch."
+
+.PHONY: use-cnh
+use-cnh: ## Make cnh the default context in ~/.kube/config for the event
+	KUBECONFIG=$$HOME/.kube/config kubectl config use-context cnh
+
+.PHONY: use-wasp
+use-wasp: ## Switch the default context back to wasp
+	KUBECONFIG=$$HOME/.kube/config kubectl config use-context lke195884-ctx
+
+.PHONY: status
+status: ## Nodes, non-running pods, gateways and certificates
+	kubectl get nodes
+	kubectl get pods -A --field-selector=status.phase!=Running,status.phase!=Succeeded
+	kubectl get gateway,httproute -A
+	kubectl get certificate -A
+
+.PHONY: fmt
+fmt: ## terraform fmt everything
+	terraform fmt -recursive
+
+.PHONY: teardown
+teardown: ## Destroy platform, cluster, then the state bucket (moves bootstrap state back to local first)
+	$(TF) -chdir=platform destroy
+	$(TF) -chdir=cluster destroy
+	printf 'terraform {\n  backend "local" {}\n}\n' > bootstrap/zz_seed_override.tf
+	$(TF) -chdir=bootstrap init -migrate-state -force-copy
+	$(OP) terraform -chdir=bootstrap destroy
+	rm bootstrap/zz_seed_override.tf
