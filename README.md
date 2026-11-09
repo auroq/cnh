@@ -18,7 +18,7 @@ Project code and design start after kickoff (10:00 MT, 2026-11-09) in the commit
 
 ## Architecture
 
-To be filled in as the rings land.
+[`docs/architecture.md`](docs/architecture.md) is the one-page tour: the layers, the ports, what each package and binary is for, and where to look when you want to change something.
 The shape is fixed by the ADRs:
 
 - **Language:** Go for the API and the ingest, with server-rendered HTML and almost no JavaScript, because plain HTML is the most accessible UI there is.
