@@ -71,6 +71,7 @@ jobs:
       - uses: docker/build-push-action@v6
         with:
           context: .
+          build-args: VERSION=${{ needs.plan.outputs.sha }}
           push: true
           tags: |
             ${{ env.IMAGE }}:main
@@ -87,6 +88,7 @@ jobs:
       merge: ${{ steps.wait.outputs.merge }}
     env:
       GH_TOKEN: ${{ secrets.CD_GITHUB_TOKEN }}
+      REMOTE: origin
     steps:
       - uses: actions/checkout@v5
         with:
@@ -98,11 +100,19 @@ jobs:
         run: |
           git config user.name "wide-door-cd"
           git config user.email "cd@cnh.auroq.com"
-          url=$(tools/bump-image.sh --sha "${{ needs.plan.outputs.sha }}" | grep -m1 'https://github.com/.*/pull/')
+          out=$(tools/bump-image.sh --sha "${{ needs.plan.outputs.sha }}")
+          echo "$out"
+          if grep -q '^already pinned' <<<"$out"; then
+            echo "pr=" >> "$GITHUB_OUTPUT"
+            echo "image already pinned to this SHA; nothing to bump" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          url=$(grep -m1 'https://github.com/.*/pull/' <<<"$out")
           echo "pr=${url##*/}" >> "$GITHUB_OUTPUT"
           echo "bump PR: $url" >> "$GITHUB_STEP_SUMMARY"
       - name: Wait for it to merge
         id: wait
+        if: steps.bump.outputs.pr != ''
         run: |
           merge=$(tools/wait-pr.sh "${{ steps.bump.outputs.pr }}" --timeout 1200)
           echo "merge=$merge" >> "$GITHUB_OUTPUT"
@@ -144,7 +154,7 @@ jobs:
 
   rollback:
     needs: [plan, bump, gate]
-    if: always() && needs.plan.outputs.release == 'true' && needs.bump.result == 'success' && needs.gate.result == 'failure'
+    if: always() && needs.plan.outputs.release == 'true' && needs.bump.result == 'success' && needs.bump.outputs.pr != '' && needs.gate.result == 'failure'
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ secrets.CD_GITHUB_TOKEN }}
