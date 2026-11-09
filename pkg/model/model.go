@@ -74,4 +74,5 @@ type Answer struct {
 	Places   []Place   `json:"places"`
 	Sessions []Session `json:"sessions"`
 	Applied  []Applied `json:"applied,omitempty"`
+	Schedule *Schedule `json:"schedule,omitempty"`
 }
