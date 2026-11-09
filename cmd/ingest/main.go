@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/auroq/cnh/pkg/esindex"
@@ -34,10 +35,18 @@ Flags:
 		fs.PrintDefaults()
 	}
 	skipDetails := fs.Bool("skip-details", false, "index only what the index page has, without per-session descriptions")
+	healthCheck := fs.Bool("health-check", false, "check whether the ingest process is running")
 	timeout := fs.Duration("timeout", 10*time.Minute, "overall timeout")
 	_ = fs.Parse(os.Args[1:])
 
 	log := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	if *healthCheck {
+		if err := checkMainProcess(); err != nil {
+			fatal(log, "health check", err)
+		}
+		return
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), *timeout)
 	defer cancel()
 
@@ -59,19 +68,22 @@ Flags:
 	}
 	log.Info("fetched index", "sessions", len(sessions))
 
+	described := make(map[string]bool, len(sessions))
 	if !*skipDetails {
+		var mu sync.Mutex
 		failed := src.Describe(ctx, sessions, func(id string, err error) {
 			if err != nil {
 				log.Warn("describe failed", "session", id, "err", err.Error())
+				return
 			}
+			mu.Lock()
+			described[id] = true
+			mu.Unlock()
 		})
 		log.Info("fetched details", "failed", failed)
 	}
 
-	docs := make([]esindex.Doc, 0, len(sessions))
-	for _, s := range sessions {
-		docs = append(docs, esindex.Doc{ID: s.ID, Body: toDoc(s)})
-	}
+	docs := docsForIndex(sessions, described, *skipDetails)
 	failed, err := es.Bulk(ctx, index, docs, 50)
 	if err != nil {
 		fatal(log, "bulk index", err)
@@ -81,6 +93,17 @@ Flags:
 	if failed > 0 {
 		os.Exit(2)
 	}
+}
+
+func docsForIndex(sessions []sessionize.Session, described map[string]bool, skipDetails bool) []esindex.Doc {
+	docs := make([]esindex.Doc, 0, len(sessions))
+	for _, s := range sessions {
+		if !skipDetails && !described[s.ID] {
+			continue
+		}
+		docs = append(docs, esindex.Doc{ID: s.ID, Body: toDoc(s)})
+	}
+	return docs
 }
 
 func toDoc(s sessionize.Session) map[string]any {
@@ -123,6 +146,25 @@ var sessionsMapping = map[string]any{
 			"ingested_at": map[string]any{"type": "date"},
 		},
 	},
+}
+
+func checkMainProcess() error {
+	stat, err := os.ReadFile("/proc/1/stat")
+	if err != nil {
+		return fmt.Errorf("read process status: %w", err)
+	}
+	end := strings.LastIndexByte(string(stat), ')')
+	if end < 0 {
+		return fmt.Errorf("invalid process status")
+	}
+	fields := strings.Fields(string(stat[end+1:]))
+	if len(fields) == 0 {
+		return fmt.Errorf("invalid process status")
+	}
+	if fields[0] == "Z" || fields[0] == "X" {
+		return fmt.Errorf("ingest process is not running")
+	}
+	return nil
 }
 
 func env(k, def string) string {
