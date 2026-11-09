@@ -40,7 +40,7 @@ flowchart LR
 | `pkg/ask` | use case, and the model types | answers "where is the nearest X from here": resolves the room, infers the kind of place asked for, asks the store for that kind, ranks by level then building, writes the one sentence a screen reader hears first |
 | `pkg/reports` | use case | takes "Were you here?" reports: validates the verdict and note, rate limits per token and per IP, stores through its `Store`, and derives each place's attendee status (a problem shows at once, two different attendees make it verified, six hours and it is forgotten) |
 | `pkg/ingest` | use case | fills the store: fetches the schedule through its `Source`, loads the curated places through `Places`, writes both through `Indexer`, and reports what was rejected |
-| `pkg/model` | model | `Place`, `Room`, `Session`, `Here`, `Need`, `Answer`, `Preferences` (the profile chips and their encoding) and `Applied`: what the business means, spoken by every port |
+| `pkg/model` | model | `Place`, `Room`, `Session`, `Here`, `Need`, `Answer`, `Preferences` (the profile chips and their encoding), `Applied` and `Lesson` (a chip a question implied, and why): what the business means, spoken by every port |
 | `pkg/api/v1` | contract | the frozen JSON of `/api/ask`; a wire change is a `v2` |
 | `pkg/venue` | model helper | the curated access features (`data/venue/places.yaml`) as model places, the need vocabulary (`data/venue/needs.yaml`) as model needs, the rooms derived from the schedule, and the loaders that validate them |
 | `pkg/schedule` | model helper | schedule-wide helpers over `model.Session` |
@@ -49,7 +49,7 @@ flowchart LR
 | `pkg/sessionize` | adapter | fetches and parses the public KubeCon schedule from Sessionize's markdown view |
 | `pkg/telemetry` | adapter | everything OpenTelemetry: `Setup` builds the SDK providers and OTLP gRPC exporters (noops when no endpoint is set), `Handler` is the slog handler that sends every log line to Dash0 with its trace id, `Transport` makes each Elasticsearch call a child span |
 | `pkg/qr` | adapter | renders the code taped beside a door: the `/?from=<place id>` URL as SVG and PNG per place, and the printable sheet with the name in large type |
-| `pkg/web` | controller | the HTML page, the JSON API, the probes, the templates and the CSS; the profile panel, the `/profile` form, the `wd_prefs` cookie and the `widedoor.profile.chip_used` counter |
+| `pkg/web` | controller | the HTML page, the JSON API, the probes, the templates and the CSS; the profile panel, the `/profile` form, the `wd_prefs` and `wd_prefs_no` cookies and the `widedoor.profile.chip_used` and `widedoor.profile.chip_learned` counters |
 | `pkg/cli` | wiring | the `widedoor` command and its `serve`, `ingest` and `qr` subcommands: load config, construct adapters, hand them to the use cases |
 | `pkg/app` | wiring | `Main()`: builds the command line and turns its result into an exit code |
 | `cmd/widedoor` | wiring | `os.Exit(app.Main())` |
@@ -97,6 +97,7 @@ Settings come from flags, then `WIDEDOOR_*` environment variables, then `/etc/wi
 | the page, the form, the live region, the CSS | `pkg/web` |
 | the "Were you here?" form, the `wd_id` cookie, the sentence after a report | `pkg/web/report.go`, `pkg/web/templates/report.html`; the trust rules are `reports.Derive`, the wording is `ask.AttendeeSentence`, the blocked words are `data/venue/blocked-words.txt` |
 | the profile chips, the cookie, what a chip does to an answer | `pkg/model/preferences.go` (the chips), `pkg/web/profile.go` (the panel and the cookie), `pkg/ask` (the effects, one hook after `KindOf`) |
+| which chips a question implies, and how a learned chip is shown, announced and kept from coming back | `pkg/ask/learn.go` (the mapping from `KindOf`, the need and plain words to chips), `pkg/web/learn.go` (adding them, the live-region sentence, the `wd_prefs_no` do-not-re-add cookie) |
 | a field in the JSON API, or what a type means | `pkg/api/v1` (the promise), `pkg/model` (the meaning), the adapter (the storage) |
 | the QR codes on the doors, which places get one, the printable sheet | `pkg/qr`; the URL they open is `/?from=<place id>`, read by `pkg/web` and resolved id-first by `pkg/ask` |
 | what runs in the cluster, probes, resources, routes | `deploy/app` (synced by Argo CD, pinned by image SHA, bumped by `tools/bump-image.sh` or by `cd.yml`) |
