@@ -213,8 +213,8 @@ places:
     name: Elevators between Salt Palace levels
     venue: Salt Palace
     level: ""
-    near: The organiser does not publish elevator positions. Staff at registration and the information desks will point you to the nearest one.
-    notes: Seeded as unverified. If you find one, tell us where and we will mark it verified.
+    near: See the Level 1 and Level 2 elevator entries, read off the venue's floor plan. Staff at registration and the information desks can point you to the nearest one.
+    notes: The organiser does not publish elevator positions; the venue's floor plan shows them as icons. If you use one, tell us where and we will mark it verified.
     for: [mobility]
     verified: false
     source: floor plan, unverified
@@ -422,7 +422,7 @@ places:
     for: [medical, help]
     verified: false
     source: https://www.visitsaltlake.com/salt-palace-convention-center/plan/interactive-floor-plan/
-    aliases: [first aid by 155, first aid by the halls, medic by the showcase]
+    aliases: [first aid point two, the other first aid station, medical station two]
   - id: security-151
     kind: security
     name: Security, by room 151
@@ -446,7 +446,7 @@ places:
       - On Level 2 the floor plan shows elevators at East Registration, on the Upper Concourse by room 250, at the Upper Mezzanine by 255 and 257, and at the West Lobby, which line up with the Level 1 icons.
     verified: false
     source: https://www.visitsaltlake.com/salt-palace-convention-center/plan/interactive-floor-plan/
-    aliases: [lift, lifts, elevator downstairs, elevator on the ground floor, elevator by the ballroom, elevator by the halls]
+    aliases: [lift, lifts, elevator downstairs, elevator on the ground floor]
   - id: elevators-level-2
     kind: elevator
     name: Elevators on Level 2
@@ -457,7 +457,7 @@ places:
     for: [mobility]
     verified: false
     source: https://www.visitsaltlake.com/salt-palace-convention-center/plan/interactive-floor-plan/
-    aliases: [elevator upstairs, elevator on the mezzanine, elevator by 255, elevator by registration, elevator by the quiet room]
+    aliases: [elevator upstairs, lift upstairs, elevator to the quiet rooms]
   - id: escalators-level-1
     kind: escalator
     name: Escalators between Level 1 and Level 2
@@ -470,7 +470,7 @@ places:
       - The Level 2 floor plan shows the matching escalators at East Registration, on the Upper Concourse by 250 and 251, at the Upper Mezzanine by 255, and at the West Lobby.
     verified: false
     source: https://www.visitsaltlake.com/salt-palace-convention-center/plan/interactive-floor-plan/
-    aliases: [escalator, escalators, moving stairs, stairs up to the mezzanine]
+    aliases: [escalator, escalators, moving stairs]
   - id: restrooms-level-1
     kind: restroom
     name: Restrooms on Level 1
@@ -481,7 +481,7 @@ places:
     for: [restroom]
     verified: false
     source: https://www.visitsaltlake.com/salt-palace-convention-center/plan/interactive-floor-plan/
-    aliases: [bathroom, toilet, washroom, loo, the toilets downstairs, restroom by the halls]
+    aliases: [bathroom, toilet, washroom, loo, the toilets downstairs]
   - id: restrooms-level-2
     kind: restroom
     name: Restrooms on Level 2
@@ -492,7 +492,7 @@ places:
     for: [restroom]
     verified: false
     source: https://www.visitsaltlake.com/salt-palace-convention-center/plan/interactive-floor-plan/
-    aliases: [the toilets upstairs, bathroom on the mezzanine, restroom by registration, washroom upstairs]
+    aliases: [the toilets upstairs, bathroom upstairs, washroom upstairs]
   - id: visitor-center-level-2
     kind: info-desk
     name: Visit Salt Lake Visitors' Center and gift shop
