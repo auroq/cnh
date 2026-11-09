@@ -60,3 +60,25 @@ variable "enable_sandbox" {
   default     = false
   description = "Learning sandbox: otel-demo namespace with a Dash0 export secret"
 }
+
+variable "enable_cd_gate" {
+  type        = bool
+  default     = false
+  description = "Create the cd-gate ServiceAccount, its token and the CD_KUBECONFIG and CD_GITHUB_TOKEN repository secrets (ADR 0008). Needs the 1Password item \"CD GitHub Token CNH\"."
+}
+
+variable "github_repository" {
+  type    = string
+  default = "auroq/cnh"
+}
+
+variable "app_namespace" {
+  type    = string
+  default = "wide-door"
+}
+
+variable "cd_gate_token_ttl_seconds" {
+  type        = number
+  default     = 172800
+  description = "Lifetime of the cd-gate token; 48 hours outlives the event, re-apply to rotate."
+}
