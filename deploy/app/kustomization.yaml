@@ -6,6 +6,6 @@ labels:
       app.kubernetes.io/part-of: wide-door
     includeSelectors: false
 resources:
-  - web.yaml
+  - widedoor.yaml
   - elasticsearch.yaml
   - ingest.yaml
