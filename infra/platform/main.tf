@@ -1,5 +1,5 @@
 locals {
-  namespaces = toset(["envoy-gateway-system", "gateway", "cert-manager", "external-dns", "elastic-system", "argocd", "dash0-system", "radar"])
+  namespaces = toset(["envoy-gateway-system", "gateway", "cert-manager", "elastic-system", "argocd", "dash0-system", "radar"])
 }
 
 resource "kubernetes_namespace_v1" "ns" {
@@ -11,7 +11,7 @@ resource "kubernetes_namespace_v1" "ns" {
 }
 
 resource "kubernetes_secret_v1" "do_token" {
-  for_each = toset(["cert-manager", "external-dns"])
+  for_each = toset(["cert-manager"])
 
   metadata {
     name      = "digitalocean-token"
@@ -47,31 +47,6 @@ resource "helm_release" "cert_manager" {
       kind             = "ControllerConfiguration"
       enableGatewayAPI = true
     }
-  })]
-
-  depends_on = [helm_release.envoy_gateway]
-}
-
-resource "helm_release" "external_dns" {
-  name       = "external-dns"
-  repository = "https://kubernetes-sigs.github.io/external-dns"
-  chart      = "external-dns"
-  version    = var.versions.external_dns
-  namespace  = kubernetes_namespace_v1.ns["external-dns"].metadata[0].name
-
-  values = [yamlencode({
-    provider      = { name = "digitalocean" }
-    sources       = ["gateway-httproute", "service"]
-    domainFilters = [var.domain]
-    txtOwnerId    = "cnh"
-    policy        = "sync"
-    env = [{
-      name = "DO_TOKEN"
-      valueFrom = { secretKeyRef = {
-        name = kubernetes_secret_v1.do_token["external-dns"].metadata[0].name
-        key  = "token"
-      } }
-    }]
   })]
 
   depends_on = [helm_release.envoy_gateway]
@@ -194,4 +169,24 @@ resource "helm_release" "radar" {
       selfUpgrade = true
     }
   })]
+}
+
+data "kubernetes_resource" "public_gateway" {
+  api_version = "gateway.networking.k8s.io/v1"
+  kind        = "Gateway"
+
+  metadata {
+    name      = "public"
+    namespace = kubernetes_namespace_v1.ns["gateway"].metadata[0].name
+  }
+
+  depends_on = [helm_release.platform_config]
+}
+
+resource "digitalocean_record" "wildcard" {
+  domain = var.domain
+  type   = "A"
+  name   = "*"
+  value  = data.kubernetes_resource.public_gateway.object.status.addresses[0].value
+  ttl    = 300
 }

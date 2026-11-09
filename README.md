@@ -19,7 +19,7 @@ AI use: this repo was written with Claude Code (Anthropic) pairing with me.
 |---|---|---|
 | `infra/bootstrap/` | Spaces `cnh-tfstate` (seeded locally, then migrated) | DO project `cnh`, Spaces key (saved to 1Password), versioned state bucket |
 | `infra/cluster/` | Spaces | VPC, DOKS in `sfo3` (3–5 × `g-8vcpu-32gb`), DO DNS zone `cnh.auroq.com` |
-| `infra/platform/` | Spaces | Envoy Gateway + wildcard TLS (cert-manager, DNS-01), external-dns, ECK operator, Argo CD, Dash0 operator, Radar Cloud agent |
+| `infra/platform/` | Spaces | Envoy Gateway + wildcard TLS (cert-manager, DNS-01) with a wildcard DNS record, ECK operator, Argo CD, Dash0 operator, Radar Cloud agent |
 
 `infra/sandbox/` holds learning-only manifests: the OpenTelemetry demo as an Argo CD app, a single-node ECK Elasticsearch + Kibana, and a local docker compose for Elasticsearch.
 
