@@ -21,6 +21,12 @@ type answer struct {
 		State string `json:"state"`
 		Start string `json:"start"`
 	} `json:"sessions"`
+	Profile struct {
+		Applied []struct {
+			Chip   string `json:"chip"`
+			Effect string `json:"effect"`
+		} `json:"applied"`
+	} `json:"profile"`
 	SessionsShownBecause string `json:"sessions_shown_because"`
 }
 

@@ -34,5 +34,11 @@ func toV1(a model.Answer) v1.AskResponse {
 			})
 		}
 	}
+	if a.Applied != nil {
+		out.Profile = &v1.Profile{Applied: make([]v1.Applied, 0, len(a.Applied))}
+		for _, ap := range a.Applied {
+			out.Profile.Applied = append(out.Profile.Applied, v1.Applied{Chip: ap.Chip, Effect: ap.Effect})
+		}
+	}
 	return out
 }

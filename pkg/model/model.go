@@ -78,5 +78,6 @@ type Answer struct {
 	Need                 *Need     `json:"need,omitempty"`
 	Places               []Place   `json:"places"`
 	Sessions             []Session `json:"sessions"`
+	Applied              []Applied `json:"applied,omitempty"`
 	SessionsShownBecause string    `json:"sessions_shown_because,omitempty"`
 }

@@ -10,11 +10,13 @@ import (
 	"log/slog"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/trace"
 
 	v1 "github.com/auroq/cnh/pkg/api/v1"
@@ -36,6 +38,10 @@ type Server struct {
 	tmpl   *template.Template
 	log    *slog.Logger
 	tracer trace.TracerProvider
+	meter  metric.MeterProvider
+
+	once        sync.Once
+	chipCounter metric.Int64Counter
 }
 
 // Option adjusts a Server; nil tracing options mean the OpenTelemetry globals.
@@ -47,13 +53,20 @@ func WithTracerProvider(tp trace.TracerProvider) Option {
 }
 
 type page struct {
-	Title    string
-	Question string
-	From     string
-	Answer   *ask.Answer
-	Scanned  *ask.Here
-	Error    string
-	Kinds    []kind
+	Title       string
+	Question    string
+	From        string
+	Answer      *ask.Answer
+	Scanned     *ask.Here
+	Error       string
+	Kinds       []kind
+	Prefs       string
+	Chips       []chip
+	Count       string
+	ProfileOpen bool
+	ProfileURL  string
+	Status      string
+	Forgot      bool
 }
 
 type kind struct{ Query, Label string }
@@ -94,6 +107,8 @@ func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /{$}", s.home)
 	mux.HandleFunc("GET /ask", s.home)
+	mux.HandleFunc("GET /profile", s.home)
+	mux.HandleFunc("POST /profile", s.profile)
 	mux.HandleFunc("GET /api/ask", s.apiAsk)
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, _ *http.Request) { fmt.Fprintln(w, "ok") })
 	mux.HandleFunc("GET /readyz", s.ready)
@@ -108,7 +123,9 @@ func notProbe(r *http.Request) bool {
 func (s *Server) home(w http.ResponseWriter, r *http.Request) {
 	q := strings.TrimSpace(r.URL.Query().Get("q"))
 	from := strings.TrimSpace(r.URL.Query().Get("from"))
+	prefs := s.preferences(w, r)
 	p := page{Title: "Wide Door", Question: q, From: from, Kinds: quickKinds}
+	s.describeProfile(&p, r, prefs)
 	if q == "" && from != "" {
 		ctx, cancel := context.WithTimeout(r.Context(), askTimeout)
 		defer cancel()
@@ -122,7 +139,8 @@ func (s *Server) home(w http.ResponseWriter, r *http.Request) {
 	if q != "" {
 		ctx, cancel := context.WithTimeout(r.Context(), askTimeout)
 		defer cancel()
-		a, err := s.ask.Ask(ctx, q, from)
+		s.countChips(ctx, prefs)
+		a, err := s.askFor(ctx, q, from, prefs)
 		if err != nil {
 			s.log.ErrorContext(ctx, "ask", "err", err.Error())
 			p.Error = searchDown
@@ -141,7 +159,11 @@ func (s *Server) home(w http.ResponseWriter, r *http.Request) {
 func (s *Server) apiAsk(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), askTimeout)
 	defer cancel()
-	a, err := s.ask.Ask(ctx, r.URL.Query().Get("q"), r.URL.Query().Get("from"))
+	prefs := s.preferences(w, r)
+	if strings.TrimSpace(r.URL.Query().Get("q")) != "" {
+		s.countChips(ctx, prefs)
+	}
+	a, err := s.askFor(ctx, r.URL.Query().Get("q"), r.URL.Query().Get("from"), prefs)
 	w.Header().Set("Content-Type", "application/json")
 	if err != nil {
 		s.log.ErrorContext(ctx, "api ask", "err", err.Error())

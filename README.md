@@ -42,6 +42,16 @@ Logs: `slog` goes through the `otelslog` bridge, so every request log reaches Da
 The Dash0 dashboard "Wide Door" is a file too: [`deploy/dash0/wide-door.json`](deploy/dash0/wide-door.json) in the Perses format, reviewed like any other change and pushed with `make dashboard` through the Dash0 API by [`tools/dash0-dashboard.sh`](tools/dash0-dashboard.sh), with the token coming from the vault through `secret-run`.
 Its panels are the accessibility story in metrics: ask latency, answers by kind and by whether anyone verified the place, "What volunteers should go verify", profile chips as needs without identities, requests by route and release, and the health of the schedule ingest.
 
+## What we store and why
+
+Nothing about a person.
+The profile panel "What Wide Door knows about you" holds chips that are needs, not diagnoses: step-free only, avoid crowds and noise, quiet spaces matter, all-gender restrooms, captions or ASL, I use a wheelchair or scooter, dietary needs.
+The chips live on the attendee's device only: in the `prefs` query parameter, in the first-party cookie `wd_prefs` (SameSite=Strict, Secure, expires when the conference ends on Thursday 2026-11-12) and in localStorage.
+The server reads them on each request to render the panel and shape the answer, then forgets them: there is no account, no session, no profile in any index, and the request log omits `prefs`.
+The only trace is the counter `widedoor.profile.chip_used` with one attribute, `chip`, so Dash0 shows how often each need is stated and never a combination that could identify someone.
+"Forget me" clears all three places; "Save my profile" shows the link that carries only the chips, so the same profile can be opened on another device.
+Chips are also designed to carry a source, `chosen` or `learned` (a trailing `~` in the encoding), so a follow-up can suggest chips from what people ask and let them say no.
+
 ## Evidence from the day
 
 - [`docs/demo/2026-11-09-rollout-abort.md`](docs/demo/2026-11-09-rollout-abort.md): a real canary aborted by Argo Rollouts at two minutes, diagnosed by Radar with the change that caused it.
@@ -66,6 +76,7 @@ make help
 
 Infrastructure targets are described in [`infra/`](infra/); the app targets are added as the rings land.
 The Makefile pins `KUBECONFIG` to `./.kube/config`, so its targets only ever talk to this cluster.
+Node 24 for the browser tests; `.nvmrc` pins it.
 
 ### Print the door codes
 
