@@ -15,7 +15,7 @@ var Chips = []Chip{
 	{"quiet-matters", "Quiet spaces matter"},
 	{"all-gender", "All-gender restrooms"},
 	{"captions-asl", "Captions or ASL"},
-	{"wheels", "I use a wheelchair or scooter"},
+	{"wheels", "Wide doors and ramps"},
 	{"dietary", "Dietary needs, unspecified"},
 }
 

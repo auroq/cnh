@@ -166,12 +166,12 @@ func TestLearnedChips(t *testing.T) {
 
 	t.Run("when the question implies two chips", func(t *testing.T) {
 		wheels := fakeAsker{answer: ask.Answer{Summary: "x", Learned: []model.Lesson{
-			{Chip: "step-free", Because: "you mentioned a wheelchair or scooter"},
-			{Chip: "wheels", Because: "you mentioned a wheelchair or scooter"},
+			{Chip: "step-free", Because: "you asked about a wheelchair or scooter"},
+			{Chip: "wheels", Because: "you asked about a wheelchair or scooter"},
 		}}}
 		_, body := newClient(t, wheels).get("/ask?q=wheelchair+ramp", "")
 		t.Run("it should say both in one sentence", func(t *testing.T) {
-			want := "Added Step-free only and I use a wheelchair or scooter to what Wide Door knows about you, because you mentioned a wheelchair or scooter. Remove them if that is wrong."
+			want := "Added Step-free only and Wide doors and ramps to what Wide Door knows about you, because you asked about a wheelchair or scooter. Remove them if that is wrong."
 			if !strings.Contains(body, want) {
 				t.Fatalf("%q missing in %s", want, body)
 			}
