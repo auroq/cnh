@@ -1,6 +1,6 @@
 # 85. Chips learned from what you ask: a profile chip is added when a question implies it, said in the open, removable
 
-**Open. Filed 2026-11-09 by Aria, p1, ready for a worker. Nobody's call once item 081 lands.**
+**Done 2026-11-09 (PR #101, issue #85). Filed 2026-11-09 by Aria, p1. Aria's call: the wording of what is learned and why.**
 
 Depends on: 063, 066, 081
 

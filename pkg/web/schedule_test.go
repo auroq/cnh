@@ -99,9 +99,14 @@ func TestSchedulePage(t *testing.T) {
 		if cookie == nil {
 			t.Fatalf("no %s cookie in %v", schedCookie, res.Header)
 		}
+		t.Run("it should redirect", func(t *testing.T) {
+			if res.StatusCode != http.StatusSeeOther {
+				t.Fatalf("%d", res.StatusCode)
+			}
+		})
 		t.Run("it should send the attendee back to the schedule page", func(t *testing.T) {
-			if res.StatusCode != http.StatusSeeOther || location.Path != "/schedule" {
-				t.Fatalf("%d %s", res.StatusCode, location)
+			if location.Path != "/schedule" {
+				t.Fatalf("%s", location)
 			}
 		})
 		t.Run("it should carry only the matched ids", func(t *testing.T) {
@@ -109,8 +114,8 @@ func TestSchedulePage(t *testing.T) {
 				t.Fatalf("sched %q", got)
 			}
 		})
-		t.Run("it should carry the title it could not find", func(t *testing.T) {
-			if got := location.Query().Get("missed"); got != "A talk nobody gave" {
+		t.Run("it should carry how many titles it could not find, never the titles", func(t *testing.T) {
+			if got := location.Query().Get("missed"); got != "1" {
 				t.Fatalf("missed %q", got)
 			}
 		})
@@ -124,21 +129,28 @@ func TestSchedulePage(t *testing.T) {
 				t.Fatalf("cookie %q", cookie.Value)
 			}
 		})
-		t.Run("it should keep the cookie first-party, strict and until the conference ends", func(t *testing.T) {
-			if cookie.SameSite != http.SameSiteStrictMode || !cookie.Secure || !cookie.HttpOnly || !cookie.Expires.Equal(cookieExpiry) {
-				t.Fatalf("cookie %+v", cookie)
-			}
-		})
+		attributes := map[string]bool{
+			"keep the cookie same-site strict":           cookie.SameSite == http.SameSiteStrictMode,
+			"keep the cookie secure":                     cookie.Secure,
+			"keep the cookie away from scripts":          cookie.HttpOnly,
+			"expire the cookie when the conference ends": cookie.Expires.Equal(cookieExpiry),
+		}
+		for name, ok := range attributes {
+			t.Run("it should "+name, func(t *testing.T) {
+				if !ok {
+					t.Fatalf("cookie %+v", cookie)
+				}
+			})
+		}
 	})
 
 	t.Run("when the schedule page is opened with the ids in the query", func(t *testing.T) {
 		asker := newAsker()
-		_, body := newClient(t, asker).get("/schedule?sched=crash,keynote&missed=A+talk+nobody+gave&prefs=step-free", "")
+		_, body := newClient(t, asker).get("/schedule?sched=crash,keynote&missed=1&prefs=step-free", "")
 		shows := map[string]string{
 			"count the kept sessions in the heading":              "Your schedule: 2 sessions</h2>",
 			"announce what was kept and what was not":             `<p class="status" role="status">Your schedule: 2 sessions kept, 1 title not found.</p>`,
 			"list a kept session with its time and room":          "<strong>Keynote: Welcome</strong>",
-			"list the title it could not find":                    "<h3>Not found</h3>",
 			"label the textarea":                                  `<label for="sched-text">Paste your schedule</label>`,
 			"describe the textarea":                               `<textarea id="sched-text" name="text" rows="6" aria-describedby="sched-help"`,
 			"offer to forget the schedule":                        `name="forget" value="1" class="secondary">Forget my schedule</button>`,
@@ -185,9 +197,14 @@ func TestSchedulePage(t *testing.T) {
 	t.Run("when a question is asked with a schedule and no location", func(t *testing.T) {
 		asker := newAsker()
 		_, body := newClient(t, asker).get("/ask?q=nearest+quiet+room&sched=crash,keynote", "")
+		t.Run("it should ask the use case the question", func(t *testing.T) {
+			if strings.Join(asker.asked, ",") != "nearest quiet room" {
+				t.Fatalf("asked %q", asker.asked)
+			}
+		})
 		t.Run("it should hand the schedule to the use case", func(t *testing.T) {
-			if len(asker.asked) == 0 || asker.asked[0] != "nearest quiet room" || strings.Join(asker.askedIDs, ",") != "crash,keynote" {
-				t.Fatalf("asked %q ids %q", asker.asked, asker.askedIDs)
+			if strings.Join(asker.askedIDs, ",") != "crash,keynote" {
+				t.Fatalf("ids %q", asker.askedIDs)
 			}
 		})
 		t.Run("it should say it assumed the room just left", func(t *testing.T) {
@@ -214,8 +231,13 @@ func TestSchedulePage(t *testing.T) {
 			}
 		})
 		t.Run("it should return the assumed location", func(t *testing.T) {
-			if got.Schedule.AssumedLocation != "Grand Ballroom J" || got.Here.Via != ask.ViaSchedule {
-				t.Fatalf("schedule %+v here %+v", got.Schedule, got.Here)
+			if got.Schedule.AssumedLocation != "Grand Ballroom J" {
+				t.Fatalf("schedule %+v", got.Schedule)
+			}
+		})
+		t.Run("it should say the location came from the schedule", func(t *testing.T) {
+			if got.Here.Via != ask.ViaSchedule {
+				t.Fatalf("here %+v", got.Here)
 			}
 		})
 	})
@@ -255,7 +277,12 @@ func TestSchedulePage(t *testing.T) {
 		location, _ := url.Parse(res.Header.Get("Location"))
 		_, body := c.get(location.String(), "")
 		t.Run("it should expire the cookie", func(t *testing.T) {
-			if cookie.MaxAge != -1 || cookie.Value != "" {
+			if cookie.MaxAge != -1 {
+				t.Fatalf("cookie %+v", cookie)
+			}
+		})
+		t.Run("it should empty the cookie", func(t *testing.T) {
+			if cookie.Value != "" {
 				t.Fatalf("cookie %+v", cookie)
 			}
 		})
@@ -278,9 +305,14 @@ func TestSchedulePage(t *testing.T) {
 
 	t.Run("when the use case does not understand schedules", func(t *testing.T) {
 		res, body := newClient(t, fakeAsker{}).postSchedule(url.Values{"text": {"Keynote: Welcome"}})
+		t.Run("it should answer with a bad gateway", func(t *testing.T) {
+			if res.StatusCode != http.StatusBadGateway {
+				t.Fatalf("%d", res.StatusCode)
+			}
+		})
 		t.Run("it should say the search is not answering", func(t *testing.T) {
-			if res.StatusCode != http.StatusBadGateway || !strings.Contains(body, searchDown) {
-				t.Fatalf("%d %q", res.StatusCode, body)
+			if !strings.Contains(body, searchDown) {
+				t.Fatalf("%q", body)
 			}
 		})
 	})

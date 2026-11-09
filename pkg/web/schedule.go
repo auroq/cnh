@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 
 	"go.opentelemetry.io/otel"
@@ -31,6 +32,8 @@ const (
 	scheduleForgot   = "Your schedule is forgotten. Nothing about it is on this device now."
 	quietRoomAsk     = "nearest quiet room"
 	matchedMetric    = "widedoor.schedule.matched"
+	maxTitles        = 100
+	maxPasteBytes    = 64 << 10
 )
 
 // scheduleIDs reads the kept session ids for this request: the query wins and refreshes the cookie, else the cookie.
@@ -61,6 +64,7 @@ func rememberSchedule(w http.ResponseWriter, ids []string) {
 
 // schedule is the paste: titles or an iCal export in, the matched ids kept on the device, then back to the page.
 func (s *Server) schedule(w http.ResponseWriter, r *http.Request) {
+	r.Body = http.MaxBytesReader(w, r.Body, maxPasteBytes)
 	if err := r.ParseForm(); err != nil {
 		http.Error(w, "bad form", http.StatusBadRequest)
 		return
@@ -80,18 +84,22 @@ func (s *Server) schedule(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), askTimeout)
 	defer cancel()
 	titles := ask.ParseTitles(r.PostForm.Get("text"))
+	if len(titles) > maxTitles {
+		titles = titles[:maxTitles]
+	}
 	matches, err := s.matchSessions(ctx, titles)
 	if err != nil {
 		s.log.ErrorContext(ctx, "schedule", "err", err.Error())
 		http.Error(w, searchDown, http.StatusBadGateway)
 		return
 	}
-	var ids, missed []string
+	var ids []string
+	missed := 0
 	for _, m := range matches {
 		if m.Session != nil {
 			ids = append(ids, m.Session.ID)
 		} else {
-			missed = append(missed, m.Title)
+			missed++
 		}
 	}
 	ids = ask.ParseScheduleIDs(ask.JoinScheduleIDs(ids))
@@ -100,8 +108,8 @@ func (s *Server) schedule(w http.ResponseWriter, r *http.Request) {
 	if len(ids) > 0 {
 		values.Set(schedParam, ask.JoinScheduleIDs(ids))
 	}
-	if len(missed) > 0 {
-		values.Set(missedParam, strings.Join(missed, "\n"))
+	if missed > 0 {
+		values.Set(missedParam, strconv.Itoa(missed))
 	}
 	http.Redirect(w, r, schedulePath+"?"+values.Encode(), http.StatusSeeOther)
 }
@@ -130,9 +138,7 @@ func (s *Server) describeSchedule(ctx context.Context, p *page, r *http.Request,
 	if q.Get(forgotSchedParam) != "" {
 		p.Status, p.ForgotSched = scheduleForgot, true
 	}
-	if missed := q.Get(missedParam); missed != "" {
-		p.Missed = strings.Split(missed, "\n")
-	}
+	p.Missed, _ = strconv.Atoi(q.Get(missedParam))
 	if len(ids) == 0 {
 		p.ScheduleCount = "none yet"
 		return
@@ -153,7 +159,7 @@ func (s *Server) describeSchedule(ctx context.Context, p *page, r *http.Request,
 	}
 	p.ScheduleCount = countSessions(len(p.Schedule.Sessions))
 	if p.ScheduleOpen && q.Has(schedParam) {
-		p.Status = "Your schedule: " + p.ScheduleCount + " kept" + missedWords(len(p.Missed)) + "."
+		p.Status = "Your schedule: " + p.ScheduleCount + " kept" + missedWords(p.Missed) + "."
 	}
 	if p.Schedule.BackToBack {
 		p.QuietRoom = s.quietRoom(ctx, p.From, prefs, ids)

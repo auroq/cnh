@@ -34,9 +34,10 @@ const (
 var cookieExpiry = time.Date(2026, 11, 12, 23, 59, 0, 0, time.FixedZone("MST", -7*3600))
 
 type chip struct {
-	ID    string
-	Label string
-	On    bool
+	ID      string
+	Label   string
+	On      bool
+	Learned bool
 }
 
 // preferences reads the profile for this request: the query wins and refreshes the cookie, else the cookie.
@@ -62,13 +63,13 @@ func remember(w http.ResponseWriter, prefs model.Preferences) {
 		c.Value = url.QueryEscape(prefs.String())
 		c.Expires = cookieExpiry
 	}
-	http.SetCookie(w, c)
+	setCookie(w, c)
 }
 
 func chips(prefs model.Preferences) []chip {
 	out := make([]chip, 0, len(model.Chips))
 	for _, c := range model.Chips {
-		out = append(out, chip{ID: c.ID, Label: c.Label, On: prefs.Has(c.ID)})
+		out = append(out, chip{ID: c.ID, Label: c.Label, On: prefs.Has(c.ID), Learned: prefs.IsLearned(c.ID)})
 	}
 	return out
 }
@@ -86,24 +87,32 @@ func (s *Server) profile(w http.ResponseWriter, r *http.Request) {
 			values.Set(key, v)
 		}
 	}
-	if id := r.PostForm.Get("add"); id != "" && !prefs.Has(id) {
+	no := declined(r)
+	if id := r.PostForm.Get("add"); id != "" && (!prefs.Has(id) || prefs.IsLearned(id)) {
+		was := prefs.IsLearned(id)
 		prefs = prefs.With(id)
-		if prefs.Has(id) {
+		no = no.Without(id)
+		switch {
+		case was:
+			values.Set(keptParam, id)
+		case prefs.Has(id):
 			values.Set(addedParam, id)
 		}
 	}
 	if id := r.PostForm.Get("remove"); prefs.Has(id) {
 		prefs = prefs.Without(id)
+		no = no.With(id)
 		values.Set(removedParam, id)
 	}
 	if r.PostForm.Get("forget") != "" {
-		prefs = nil
+		prefs, no = nil, nil
 		values.Set(forgotParam, "1")
 	}
 	if len(prefs) > 0 {
 		values.Set(prefsParam, prefs.String())
 	}
 	remember(w, prefs)
+	rememberDeclined(w, no)
 	http.Redirect(w, r, profilePath+"?"+values.Encode(), http.StatusSeeOther)
 }
 
@@ -113,6 +122,7 @@ func (s *Server) describeProfile(p *page, r *http.Request, prefs model.Preferenc
 	p.Chips = chips(prefs)
 	p.Count = countWords(len(prefs))
 	p.ProfileOpen = r.URL.Path == profilePath
+	p.EditURL = editURL(r, prefs)
 	if len(prefs) > 0 {
 		p.ProfileURL = profileURL(r, prefs)
 	}
@@ -122,6 +132,8 @@ func (s *Server) describeProfile(p *page, r *http.Request, prefs model.Preferenc
 		p.Status, p.Forgot = forgotten, true
 	case q.Get(addedParam) != "":
 		p.Status = "Added " + labelOf(q.Get(addedParam)) + " to what Wide Door knows about you."
+	case q.Get(keptParam) != "":
+		p.Status = "Kept " + labelOf(q.Get(keptParam)) + " as your own choice, not just from your question."
 	case q.Get(removedParam) != "":
 		p.Status = "Removed " + labelOf(q.Get(removedParam)) + " from what Wide Door knows about you."
 	}
@@ -145,6 +157,22 @@ func labelOf(id string) string {
 		}
 	}
 	return id
+}
+
+func editURL(r *http.Request, prefs model.Preferences) string {
+	values := url.Values{}
+	for _, key := range []string{"q", "from"} {
+		if v := strings.TrimSpace(r.URL.Query().Get(key)); v != "" {
+			values.Set(key, v)
+		}
+	}
+	if len(prefs) > 0 {
+		values.Set(prefsParam, prefs.String())
+	}
+	if len(values) == 0 {
+		return profilePath
+	}
+	return profilePath + "?" + values.Encode()
 }
 
 func profileURL(r *http.Request, prefs model.Preferences) string {

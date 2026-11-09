@@ -42,8 +42,9 @@ type Server struct {
 	tracer   trace.TracerProvider
 	meter    metric.MeterProvider
 
-	once        sync.Once
-	chipCounter metric.Int64Counter
+	once               sync.Once
+	chipCounter        metric.Int64Counter
+	chipLearnedCounter metric.Int64Counter
 
 	schedOnce      sync.Once
 	matchedCounter metric.Int64Counter
@@ -72,6 +73,7 @@ type page struct {
 	Count       string
 	ProfileOpen bool
 	ProfileURL  string
+	EditURL     string
 	Status      string
 	Forgot      bool
 
@@ -79,7 +81,7 @@ type page struct {
 	Schedule      *model.Schedule
 	ScheduleCount string
 	ScheduleOpen  bool
-	Missed        []string
+	Missed        int
 	ForgotSched   bool
 	QuietRoom     string
 }
@@ -144,7 +146,6 @@ func (s *Server) home(w http.ResponseWriter, r *http.Request) {
 	prefs := s.preferences(w, r)
 	ids := s.scheduleIDs(w, r)
 	p := page{Title: "Wide Door", Question: q, From: from, Kinds: quickKinds, Reported: reportMessage(r.URL.Query().Get("reported")), CanReport: s.reporter != nil}
-	s.describeProfile(&p, r, prefs)
 	ctx, cancel := context.WithTimeout(r.Context(), askTimeout)
 	defer cancel()
 	if q == "" && from != "" {
@@ -165,8 +166,12 @@ func (s *Server) home(w http.ResponseWriter, r *http.Request) {
 		} else {
 			p.Answer = &a
 			p.Title = a.Summary + " | Wide Door"
+			if r.URL.Path != profilePath {
+				prefs = s.learn(ctx, w, r, &p, prefs, a.Learned)
+			}
 		}
 	}
+	s.describeProfile(&p, r, prefs)
 	s.describeSchedule(ctx, &p, r, ids, prefs)
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	if err := s.tmpl.ExecuteTemplate(w, "home.html", p); err != nil {

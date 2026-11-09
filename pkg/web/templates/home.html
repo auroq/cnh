@@ -13,6 +13,7 @@
   <h1>{{if and .Prefs .Sched}}<a href="/?prefs={{.Prefs}}&amp;sched={{.Sched}}">{{else if .Prefs}}<a href="/?prefs={{.Prefs}}">{{else if .Sched}}<a href="/?sched={{.Sched}}">{{else}}<a href="/">{{end}}Wide Door</a></h1>
   <p class="lede">Ask where things are at KubeCon. Answers say the building, the level, and whether anyone has checked them.</p>
 </header>
+{{if .ProfileOpen}}{{template "profile_aside" .}}{{else}}<p class="profile-bar">What Wide Door knows about you: {{.Count}}. <a class="edit wide" href="#profile">Edit<span class="vh"> your profile</span></a><a class="edit narrow" href="{{.EditURL}}">Edit<span class="vh"> your profile</span></a></p>{{end}}
 <main id="main">
   {{if .Scanned}}<p class="here scanned">You scanned the code at <strong>{{.Scanned.Room}}</strong>, {{.Scanned.Venue}}{{if .Scanned.Level}} {{.Scanned.Level}}{{end}}. <a href="#from">Change where you are</a></p>{{end}}
   {{if .Schedule}}<div class="agenda">
@@ -89,30 +90,7 @@
     {{if .Status}}<p class="status" role="status">{{.Status}}</p>{{end}}
   </section>
 
-  <details class="profile"{{if .ProfileOpen}} open{{end}}>
-    <summary><h2>What Wide Door knows about you: {{.Count}}</h2><span class="edit" aria-hidden="true">Edit</span></summary>
-    <form action="/profile" method="post">
-      <input type="hidden" name="q" value="{{.Question}}">
-      <input type="hidden" name="from" value="{{.From}}">
-      <input type="hidden" name="prefs" value="{{.Prefs}}">
-      <p class="how">Needs, not diagnoses. Pick what applies and answers put it first.</p>
-      <ul class="chips">
-        {{range .Chips}}<li><button type="submit" class="chip{{if .On}} on{{end}}" name="{{if .On}}remove{{else}}add{{end}}" value="{{.ID}}"><span class="vh">{{if .On}}Remove {{else}}Add {{end}}</span>{{if .On}}<span aria-hidden="true">&#10003; </span>{{end}}{{.Label}}</button></li>
-        {{end}}
-      </ul>
-      <p class="privacy">Stored on this device until Thursday, sent with every page, never kept by the server. We never ask what you have, only what you need.</p>
-      {{if .Prefs}}
-      <button type="submit" name="forget" value="1" class="secondary">Forget me</button>
-      <details class="save">
-        <summary>Save my profile</summary>
-        <p>Open this link on another device to carry the same chips. It contains only the chips, nothing else.</p>
-        <p class="link"><a href="{{.ProfileURL}}">{{.ProfileURL}}</a> <button type="button" class="secondary copy" hidden data-copy="{{.ProfileURL}}">Copy link</button></p>
-      </details>
-      {{end}}
-    </form>
-  </details>
-
-  <details class="profile schedule"{{if .ScheduleOpen}} open{{end}}>
+  <details class="schedule"{{if .ScheduleOpen}} open{{end}}>
     <summary><h2>Your schedule: {{.ScheduleCount}}</h2><span class="edit" aria-hidden="true">Edit</span></summary>
     <form action="/schedule" method="post">
       <input type="hidden" name="q" value="{{.Question}}">
@@ -120,7 +98,7 @@
       <input type="hidden" name="prefs" value="{{.Prefs}}">
       <div class="field">
         <label for="sched-text">Paste your schedule</label>
-        <p id="sched-help" class="how">Session titles, one per line, or the iCal text that Sched exports from My Schedule. Titles are matched to the programme; only the matched session ids stay, on this device.</p>
+        <p id="sched-help" class="how">Session titles, one per line, or the iCal text that Sched exports from My Schedule. Titles are matched to the programme; only the matched session ids stay, on this device, and the page says how many lines matched nothing.</p>
         <textarea id="sched-text" name="text" rows="6" aria-describedby="sched-help" autocomplete="off" placeholder="Sign Language Crash Course&#10;Keynote: Welcome"></textarea>
       </div>
       <button type="submit">Keep my schedule</button>
@@ -138,15 +116,9 @@
       {{end}}
     </ol>
     {{end}}{{end}}
-    {{if .Missed}}
-    <h3>Not found</h3>
-    <ul class="results missed">
-      {{range .Missed}}<li>{{.}}</li>
-      {{end}}
-    </ul>
-    {{end}}
   </details>
 </main>
+{{if not .ProfileOpen}}{{template "profile_aside" .}}{{end}}
 <footer>
   <p>Wide Door is a hackathon project by team Curb Cut. Organiser-published facts come from the <a href="https://events.linuxfoundation.org/kubecon-cloudnativecon-north-america/attend/inclusion-accessibility/">KubeCon inclusion and accessibility page</a>; anything marked unverified has not been checked on the floor. <a href="https://github.com/auroq/cnh">Source and data</a>.</p>
 </footer>
@@ -176,3 +148,25 @@
 </script>
 </body>
 </html>
+{{define "profile_aside"}}<aside id="profile" class="profile{{if .ProfileOpen}} shown{{end}}" aria-labelledby="profile-heading">
+  <h2 id="profile-heading">What Wide Door knows about you: {{.Count}}</h2>
+  <form action="/profile" method="post">
+    <input type="hidden" name="q" value="{{.Question}}">
+    <input type="hidden" name="from" value="{{.From}}">
+    <input type="hidden" name="prefs" value="{{.Prefs}}">
+    <p class="how">Needs, not diagnoses. Pick what applies and answers put it first.</p>
+    <ul class="chips">
+      {{range .Chips}}<li><button type="submit" class="chip{{if .On}} on{{end}}{{if .Learned}} learned{{end}}" name="{{if .On}}remove{{else}}add{{end}}" value="{{.ID}}"><span class="vh">{{if .On}}Remove {{else}}Add {{end}}</span>{{if .On}}<span aria-hidden="true">&#10003; </span>{{end}}{{.Label}}{{if .Learned}}<span class="from">, from your question</span>{{end}}</button>{{if .Learned}} <button type="submit" class="chip keep" name="add" value="{{.ID}}"><span class="vh">Keep {{.Label}}</span><span aria-hidden="true">Keep</span></button>{{end}}</li>
+      {{end}}
+    </ul>
+    <p class="privacy">Stored on this device until Thursday, sent with every page, never kept by the server. We never ask what you have, only what you need.</p>
+    {{if .Prefs}}
+    <button type="submit" name="forget" value="1" class="secondary">Forget me</button>
+    <details class="save">
+      <summary>Save my profile</summary>
+      <p>Open this link on another device to carry the same chips. It contains only the chips, nothing else.</p>
+      <p class="link"><a href="{{.ProfileURL}}">{{.ProfileURL}}</a> <button type="button" class="secondary copy" hidden data-copy="{{.ProfileURL}}">Copy link</button></p>
+    </details>
+    {{end}}
+  </form>
+</aside>{{end}}

@@ -58,13 +58,21 @@ func TestSchedule(t *testing.T) {
 				t.Fatalf("matched %q", store.matched)
 			}
 		})
-		t.Run("it should pair the real titles with their sessions", func(t *testing.T) {
-			if matches[0].Session == nil || matches[0].Session.ID != "crash" || matches[2].Session == nil || matches[2].Session.ID != "keynote" {
+		paired := map[int]string{0: "crash", 2: "keynote"}
+		for i, id := range paired {
+			t.Run("it should pair title "+matches[i].Title+" with its session", func(t *testing.T) {
+				if matches[i].Session == nil || matches[i].Session.ID != id {
+					t.Fatalf("matches %+v", matches)
+				}
+			})
+		}
+		t.Run("it should keep the made-up title", func(t *testing.T) {
+			if matches[1].Title != "A talk nobody gave" {
 				t.Fatalf("matches %+v", matches)
 			}
 		})
-		t.Run("it should keep the made-up title with no session", func(t *testing.T) {
-			if matches[1].Title != "A talk nobody gave" || matches[1].Session != nil {
+		t.Run("it should give the made-up title no session", func(t *testing.T) {
+			if matches[1].Session != nil {
 				t.Fatalf("matches %+v", matches)
 			}
 		})
@@ -97,7 +105,12 @@ func TestSchedule(t *testing.T) {
 			}
 		})
 		t.Run("it should resolve that room as here", func(t *testing.T) {
-			if ans.Here.Room != "Grand Ballroom J" || ans.Here.Venue != "Salt Palace" {
+			if ans.Here.Room != "Grand Ballroom J" {
+				t.Fatalf("here %+v", ans.Here)
+			}
+		})
+		t.Run("it should know which building that room is in", func(t *testing.T) {
+			if ans.Here.Venue != "Salt Palace" {
 				t.Fatalf("here %+v", ans.Here)
 			}
 		})
@@ -127,8 +140,13 @@ func TestSchedule(t *testing.T) {
 			t.Fatal(err)
 		}
 		t.Run("it should not assume anything", func(t *testing.T) {
-			if ans.Schedule.AssumedLocation != "" || ans.Here.Via != ViaRoom {
-				t.Fatalf("schedule %+v here %+v", ans.Schedule, ans.Here)
+			if ans.Schedule.AssumedLocation != "" {
+				t.Fatalf("schedule %+v", ans.Schedule)
+			}
+		})
+		t.Run("it should resolve the given room as usual", func(t *testing.T) {
+			if ans.Here.Via != ViaRoom {
+				t.Fatalf("here %+v", ans.Here)
 			}
 		})
 	})
@@ -141,8 +159,13 @@ func TestSchedule(t *testing.T) {
 			t.Fatal(err)
 		}
 		t.Run("it should leave the location unknown", func(t *testing.T) {
-			if ans.Here.Venue != "" || ans.Schedule.AssumedLocation != "" {
-				t.Fatalf("here %+v schedule %+v", ans.Here, ans.Schedule)
+			if ans.Here.Venue != "" {
+				t.Fatalf("here %+v", ans.Here)
+			}
+		})
+		t.Run("it should not claim to have assumed one", func(t *testing.T) {
+			if ans.Schedule.AssumedLocation != "" {
+				t.Fatalf("schedule %+v", ans.Schedule)
 			}
 		})
 	})
@@ -153,9 +176,14 @@ func TestSchedule(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		t.Run("it should answer exactly as Ask does", func(t *testing.T) {
-			if ans.Schedule != nil || len(store.wanted) != 0 {
-				t.Fatalf("schedule %+v wanted %q", ans.Schedule, store.wanted)
+		t.Run("it should attach no schedule", func(t *testing.T) {
+			if ans.Schedule != nil {
+				t.Fatalf("schedule %+v", ans.Schedule)
+			}
+		})
+		t.Run("it should not ask the store for sessions", func(t *testing.T) {
+			if len(store.wanted) != 0 {
+				t.Fatalf("wanted %q", store.wanted)
 			}
 		})
 	})
