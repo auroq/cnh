@@ -1,6 +1,6 @@
 # 9. The ask API
 
-**Open. Filed 2026-11-09, from the kickoff plan. Nobody's call: the shape follows from items 007 and 008.**
+**Done 2026-11-09 (PR #19, issue #9). Filed 2026-11-09, from the kickoff plan. Nobody's call: the shape follows from items 007 and 008.**
 
 Depends on: 007, 008
 

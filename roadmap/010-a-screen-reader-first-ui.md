@@ -1,6 +1,6 @@
 # 10. A screen-reader-first UI
 
-**Open. Filed 2026-11-09, from the kickoff plan. Nobody's call: the target users define it.**
+**Done 2026-11-09 (PR #19 and #22, issue #10). Filed 2026-11-09, from the kickoff plan. Nobody's call: the target users define it.**
 
 Depends on: 009
 
