@@ -87,6 +87,7 @@ jobs:
       merge: ${{ steps.wait.outputs.merge }}
     env:
       GH_TOKEN: ${{ secrets.CD_GITHUB_TOKEN }}
+      REMOTE: origin
     steps:
       - uses: actions/checkout@v5
         with:
