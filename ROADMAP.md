@@ -36,3 +36,4 @@ Times are Mountain Time on 2026-11-09: coding starts at 11:00, code freezes at 1
 | [015](roadmap/015-stretch-live-mic-captions.md) | **stretch:** room-anchored large-text captions from a live mic | 014 | nobody |
 | [016](roadmap/016-stretch-search-inside-talks.md) | **stretch:** timestamped transcript search, joined to the schedule | 007, 015 | nobody |
 | [032](roadmap/032-configuration-through-cobra-and-viper.md) | one `widedoor` binary with `serve` and `ingest`, settings through cobra and viper with typed per-area interfaces, non-secrets in a ConfigMap | 025, 031 | Aria, the shape |
+| [036](roadmap/036-ci-and-cd-are-separate-stages.md) | CI and CD as separate stages with integration tests, a post-deploy gate against the live site, and rollback by reverting the bump | 032 | Aria, bot commit or bump PR |
