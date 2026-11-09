@@ -16,6 +16,7 @@ const (
 	attrSucceeded        = attribute.Key("succeeded")
 	attrSessionsIndexed  = attribute.Key("sessions.indexed")
 	attrPlacesIndexed    = attribute.Key("places.indexed")
+	attrNeedsIndexed     = attribute.Key("needs.indexed")
 	attrDescribeFailures = attribute.Key("describe.failures")
 )
 

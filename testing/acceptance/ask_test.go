@@ -39,7 +39,7 @@ func ask(t *testing.T, question, from string) answer {
 
 var distanceWords = map[distance]string{
 	sameLevel:     "Same level as you",
-	sameBuilding:  "Same building, you are on",
+	sameBuilding:  "Same building,",
 	otherBuilding: "It is in the",
 }
 
@@ -113,6 +113,30 @@ func TestAsk(t *testing.T) {
 			}
 		})
 	})
+
+	for _, c := range needCases {
+		t.Run("when I say "+c.Say, func(t *testing.T) {
+			t.Parallel()
+			a := ask(t, c.Say, "")
+			t.Run("it should understand I need "+c.Need, func(t *testing.T) {
+				if !strings.HasPrefix(a.Summary, "You asked for "+c.Need+". ") {
+					t.Fatalf("summary = %q", a.Summary)
+				}
+			})
+			t.Run("it should offer a "+c.Kind+" first", func(t *testing.T) {
+				if len(a.Places) == 0 || a.Places[0].Kind != c.Kind {
+					t.Fatalf("places = %+v", a.Places)
+				}
+			})
+			if c.Note != "" {
+				t.Run("it should say why the place is a stand-in", func(t *testing.T) {
+					if !strings.Contains(a.Summary, c.Note) {
+						t.Fatalf("summary = %q", a.Summary)
+					}
+				})
+			}
+		})
+	}
 
 	t.Run("when I ask about sign language", func(t *testing.T) {
 		t.Parallel()

@@ -1,4 +1,4 @@
-// Package ingest is the use case that fills the search store: fetch the schedule, load the curated places, index both.
+// Package ingest is the use case that fills the search store: fetch the schedule, load the curated places and needs, index them all.
 package ingest
 
 import (
@@ -28,11 +28,17 @@ type Places interface {
 	Places() ([]venue.Place, error)
 }
 
+// Needs is where the need vocabulary comes from.
+type Needs interface {
+	Needs() ([]venue.Need, error)
+}
+
 // Indexer is the store's write side.
 type Indexer interface {
 	EnsureIndexes(ctx context.Context) error
 	IndexSessions(ctx context.Context, sessions []schedule.Session) (Result, error)
 	IndexPlaces(ctx context.Context, places []venue.Place) (Result, error)
+	IndexNeeds(ctx context.Context, needs []venue.Need) (Result, error)
 }
 
 // Result is what one bulk write did.
@@ -46,18 +52,20 @@ type Result struct {
 type Report struct {
 	Sessions       Result
 	Places         Result
+	Needs          Result
 	DescribeFailed int
 	Curated        int
 	Rooms          int
 }
 
 // Failed is true when any document was rejected by the store.
-func (r Report) Failed() bool { return r.Sessions.Failed+r.Places.Failed > 0 }
+func (r Report) Failed() bool { return r.Sessions.Failed+r.Places.Failed+r.Needs.Failed > 0 }
 
 // Runner runs one ingest. Tracer and Meter are optional; nil means the OpenTelemetry globals.
 type Runner struct {
 	Source      Source
 	Places      Places
+	Needs       Needs
 	Indexer     Indexer
 	SkipDetails bool
 	Log         *slog.Logger
@@ -75,7 +83,7 @@ func (r *Runner) log() *slog.Logger {
 	return r.Log
 }
 
-// Run indexes the schedule, then the curated places together with the rooms the schedule names.
+// Run indexes the schedule, then the curated places together with the rooms the schedule names, then the need vocabulary.
 // One span covers the run with a child per step, and the counters say what reached the store.
 func (r *Runner) Run(ctx context.Context) (Report, error) {
 	start := time.Now()
@@ -85,6 +93,7 @@ func (r *Runner) Run(ctx context.Context) (Report, error) {
 	span.SetAttributes(
 		attrSessionsIndexed.Int(rep.Sessions.Count),
 		attrPlacesIndexed.Int(rep.Places.Count),
+		attrNeedsIndexed.Int(rep.Needs.Count),
 		attrDescribeFailures.Int(rep.DescribeFailed),
 	)
 	if err != nil {
@@ -140,5 +149,15 @@ func (r *Runner) run(ctx context.Context) (Report, error) {
 		return rep, fmt.Errorf("index places: %w", err)
 	}
 	r.log().InfoContext(ctx, "indexed places", "curated", rep.Curated, "rooms", rep.Rooms, "failed", rep.Places.Failed, "count", rep.Places.Count)
+
+	needs, err := r.Needs.Needs()
+	if err != nil {
+		return rep, fmt.Errorf("load needs: %w", err)
+	}
+	rep.Needs, err = step(ctx, tracer, "ingest.index-needs", func(ctx context.Context) (Result, error) { return r.Indexer.IndexNeeds(ctx, needs) })
+	if err != nil {
+		return rep, fmt.Errorf("index needs: %w", err)
+	}
+	r.log().InfoContext(ctx, "indexed needs", "sent", rep.Needs.Sent, "failed", rep.Needs.Failed, "count", rep.Needs.Count)
 	return rep, nil
 }

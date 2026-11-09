@@ -34,6 +34,25 @@ type question struct {
 	Rows []expectation
 }
 
+type needCase struct {
+	Say  string
+	Need string
+	Kind string
+	Note string
+}
+
+var needCases = []needCase{
+	{"I can't do stairs", "a step-free way around", "step-free-entrance", ""},
+	{"I need to fix my makeup", "somewhere private", "all-gender-restroom", "Single-stall where known."},
+	{"where can I inject insulin", "a private place for medication", "nursing-room", "first aid staff can help"},
+	{"I need a tampon", "period products", "all-gender-restroom", "Ask at the information desk if the restroom has none."},
+	{"I'm hurt", "first aid", "info-desk", "Staff at registration know where the first-aid points are."},
+	{"emergency exit", "the way out", "step-free-entrance", "follow the lit exit signs"},
+	{"I'm overwhelmed", "somewhere to rest", "quiet-room", ""},
+	{"I'm lost", "help from staff", "info-desk", ""},
+	{"I can't walk up the stairs", "a step-free way around", "step-free-entrance", ""},
+}
+
 var cases = []question{
 	{"nearest all-gender restroom", []expectation{
 		{From: "255 BC", Place: "agr-sp-l2-255", Distance: sameLevel, Verified: true},

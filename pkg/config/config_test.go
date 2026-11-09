@@ -81,7 +81,7 @@ func TestSecrets(t *testing.T) {
 }
 
 func TestTypedAccessors(t *testing.T) {
-	file := "server:\n  listen: \":9090\"\ningest:\n  concurrency: 3\n  skip_details: true\n  timeout: 2m\ntelemetry:\n  otlp_endpoint: http://collector:4318\n"
+	file := "server:\n  listen: \":9090\"\ningest:\n  concurrency: 3\n  skip_details: true\n  timeout: 2m\ntelemetry:\n  otlp_endpoint: http://collector:4318\nvenue:\n  needs_file: /data/venue/needs.yaml\n"
 	cfg := load(t, nil, nil, file)
 	t.Run("when a file sets several areas", func(t *testing.T) {
 		checks := []struct {
@@ -96,6 +96,8 @@ func TestTypedAccessors(t *testing.T) {
 			{"ingest elasticsearch timeout default", cfg.Ingest().ESTimeout().String(), "5m0s"},
 			{"telemetry endpoint", cfg.Telemetry().OTLPEndpoint(), "http://collector:4318"},
 			{"telemetry service name default", cfg.Telemetry().ServiceName(), "widedoor"},
+			{"elasticsearch needs index default", cfg.Elasticsearch().NeedsIndex(), "needs"},
+			{"venue needs file", cfg.Venue().NeedsFile(), "/data/venue/needs.yaml"},
 		}
 		for _, c := range checks {
 			t.Run("it should expose "+c.name+" through its interface", func(t *testing.T) {

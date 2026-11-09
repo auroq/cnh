@@ -15,11 +15,14 @@ type fakeStore struct {
 	nearby        Here
 	places        []Place
 	sessions      []Session
+	needs         []NeedMatch
+	byKind        map[string][]Place
 	err           error
 	located       []string
 	rules         []string
 	sessionNow    time.Time
 	searched      []string
+	guessed       []string
 	kinds         []string
 	noneOfAnyKind bool
 }
@@ -58,6 +61,9 @@ func (f *fakeStore) FindPlaces(_ context.Context, question, kind string) ([]Plac
 	f.kinds = append(f.kinds, kind)
 	if kind != "" && f.noneOfAnyKind {
 		return nil, f.err
+	}
+	if f.byKind != nil {
+		return f.byKind[kind], f.err
 	}
 	return f.places, f.err
 }
@@ -128,8 +134,8 @@ func TestAsk(t *testing.T) {
 				t.Fatalf("first place %s", ans.Places[0].ID)
 			}
 		})
-		t.Run("it should say it is in the same building on an unlisted level", func(t *testing.T) {
-			want := "Elevators: Salt Palace. Same building, you are on Level 2 and it is on an unlisted level. Unverified: read off a plan, nobody has checked it yet."
+		t.Run("it should say it is in the same building and that we do not know its level", func(t *testing.T) {
+			want := "Elevators: Salt Palace. Same building, we do not know which level it is on. Unverified: read off a plan, nobody has checked it yet."
 			if ans.Summary != want {
 				t.Fatalf("\n got %q\nwant %q", ans.Summary, want)
 			}
@@ -249,4 +255,9 @@ func TestLocate(t *testing.T) {
 			})
 		})
 	}
+}
+
+func (f *fakeStore) FindNeeds(_ context.Context, question string) ([]NeedMatch, error) {
+	f.guessed = append(f.guessed, question)
+	return f.needs, f.err
 }

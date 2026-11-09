@@ -1,33 +1,28 @@
 # 67. Say where you are in your own words: landmarks, street sides and session names resolve to a place
 
-**Open. Filed 2026-11-09 by Aria (issue #67). Nobody's call: the resolution order is in the issue and the data is seeded unverified like the rest of the floor plan.**
+**Done 2026-11-09 (PR #88, issue #67). Filed 2026-11-09 by Aria, p1. Nobody's call: the data decides.**
 
-Depends on: 063, 069
+Depends on: 063, 068
 
 Numbered 067 because issue numbers share a sequence with pull requests; the item number equals the issue number.
+The full text, discussion and evidence are on [issue #67](https://github.com/auroq/cnh/issues/67); this file is the summary the roadmap keeps.
 
 ## What
 
-`Locate` accepts how people describe where they are, not only room names.
-A landmark: "where everyone registered", "the sponsor booths", "the community hub", "the coat check".
-A street side or entrance: "the 100 S side", "200 South entrance", "West Temple side".
-A session: "I just got out of Sign Language Crash Course" resolves through the sessions index to the room that session is in, preferring one that ended in the last half hour.
-A room, as before, by exact name first and fuzzy name later.
-Places gain `aliases`, `side` and `leads_to` in `data/venue/places.yaml`, and the kinds `landmark` and `entrance`.
-When the attendee is outside and the question mentions stairs or mobility, the answer is a step-free entrance and names which side it is on.
+`Locate` accepts landmarks ("where I registered", "the sponsor booths"), street sides and entrances ("the 200 South entrance", "I'm outside"), and session titles ("I just got out of the Flux keynote", resolved through the sessions index to its room), as well as room names.
+Places gain `aliases`, `side` and `leads_to`, and the kinds `landmark`, `entrance` and `emergency-exit`.
+When the attendee is outside, the answer offers entrances, step-free first when the question mentions stairs or mobility, and names the side.
 
 ## Why
 
-Merge Forward: a blind attendee does not read the room sign; a wheelchair user outside a locked door needs the step-free door on their side; everyone knows "where I registered" and nobody knows "255 EF".
-Elasticsearch: resolving a session title to a room is the Find the Right Talk retrieval used the other way round, with `distance_feature` on the end time for recency.
+Merge Forward: a blind attendee does not read the room sign; a wheelchair user outside a locked door needs the step-free door on their side.
+Elasticsearch: resolving a session title to a room is the schedule retrieval used the other way round.
 
 ## Acceptance
 
-- `Locate` resolves in this order: place id, exact room name, place alias, session title, fuzzy room name, semantic match on the places `content`; `Here` carries `Side` and `Via` (which rule matched).
-- Unit tests in `pkg/ask` prove the order with a fake store; an integration test resolves a session title against a real index.
-- Acceptance rows: "where I registered" resolves to Salt Palace; "the 100 S side" with "without stairs" answers the step-free entrance with its side named; "I just got out of Sign Language Crash Course" resolves to Grand Ballroom J, Level 1.
-- The page's location help text says "a room, a landmark, or the talk you just left".
+- Each example phrase resolves to the expected place in a unit test with a fake store.
+- Acceptance rows for a landmark, a street side and a session title pass against the live site.
 
 ## Touches
 
-`pkg/ask` (`Locate`, the outside rule, ranking and summary), `pkg/esindex` (alias, session, fuzzy and semantic lookups; mapping), `pkg/model` and `pkg/api/v1` (`Side`, `Via`, `Aliases`, `LeadsTo`), `pkg/venue`, `data/venue/places.yaml`, `pkg/web`, `testing/`.
+`pkg/ask`, `pkg/esindex/store.go`, `data/venue/places.yaml`, `testing/acceptance`.
