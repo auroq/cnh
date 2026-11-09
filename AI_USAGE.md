@@ -27,10 +27,11 @@ This file is the disclosure the hackathon rules ask for, and [ADR 0007](docs/adr
 ## Merge policy
 
 After the first commit, every change goes through a pull request.
-`main` is protected: a PR merges only when the `docs`, `manifests`, `architecture`, `integration` and `Gitar` CI checks pass.
-Gitar also posts an approving review when [`.gitar/config/approve.md`](.gitar/config/approve.md) holds, and that review is advisory: between 13:40 and 13:47 MT it was a required review ([ADR 0009](docs/adr/0009-gitar-approval-is-the-merge-gate.md)), which turned out to be unsatisfiable on a repository with one GitHub author, since an author cannot approve their own PR and Gitar cannot read PR bodies here ([ADR 0010](docs/adr/0010-gitar-approval-is-advisory.md)).
-The `Gitar` status check reports SUCCESS even when Gitar requests changes (PR 18), so the honest statement is: CI is the gate, Gitar's review and approval are visible evidence on every PR, and a person reads them.
-The agent opens the PR and arms GitHub auto-merge, so a PR merges without a human reading it, on the strength of those checks.
+`main` is protected: a PR merges only when the `docs`, `manifests`, `architecture`, `integration` and `Gitar` CI checks pass and Gitar has not requested changes.
+Since 15:25 MT Gitar posts a "request changes" review on any finding it rates important or higher, and GitHub refuses the merge until Gitar dismisses it because the finding is fixed or Aria comments `gitar unblock` ([ADR 0013](docs/adr/0013-gitar-blocks-on-important-findings.md)).
+Gitar also posts an approving review when [`.gitar/config/approve.md`](.gitar/config/approve.md) holds; that review is advisory and never required, because on a repository with one GitHub author nobody can approve their own PR and Gitar cannot read PR bodies here ([ADR 0009](docs/adr/0009-gitar-approval-is-the-merge-gate.md) tried it between 13:40 and 13:47 MT, [ADR 0010](docs/adr/0010-gitar-approval-is-advisory.md) records why it was withdrawn).
+Between 13:47 and 15:25 MT, under the advisory policy, nine PRs merged with Gitar findings still open (73, 76, 78, 80, 82, 86, 88, 90, 93); that is said here rather than hidden.
+The agent opens the PR and arms GitHub auto-merge, so a PR merges without a human reading it, on the strength of CI and the absence of a blocking finding.
 Aria chose this on 2026-11-09 so that one person could spend the day building rather than clicking merge, and accepted that Gitar's review and the CI checks are the gate.
 Gitar's auto-apply may also push fixes to a PR branch; those commits are Gitar's and are visible as such.
 

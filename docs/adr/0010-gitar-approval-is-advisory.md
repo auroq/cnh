@@ -1,6 +1,6 @@
 # 0010. Gitar's approval is advisory; the status checks are the gate
 
-Status: Accepted, 2026-11-09. Supersedes [ADR 0009](0009-gitar-approval-is-the-merge-gate.md). Aria's call, roadmap item 043.
+Status: Accepted, 2026-11-09. Supersedes [ADR 0009](0009-gitar-approval-is-the-merge-gate.md); its blocking half is superseded by [ADR 0013](0013-gitar-blocks-on-important-findings.md) at 15:25 MT, its facts about approval stand. Aria's call, roadmap item 043.
 
 ## Context
 
