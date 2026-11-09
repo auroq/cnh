@@ -32,11 +32,18 @@ func toV1(a model.Answer) v1.AskResponse {
 	if a.Sessions != nil {
 		out.Sessions = make([]v1.Session, 0, len(a.Sessions))
 		for _, s := range a.Sessions {
-			out.Sessions = append(out.Sessions, v1.Session{
-				ID: s.ID, Title: s.Title, URL: s.URL, Speakers: s.Speakers, Start: s.Start, End: s.End,
-				Location: s.Location, Venue: s.Venue, Level: s.Level, Room: s.Room,
-				State: s.State, StartsInMinutes: s.StartsInMinutes, Distance: s.Distance,
-			})
+			out.Sessions = append(out.Sessions, sessionV1(s))
+		}
+	}
+	if a.Schedule != nil {
+		out.Schedule = &v1.Schedule{AssumedLocation: a.Schedule.AssumedLocation, BackToBack: a.Schedule.BackToBack}
+		if a.Schedule.Next != nil {
+			next := sessionV1(*a.Schedule.Next)
+			out.Schedule.Next = &next
+		}
+		if a.Schedule.JustLeft != nil {
+			left := sessionV1(*a.Schedule.JustLeft)
+			out.Schedule.JustLeft = &left
 		}
 	}
 	if a.Applied != nil {
@@ -46,4 +53,12 @@ func toV1(a model.Answer) v1.AskResponse {
 		}
 	}
 	return out
+}
+
+func sessionV1(s model.Session) v1.Session {
+	return v1.Session{
+		ID: s.ID, Title: s.Title, URL: s.URL, Speakers: s.Speakers, Start: s.Start, End: s.End,
+		Location: s.Location, Venue: s.Venue, Level: s.Level, Room: s.Room,
+		State: s.State, StartsInMinutes: s.StartsInMinutes, Distance: s.Distance,
+	}
 }

@@ -56,6 +56,9 @@ Each chip carries a source, `chosen` or `learned` (a trailing `~` in the encodin
 A question that implies a need adds the chip as learned: asking for an elevator adds step-free only, marked "from your question", announced in the live region, with its own remove button and a "Keep" button that makes it a choice.
 A chip you remove goes into a second cookie, `wd_prefs_no`, so no question adds it back until you add it yourself; "Forget me" clears that too.
 The counter `widedoor.profile.chip_learned`, by `chip`, is the only trace of learning.
+The schedule works the same way: "Your schedule" takes a pasted Sched iCal export or a list of titles, matches them to the programme in Elasticsearch (exact title first, then the best fuzzy match with most of the words), and keeps only the matched session ids in the `sched` query parameter, the cookie `wd_sched` (same attributes and expiry) and localStorage.
+With a schedule present the page says "Your next session" and "You just left", assumes you are still near the room you just left when no location is given (and says so), and offers the nearest quiet room when three sessions run back to back.
+The only trace is the counter `widedoor.schedule.matched`, a count of matched sessions per paste.
 
 ## Evidence from the day
 

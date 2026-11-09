@@ -80,7 +80,7 @@ p, li, legend, label, .lede, .how { max-width: 70ch; }
 .field { margin: 1rem 0; }
 label { display: block; font-weight: 600; margin-bottom: 0.5rem; }
 .opt { font-weight: 400; color: var(--muted); }
-input {
+input, textarea {
   width: 100%;
   font: inherit;
   padding: 0.75rem;
@@ -206,3 +206,12 @@ textarea { width: 100%; font: inherit; padding: 0.75rem; border: 2px solid var(-
   .chips .chip.on { background: var(--accent); color: var(--accent-fg); }
   .chips .chip.keep, .report summary { border-color: currentColor; }
 }
+.agenda { margin: 1rem 0; }
+.agenda-line { margin: 0.25rem 0; }
+.schedule textarea { min-height: 8rem; resize: vertical; }
+.schedule .secondary { margin-left: 0.5rem; }
+.schedule { margin-top: 2.5rem; border-top: 1px solid var(--border); padding-top: 1rem; }
+.schedule summary { display: flex; align-items: center; justify-content: space-between; gap: 1rem; cursor: pointer; min-height: 44px; }
+.schedule summary h2 { display: inline; font-size: 1.1rem; margin: 0; }
+.schedule .edit { color: var(--accent); text-decoration: underline; flex: none; }
+.schedule[open] .edit { display: none; }

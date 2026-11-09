@@ -54,6 +54,17 @@ func TestContractV1(t *testing.T) {
 				{ID: "elevators-salt-palace", Kind: "elevator", Name: "Elevators", Venue: "Salt Palace", Source: "floor plan"},
 			},
 		}, lines[4]},
+		{"an answer with a schedule", model.Answer{
+			Question: "nearest quiet room",
+			Here:     model.Here{Asked: "Grand Ballroom J", Room: "Grand Ballroom J", Venue: "Salt Palace", Level: "Level 1", Via: "schedule"},
+			Summary:  "x",
+			Schedule: &model.Schedule{
+				Sessions:        []model.Session{{ID: "1"}},
+				Next:            &model.Session{ID: "2", Title: "Keynote: Welcome", Start: time.Date(2026, 11, 11, 17, 0, 0, 0, time.UTC), End: time.Date(2026, 11, 11, 17, 35, 0, 0, time.UTC), Location: "Salt Palace | Level 1 | Grand Ballroom A", Venue: "Salt Palace", Level: "Level 1", Room: "Grand Ballroom A"},
+				JustLeft:        &model.Session{ID: "1", Title: "Sign Language Crash Course", Start: time.Date(2026, 11, 11, 16, 0, 0, 0, time.UTC), End: time.Date(2026, 11, 11, 16, 35, 0, 0, time.UTC), Location: "Salt Palace | Level 1 | Grand Ballroom J", Venue: "Salt Palace", Level: "Level 1", Room: "Grand Ballroom J"},
+				AssumedLocation: "Grand Ballroom J",
+			},
+		}, lines[5]},
 	}
 	for _, c := range cases {
 		t.Run("when "+c.name+" is encoded for /api/ask", func(t *testing.T) {
