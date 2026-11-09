@@ -15,7 +15,7 @@ A test that breaks one of them is a review finding, quote the test by name.
 
 ## Independence
 
-- Every test is idempotent, safe to run in parallel with any other, and depends on no external state: no network, no real Elasticsearch, no clock, no filesystem outside a temp dir.
+- Every test is idempotent and safe to run in parallel with any other. A unit test depends on no external state: no network, no real Elasticsearch, no clock, no filesystem outside a temp dir. Only tests under `testing/integration/` and `testing/acceptance/` may talk to a real system.
 - Every test cleans up after itself (`t.TempDir`, `t.Cleanup`, `httptest.NewServer` closed).
 - Unit tests test only the unit; dependencies are faked at the interface the unit itself declares.
 - Unit tests sit next to the code they test, `foo_test.go` beside `foo.go`.
