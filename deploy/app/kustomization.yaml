@@ -13,4 +13,4 @@ resources:
   - dash0.yaml
 images:
   - name: ghcr.io/auroq/cnh/widedoor
-    newTag: 68409e24668ccbd21a46c49ef63e65d1800e6615
+    newTag: 1357271d12244ce229945b2b83ec38ef400ad646
