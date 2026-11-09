@@ -71,6 +71,7 @@ type page struct {
 	ProfileURL  string
 	Status      string
 	Forgot      bool
+	PrefsKnown  bool
 }
 
 type kind struct{ Query, Label string }
