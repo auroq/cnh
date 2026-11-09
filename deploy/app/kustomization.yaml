@@ -12,4 +12,4 @@ resources:
   - config.yaml
 images:
   - name: ghcr.io/auroq/cnh/widedoor
-    newTag: 5e8f472a91d9e8716a0567cee67310c779745e80
+    newTag: f71eb2b795716b0c2ea0ae140794211f128fdac2
