@@ -1,6 +1,6 @@
 # 66. Needs, not keywords: what people say maps to what the venue offers
 
-**Open. Filed 2026-11-09 by Aria (issue #66). Nobody's call: the vocabulary is data in `data/venue/needs.yaml`, and the inference builds on the kind table from item 063.**
+**Done 2026-11-09 (PR #84, issue #66). Filed 2026-11-09 by Aria. Nobody's call: the vocabulary is data in `data/venue/needs.yaml`, and the inference builds on the kind table from item 063.**
 
 Depends on: 063
 
