@@ -39,6 +39,16 @@ Metrics: `widedoor.ask.duration`, `widedoor.ask.answers` by the kind of the top 
 Logs: `slog` goes through the `otelslog` bridge, so every request log reaches Dash0 as a log record with the trace and span id it belongs to.
 `widedoor.ask.unverified_served` is the accessibility metric: it is the list of what to go and verify next.
 
+## What we store and why
+
+Nothing about a person.
+The profile panel "What Wide Door knows about you" holds chips that are needs, not diagnoses: step-free only, avoid crowds and noise, quiet spaces matter, all-gender restrooms, captions or ASL, I use a wheelchair or scooter, dietary needs.
+The chips live on the attendee's device only: in the `prefs` query parameter, in the first-party cookie `wd_prefs` (SameSite=Strict, Secure, expires when the conference ends on Thursday 2026-11-12) and in localStorage.
+The server reads them on each request to render the panel and shape the answer, then forgets them: there is no account, no session, no profile in any index, and the request log omits `prefs`.
+The only trace is the counter `widedoor.profile.chip_used` with one attribute, `chip`, so Dash0 shows how often each need is stated and never a combination that could identify someone.
+"Forget me" clears all three places; "Save my profile" shows the link that carries only the chips, so the same profile can be opened on another device.
+Chips are also designed to carry a source, `chosen` or `learned` (a trailing `~` in the encoding), so a follow-up can suggest chips from what people ask and let them say no.
+
 ## Evidence from the day
 
 - [`docs/demo/2026-11-09-rollout-abort.md`](docs/demo/2026-11-09-rollout-abort.md): a real canary aborted by Argo Rollouts at two minutes, diagnosed by Radar with the change that caused it.
