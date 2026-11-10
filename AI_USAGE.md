@@ -2,6 +2,8 @@
 
 This project was built by one person, Aria (`auroq`), pairing with Claude Code (Anthropic, model Claude Fable 5.1) for the whole day.
 From about 13:00 MT several Claude Code sessions ran at once, each in its own git worktree: an integrator (infrastructure, Argo CD, CI and CD, roadmap bookkeeping), Aria's own pairing session (the testing rings, the ingest fix), a telemetry session (item 011, Dash0) and a coordinator that relayed Aria's instructions between them.
+Later in the afternoon the shape was an integrator session, an advisor and dispatcher session that turned Aria's instructions into issues and handed them out, one worker agent per issue on its own `issue/N-*` branch (20 issue branches: 54, 55, 63, 66, 67, 68, 69, 72, 75, 79, 81, 83, 85, 89, 96, 103, 112, 114, 118, 121), research subagents for web lookups, and Claude in Chrome for pages that refuse a non-browser fetch, such as the Salt Palace floor plan in [`docs/venue-sources.md`](docs/venue-sources.md).
+`git log pre-kickoff..` carries 87 distinct `Claude-Session` links.
 Aria directed all of them; which session wrote a change is visible from the `Claude-Session` trailer on its commits.
 This file is the disclosure the hackathon rules ask for, and [ADR 0007](docs/adr/0007-ai-disclosure.md) is the decision behind it.
 
@@ -16,7 +18,8 @@ This file is the disclosure the hackathon rules ask for, and [ADR 0007](docs/adr
 
 ## What the human did
 
-- Chose the problem, the option to build, the app and team names, the tracking method, the merge policy below, and every decision marked "Aria's call" in a roadmap item.
+- Chose the problem, the option to build, the app and team names, the tracking method, the merge policy below, and every decision marked "Aria's call" in a roadmap item: 002 (the names), 008 (what is seeded as unverified), 014 to 016 (the stretch is a different product), 032 (the config shape), 036 (CD as its own stage), 043 (the Gitar gate), 050 (whether to split config), 068 (what is verified and how it is worded), 079 (routes are the next project), 081 (the chip list and wording), 085 (the wording of what is learned), 096 (the trust rules) and 112 (chips name needs, not people).
+- Filed the issues behind items 025, 031, 032, 036, 043, 050, 054, 055, 057, 063, 066, 067, 068, 069, 072, 075, 079, 081, 083, 085, 089, 096 and 118 (each says "by Aria" on line 3), and set the layout or direction recorded on 103, 114, 118 and 121.
 - Reviewed and approved every Terraform plan before it was applied.
 - Created the sponsor accounts, the GitHub repositories and the 1Password vault, installed the Gitar app, and ran the commands the agent is not allowed to run.
 - Judged what was good enough to ship at each ring, and what to demo.
@@ -43,6 +46,6 @@ Gitar's auto-apply may also push fixes to a PR branch; those commits are Gitar's
 
 ## Other services
 
-- Gitar reviews pull requests and, since 13:40 MT, approves them against [`.gitar/config/approve.md`](.gitar/config/approve.md); its auto-apply is off and it changes code only when asked (sponsor track).
+- Gitar reviews pull requests, approves them against [`.gitar/config/approve.md`](.gitar/config/approve.md) as an advisory review, and since 15:25 MT blocks the merge on important or critical findings ([ADR 0013](docs/adr/0013-gitar-blocks-on-important-findings.md)); its auto-apply is off and it changes code only when asked (sponsor track).
 - Dash0 and Radar analyse telemetry and cluster state with their own AI features (sponsor tracks).
 - Elasticsearch's `semantic_text` field uses Elastic's ELSER model for semantic search (sponsor track).

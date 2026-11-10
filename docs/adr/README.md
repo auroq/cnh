@@ -14,7 +14,7 @@ A record is accepted or proposed; a decision that changes gets a new record that
 | [0007](0007-ai-disclosure.md) | AI use disclosed in `AI_USAGE.md` and in commit trailers | Accepted |
 | [0008](0008-ci-cd-separation-and-rollback-by-revert.md) | CI and CD are separate stages; a post-deploy gate tests the live site; rollback is a revert PR | Accepted |
 | [0009](0009-gitar-approval-is-the-merge-gate.md) | Gitar's approving review, against `.gitar/config/approve.md`, is what lets a PR merge | Superseded by 0010 |
-| [0010](0010-gitar-approval-is-advisory.md) | Gitar's approval is advisory on a single-author repository; the status checks are the gate | Accepted |
+| [0010](0010-gitar-approval-is-advisory.md) | Gitar's approval is advisory on a single-author repository; the status checks are the gate | Accepted; its blocking half superseded by 0013 |
 | [0011](0011-types-live-by-kind.md) | types live by kind: `pkg/model`, private adapter shapes, `pkg/api/v1` | Accepted |
 | [0012](0012-how-we-describe-distance.md) | distance is route facts (level change, elevator, connection), never a single walk time | Accepted |
-| [0013](0013-gitar-blocks-on-important-findings.md) | Gitar requests changes on important findings and GitHub refuses the merge; approval stays advisory | Accepted |
+| [0013](0013-gitar-blocks-on-important-findings.md) | Gitar requests changes on important findings and GitHub refuses the merge; approval stays advisory | Accepted; supersedes the blocking half of 0010 |

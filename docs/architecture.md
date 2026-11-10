@@ -22,7 +22,7 @@ flowchart LR
     cli -->|reads needs| venue
     ingest -->|Indexer port| indexer[pkg/esindex.Indexer<br/>adapter]
     indexer --> es
-    cli[pkg/cli: serve, ingest<br/>wiring] -.constructs.-> web
+    cli[pkg/cli: serve, ingest, qr, reports<br/>wiring] -.constructs.-> web
     cli -.constructs.-> ask
     cli -.constructs.-> esstore
     cli -.constructs.-> ingest
@@ -51,9 +51,11 @@ flowchart LR
 | `pkg/telemetry` | adapter | everything OpenTelemetry: `Setup` builds the SDK providers and OTLP gRPC exporters (noops when no endpoint is set), `Handler` is the slog handler that sends every log line to Dash0 with its trace id, `Transport` makes each Elasticsearch call a child span |
 | `pkg/qr` | adapter | renders the code taped beside a door: the `/?from=<place id>` URL as SVG and PNG per place, and the printable sheet with the name in large type |
 | `pkg/web` | controller | the HTML page, the JSON API, the probes, the templates and the CSS; the profile panel, the `/profile` form, the `wd_prefs` and `wd_prefs_no` cookies and the `widedoor.profile.chip_used` and `widedoor.profile.chip_learned` counters; the `/schedule` form, the `wd_sched` cookie and the `widedoor.schedule.matched` counter |
-| `pkg/cli` | wiring | the `widedoor` command and its `serve`, `ingest` and `qr` subcommands: load config, construct adapters, hand them to the use cases |
+| `pkg/cli` | wiring | the `widedoor` command and its `serve`, `ingest`, `qr` and `reports` subcommands: load config, construct adapters, hand them to the use cases |
 | `pkg/app` | wiring | `Main()`: builds the command line and turns its result into an exit code |
 | `cmd/widedoor` | wiring | `os.Exit(app.Main())` |
+
+There is no route package on `main`: routes phase 1 (item 079) is open as PR 125 and not merged.
 
 ## Ports, one line each
 
@@ -131,7 +133,7 @@ flowchart LR
     build --> bump[bump PR pins the SHA in<br/>deploy/app/kustomization.yaml<br/>auto-merges when CI passes]
     bump --> argo[Argo CD syncs deploy/app]
     argo --> canary[Argo Rollouts canary 50%<br/>aborts after 2 min if not ready]
-    canary --> gate{gate: Rollout Healthy on the SHA<br/>acceptance against widedoor.cnh.auroq.com}
+    canary --> gate{gate: Rollout Healthy on the SHA<br/>Playwright accessibility tests, then<br/>acceptance against widedoor.cnh.auroq.com}
     gate -->|pass| done([released])
     gate -->|fail| revert[revert PR pins the previous SHA<br/>auto-merges; Argo heals the cluster]
     revert --> failed([CD run fails, comment on the bump PR])
