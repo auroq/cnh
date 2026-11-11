@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: widedoor
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt
+spec:
+  ingressClassName: public
+  tls:
+    - hosts:
+        - widedoor.cnh.auroq.com
+      secretName: widedoor-tls
+  rules:
+    - host: widedoor.cnh.auroq.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: widedoor
+                port:
+                  number: 80
