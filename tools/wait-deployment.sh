@@ -30,7 +30,7 @@ while [[ $# -gt 0 ]]; do
 done
 [[ -n "$image" ]] || { echo "--image is required" >&2; exit 2; }
 
-jsonpath='{.spec.template.spec.containers[0].image} {.metadata.generation} {.status.observedGeneration} {.spec.replicas} {.status.replicas} {.status.updatedReplicas} {.status.availableReplicas}'
+jsonpath='{.spec.template.spec.containers[0].image} {.metadata.generation} {.status.observedGeneration} {.spec.replicas} {.status.replicas} {.status.updatedReplicas} {.status.availableReplicas}{"\n"}'
 
 deadline=$(( $(date +%s) + timeout ))
 last=""

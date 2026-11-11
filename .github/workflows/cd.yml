@@ -207,7 +207,7 @@ jobs:
           git revert --no-edit "${{ needs.bump.outputs.merge }}"
           git commit --amend -q -m "deploy: revert images at $short" -m "The post-deploy gate failed on this release (run ${{ github.run_id }}); the previous image is pinned again."
           git push -u origin "deploy/revert-$short"
-          url=$(tools/pr.sh --title "deploy: revert images at $short" --body "The post-deploy gate failed for ${{ needs.plan.outputs.sha }} (workflow run ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}). This pins the previous image again; Argo CD's self-heal rolls the cluster back. Reverts #${{ needs.bump.outputs.pr }}." | grep -m1 'https://github.com/.*/pull/')
+          url=$(tools/pr.sh --refs 36 --title "deploy: revert images at $short" --body "The post-deploy gate failed for ${{ needs.plan.outputs.sha }} (workflow run ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}). This pins the previous image again; Argo CD's self-heal rolls the cluster back. Reverts #${{ needs.bump.outputs.pr }}." | grep -m1 'https://github.com/.*/pull/')
           echo "revert PR: $url" >> "$GITHUB_STEP_SUMMARY"
           tools/wait-pr.sh "${url##*/}" --timeout 1200
       - name: Confirm the previous image is available again
