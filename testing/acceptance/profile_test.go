@@ -14,7 +14,7 @@ import (
 
 const (
 	prefsCookie    = "wd_prefs"
-	removeStepFree = `<span class="vh">Remove </span><span aria-hidden="true">&#10003; </span>Step-free only`
+	removeStepFree = `<span class="vh">Remove </span><span aria-hidden="true">&#10003; </span><span>Step-free only`
 )
 
 func request(t *testing.T, method, path string, query url.Values, cookie, form string) *http.Response {
@@ -133,7 +133,7 @@ func TestProfile(t *testing.T) {
 		t.Parallel()
 		body := bodyOf(t, request(t, http.MethodGet, "/", helpers.Query("prefs", "step-free,wheels"), "", ""))
 		t.Run("it should reproduce the chips", func(t *testing.T) {
-			if !strings.Contains(body, removeStepFree) || !strings.Contains(body, "Remove </span><span aria-hidden=\"true\">&#10003; </span>Wide doors and ramps") {
+			if !strings.Contains(body, removeStepFree) || !strings.Contains(body, "Remove </span><span aria-hidden=\"true\">&#10003; </span><span>Wide doors and ramps") {
 				t.Fatal("chips missing from the page")
 			}
 		})

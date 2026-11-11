@@ -39,7 +39,8 @@ Each Terraform step is `plan -out` first, Aria reads the plan, then `apply` of t
 
 ## Day to day
 
-- Kubeconfig: `KUBECONFIG=.kube/node.config kubectl -n wide-door get pods`.
+- Kubeconfig: the Makefile's default `KUBECONFIG` is `.kube/node.config`, so `make node-status` and `make ingest` talk to the node.
+  `make node-kubeconfig` names its context `cnh-node` and merges it into `~/.kube/config` without changing the default context, so `kubectl --context cnh-node` works from anywhere.
 - Deploy: merge to `main`; `cd.yml` builds, opens the bump PR, Argo syncs, the gate waits on the Deployment and tests the live site.
 - Kibana: `kubectl -n wide-door port-forward svc/wide-door-kb-http 5601` and sign in as `elastic` with the password from the vault.
 - Argo: `kubectl -n argocd port-forward svc/argo-cd-argocd-server 8080:80`; the admin password is in the `argocd-initial-admin-secret` Secret.
@@ -60,8 +61,16 @@ All times UTC.
 - 03:25: state detached so the destroys could not take the site with them: `digitalocean_domain.cnh`, `digitalocean_vpc.cnh` and `digitalocean_project_resources.cnh` from `infra/cluster`, and `github_actions_secret.cd_kubeconfig` from `infra/platform` (it now holds the node's cd-gate kubeconfig, owned by `infra/node-platform`).
 - 03:27: the old Argo Application deleted with cascade so ECK's three volumes were released; `infra/platform` destroyed (26 of 27; `metrics-server` hung uninstalling and was dropped from state); `infra/cluster` destroyed.
 - 03:30: the DigitalOcean API shows no cluster, no load balancer and no volumes; the domain, the VPC, the node and the `widedoor` record remain.
+- 03:30: the attendee `reports` index went with ECK's volumes.
+  Ingest rebuilds places, needs and sessions from YAML and Sessionize, but reports only ever lived in Elasticsearch, and nobody exported them before the destroy.
+  The node started with no reports; new ones are stored as usual.
+- 2026-11-11: the deploy gate had been passing with failing tests since before the move: its steps piped into `tee` under GitHub's default shell, which has no `pipefail`.
+  Both workflows now default to `shell: bash` (`-eo pipefail`).
+  The four acceptance and four Playwright failures it hid are fixed: three stale expectations, a chip whose flex layout put a stray space in its accessible name, a tab-order test that predated the schedule disclosure, and registration ranking behind the Level 2 gift shop.
+- 2026-11-11: the stale `cnh` context and its credentials left `~/.kube/config`, `.kube/config` was deleted, and wasp is the default context again.
 
 ## Going back to the event shape
 
 `infra/cluster` no longer owns the domain or the VPC, so `make up` would try to create both and fail on the name.
+`make kubeconfig` writes `.kube/config` again; the cluster targets read it through `CLUSTER_KUBECONFIG`.
 Import them first: `terraform -chdir=infra/cluster import digitalocean_domain.cnh cnh.auroq.com` and `terraform -chdir=infra/cluster import digitalocean_vpc.cnh <vpc id>` (through the Makefile's `$(TF)` wrapper for credentials).

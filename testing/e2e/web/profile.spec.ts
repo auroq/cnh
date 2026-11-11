@@ -205,7 +205,8 @@ test.describe("when I open the home page with a profile", () => {
     test("it should reach the profile's controls after the answer with the keyboard", async ({ page }) => {
       await page.getByRole("button", { name: "Ask" }).focus();
       const picks = await page.getByRole("group", { name: "Or pick one" }).getByRole("link").count();
-      for (let i = 0; i <= picks; i++) await page.keyboard.press("Tab");
+      const schedule = await page.locator("#main summary").count();
+      for (let i = 0; i <= picks + schedule; i++) await page.keyboard.press("Tab");
       await expect(page.getByRole("button", { name: "Remove Step-free only" })).toBeFocused();
     });
 

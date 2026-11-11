@@ -121,7 +121,7 @@ func TestAPIShape(t *testing.T) {
 		})
 		t.Run("it should describe a place with the documented fields", func(t *testing.T) {
 			got := keysOf(t, firstOf(t, a["places"]))
-			if !within(got, []string{"id", "kind", "name", "venue", "level", "near", "notes", "for", "verified", "source", "attendee_status", "report_count", "latest_note", "latest_at"}) {
+			if !within(got, []string{"id", "kind", "name", "venue", "level", "near", "notes", "route", "for", "verified", "source", "attendee_status", "report_count", "latest_note", "latest_at"}) {
 				t.Fatalf("place keys = %v", got)
 			}
 		})

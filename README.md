@@ -132,7 +132,7 @@ make help
 Infrastructure targets are described in [`infra/`](infra/).
 The app targets are `build`, `test`, `es-up`, `es-down`, `test-integration`, `test-acceptance`, `test-e2e`, `test-all`, `ingest`, `issues`, `dashboard` and `dashboard-check`.
 The binary is `widedoor` with four subcommands: `serve` (the web app and JSON API), `ingest` (index the schedule, places and needs), `qr` (door codes) and `reports` (`list` and `hide ID` for volunteers).
-The Makefile pins `KUBECONFIG` to `./.kube/config`, so its targets only ever talk to this cluster.
+The Makefile pins `KUBECONFIG` to `./.kube/node.config` (the one node since 2026-11-10), so its targets never use `~/.kube/config`.
 Node 24 for the browser tests; `.nvmrc` pins it.
 
 ### After the event

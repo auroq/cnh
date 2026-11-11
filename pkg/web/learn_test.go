@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	learnedStepFree = `<span class="vh">Remove </span><span aria-hidden="true">&#10003; </span>Step-free only<span class="from">, from your question</span>`
+	learnedStepFree = `<span class="vh">Remove </span><span aria-hidden="true">&#10003; </span><span>Step-free only<span class="from">, from your question</span></span>`
 	keepStepFree    = `<span class="vh">Keep Step-free only</span>`
 	learnedStatus   = `<p class="status" role="status">Added Step-free only to what Wide Door knows about you, because you asked for an elevator. Remove it if that is wrong.</p>`
 )
