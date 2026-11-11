@@ -34,8 +34,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - name: Render deploy/app with kustomize
-        run: kubectl kustomize deploy/app > /tmp/rendered.yaml
+      - name: Render deploy/app and deploy/node with kustomize
+        run: |
+          kubectl kustomize deploy/app > /tmp/rendered.yaml
+          kubectl kustomize deploy/node > /tmp/rendered-node.yaml
+          echo "---" >> /tmp/rendered.yaml
+          cat /tmp/rendered-node.yaml >> /tmp/rendered.yaml
       - name: Every container has resources, probes and a hardened securityContext
         run: |
           python3 - <<'PY'
