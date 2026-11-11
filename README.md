@@ -135,6 +135,12 @@ The binary is `widedoor` with four subcommands: `serve` (the web app and JSON AP
 The Makefile pins `KUBECONFIG` to `./.kube/config`, so its targets only ever talk to this cluster.
 Node 24 for the browser tests; `.nvmrc` pins it.
 
+### After the event
+
+Since 2026-11-10 the live site runs on one MicroK8s droplet instead of the three-node cluster ([ADR 0014](docs/adr/0014-one-node-after-the-event.md)).
+`make up-node` creates it from `infra/node` and `infra/node-platform`, `make node-bootstrap` seeds Elasticsearch, and the overlay it runs is `deploy/node`.
+The step-by-step cutover is in [`docs/transitions/post-event-single-node.md`](docs/transitions/post-event-single-node.md).
+
 ### Print the door codes
 
 ```bash

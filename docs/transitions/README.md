@@ -18,3 +18,4 @@ A transitional document that outlives its condition is a bug.
 | document | state | delete when |
 | --- | --- | --- |
 | [pre-kickoff-platform.md](pre-kickoff-platform.md) | `infra/` was built before the event and is described only here | the README's architecture section describes the platform |
+| [post-event-single-node.md](post-event-single-node.md) | the cutover from the event cluster to one node, step by step, with its log | the node is torn down or becomes the documented default in the README |

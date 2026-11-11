@@ -4,6 +4,7 @@ This project was built by one person, Aria (`auroq`), pairing with Claude Code (
 From about 13:00 MT several Claude Code sessions ran at once, each in its own git worktree: an integrator (infrastructure, Argo CD, CI and CD, roadmap bookkeeping), Aria's own pairing session (the testing rings, the ingest fix), a telemetry session (item 011, Dash0) and a coordinator that relayed Aria's instructions between them.
 Later in the afternoon the shape was an integrator session, an advisor and dispatcher session that turned Aria's instructions into issues and handed them out, one worker agent per issue on its own `issue/N-*` branch (20 issue branches: 54, 55, 63, 66, 67, 68, 69, 72, 75, 79, 81, 83, 85, 89, 96, 103, 112, 114, 118, 121), research subagents for web lookups, and Claude in Chrome for pages that refuse a non-browser fetch, such as the Salt Palace floor plan in [`docs/venue-sources.md`](docs/venue-sources.md).
 `git log pre-kickoff..` carries 87 distinct `Claude-Session` links.
+On 2026-11-10, after the event, the advisor session and one worker built the single-node setup in [ADR 0014](docs/adr/0014-one-node-after-the-event.md) from Aria's four decisions, with every Terraform plan read by her before it was applied.
 Aria directed all of them; which session wrote a change is visible from the `Claude-Session` trailer on its commits.
 This file is the disclosure the hackathon rules ask for, and [ADR 0007](docs/adr/0007-ai-disclosure.md) is the decision behind it.
 
