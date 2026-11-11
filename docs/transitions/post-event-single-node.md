@@ -67,6 +67,9 @@ All times UTC.
 - 2026-11-11: the deploy gate had been passing with failing tests since before the move: its steps piped into `tee` under GitHub's default shell, which has no `pipefail`.
   Both workflows now default to `shell: bash` (`-eo pipefail`).
   The four acceptance and four Playwright failures it hid are fixed: three stale expectations, a chip whose flex layout put a stray space in its accessible name, a tab-order test that predated the schedule disclosure, and registration ranking behind the Level 2 gift shop.
+- 2026-11-11 07:05 UTC: the first strict gate (run 42976292568) failed on its first step: `tools/wait-deployment.sh` read jsonpath output with no trailing newline, so `read` hit end of file and `set -e` stopped it on the first poll, in every gate since the move.
+  The rollback then failed too, because `tools/pr.sh` requires `--refs`; it left the branch `deploy/revert-01f85a2` behind.
+  The release itself was fine: acceptance and all 67 browser tests pass on it.
 - 2026-11-11: the stale `cnh` context and its credentials left `~/.kube/config`, `.kube/config` was deleted, and wasp is the default context again.
 
 ## Going back to the event shape
