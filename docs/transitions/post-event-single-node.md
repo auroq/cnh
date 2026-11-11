@@ -47,4 +47,21 @@ Each Terraform step is `plan -out` first, Aria reads the plan, then `apply` of t
 
 ## Log
 
-Filled in during the cutover.
+All times UTC.
+
+- 2026-11-11 02:27: `infra/node` applied; droplet `wide-door-node` at 164.92.84.236.
+- 02:29: cloud-init's bootstrap was killed while snapd restarted, then failed waiting on an nginx DaemonSet; MicroK8s 1.36's ingress addon is Traefik. Rerun by hand; fixed in PR #132 (wait on Traefik, retry three times, `ignore_changes = [user_data]`).
+- 02:44: `infra/node-platform` applied (12 resources); Argo CD synced `deploy/node`.
+- 02:49: `make node-bootstrap`: Kibana token, ELSER ready, first ingest indexed 602 sessions, 77 places and 8 needs.
+- 02:52: answers over http on the IP matched the old cluster.
+- 02:53: `publish_dns=true` applied; the specific A record took over from the wildcard within about four minutes.
+- 03:00 to 03:14: no certificate, because the HTTP-01 solver Ingress had no class: the ClusterIssuer set the old `class` field and Traefik only honours `ingressClassName`. A hand-applied fix was reverted by Argo's self-heal, as it should be. Fixed in PR #133, then the order was restarted; Let's Encrypt issued `widedoor-tls` at 03:14.
+- 03:20: acceptance against the node and against the old cluster through port-forwards failed the same four cases, so the move changed no answers. The stale expectations are tracked separately.
+- 03:25: state detached so the destroys could not take the site with them: `digitalocean_domain.cnh`, `digitalocean_vpc.cnh` and `digitalocean_project_resources.cnh` from `infra/cluster`, and `github_actions_secret.cd_kubeconfig` from `infra/platform` (it now holds the node's cd-gate kubeconfig, owned by `infra/node-platform`).
+- 03:27: the old Argo Application deleted with cascade so ECK's three volumes were released; `infra/platform` destroyed (26 of 27; `metrics-server` hung uninstalling and was dropped from state); `infra/cluster` destroyed.
+- 03:30: the DigitalOcean API shows no cluster, no load balancer and no volumes; the domain, the VPC, the node and the `widedoor` record remain.
+
+## Going back to the event shape
+
+`infra/cluster` no longer owns the domain or the VPC, so `make up` would try to create both and fail on the name.
+Import them first: `terraform -chdir=infra/cluster import digitalocean_domain.cnh cnh.auroq.com` and `terraform -chdir=infra/cluster import digitalocean_vpc.cnh <vpc id>` (through the Makefile's `$(TF)` wrapper for credentials).

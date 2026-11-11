@@ -50,4 +50,4 @@ Aria's calls:
   Rotate with `make apply-node-platform`.
 - The review rule that app workloads are Rollouts with two replicas and a PodDisruptionBudget does not apply under `deploy/node`; `.gitar/review/k8s.md` records the exception.
 - The Elasticsearch trial licence on the node runs 30 days from its first start; ELSER stops when it expires.
-- Going back to the event shape is `make up` as before; nothing in `infra/cluster` or `infra/platform` was removed.
+- Going back to the event shape is `make up` after importing the domain and the VPC into `infra/cluster`, because the cutover detached them from its state so its destroy could not take the site down; the transition doc has the two import commands.
