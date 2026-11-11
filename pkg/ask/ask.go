@@ -170,6 +170,7 @@ func (s *Service) answer(ctx context.Context, question, from string, prefs Prefe
 
 // RankByNearness keeps the search order but moves places on the attendee's level, then venue, to the front.
 // Without coordinates this is the honest ordering: same level beats same building beats a different building.
+// A verified place in the attendee's building with no level on record could be on their level, so it ranks with that level instead of losing to a guess read off a plan.
 func RankByNearness(places []Place, here Here) []Place {
 	out := append([]Place(nil), places...)
 	if here.Venue == "" {
@@ -179,7 +180,7 @@ func RankByNearness(places []Place, here Here) []Place {
 		switch {
 		case here.Side != "" && p.Side == here.Side:
 			return -1
-		case p.Venue == here.Venue && p.Level != "" && p.Level == here.Level:
+		case p.Venue == here.Venue && (p.Level == here.Level || p.Level == "" && p.Verified):
 			return 0
 		case p.Venue == here.Venue:
 			return 1

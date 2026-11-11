@@ -28,6 +28,25 @@ func TestRankByNearness(t *testing.T) {
 				t.Fatalf("got %s", ids(got))
 			}
 		})
+
+		unknownLevel := []struct {
+			name, want string
+			verified   bool
+		}{
+			{"verified", "sp-unknown,sp-l2-a,sp-l2-b,sp-l1,hyatt-l2", true},
+			{"unverified", "sp-l2-a,sp-l2-b,sp-unknown,sp-l1,hyatt-l2", false},
+		}
+		for _, c := range unknownLevel {
+			t.Run("and a better search match in the same building is "+c.name+" with no level on record", func(t *testing.T) {
+				withUnknown := append([]Place{{ID: "sp-unknown", Venue: "Salt Palace", Verified: c.verified}}, places...)
+				got := RankByNearness(withUnknown, Here{Venue: "Salt Palace", Level: "Level 2"})
+				t.Run("it should rank it as "+c.want, func(t *testing.T) {
+					if ids(got) != c.want {
+						t.Fatalf("got %s", ids(got))
+					}
+				})
+			})
+		}
 	})
 
 	t.Run("when the attendee's location is unknown", func(t *testing.T) {

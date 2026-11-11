@@ -4,6 +4,8 @@ SHELL := bash
 
 ROOTS      := bootstrap cluster platform node node-platform
 NODE_KUBECONFIG := $(CURDIR)/.kube/node.config
+CLUSTER_KUBECONFIG := $(CURDIR)/.kube/config
+WASP_CONTEXT := lke195884-ctx
 TF_ARGS    ?=
 OP_TOKEN   := pass:cnh/op-service-account-token
 STATE_USER := op:CNH/cnh-tfstate/username
@@ -12,7 +14,7 @@ STATE_PASS := op:CNH/cnh-tfstate/password
 OP  := secret-run --env OP_SERVICE_ACCOUNT_TOKEN=$(OP_TOKEN) --
 TF  := $(OP) secret-run --env AWS_ACCESS_KEY_ID=$(STATE_USER) --env AWS_SECRET_ACCESS_KEY=$(STATE_PASS) -- terraform
 
-export KUBECONFIG := $(CURDIR)/.kube/config
+export KUBECONFIG := $(NODE_KUBECONFIG)
 
 ES_PASSWORD  ?= widedoor-dev
 ES_PORT      ?= 19200
@@ -24,7 +26,7 @@ help: ## Show this help
 	@grep -hE '^[a-zA-Z0-9_%-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-22s %s\n", $$1, $$2}'
 	@echo
 	@echo "  ROOT is one of: $(ROOTS)   e.g. make plan-cluster"
-	@echo "  KUBECONFIG is $(KUBECONFIG); it never touches ~/.kube/config"
+	@echo "  KUBECONFIG is $(KUBECONFIG) (the node); the event cluster targets use $(CLUSTER_KUBECONFIG). Only kubectx-* and use-* edit ~/.kube/config"
 
 .PHONY: bootstrap-seed
 bootstrap-seed: ## First run only: create Spaces key + state bucket with local state, then move state into the bucket
@@ -78,8 +80,14 @@ node-kubeconfig: ## Wait for cloud-init, then write the MicroK8s admin kubeconfi
 	  if ssh -o StrictHostKeyChecking=accept-new -o ConnectTimeout=5 root@$$ip test -e /var/lib/microk8s-bootstrap.done 2>/dev/null; then break; fi; \
 	  echo "waiting for microk8s bootstrap on $$ip ($$i/60)"; sleep 10; \
 	done; \
-	umask 077; ssh root@$$ip microk8s config | sed "s#https://[0-9.]*:16443#https://$$ip:16443#" > $(NODE_KUBECONFIG)
-	KUBECONFIG=$(NODE_KUBECONFIG) kubectl get nodes -o wide
+	umask 077; ssh root@$$ip microk8s config \
+	  | sed -e "s#https://[0-9.]*:16443#https://$$ip:16443#" \
+	        -e 's#^\(\s*\(- \)\?name:\|\s*cluster:\|\s*user:\|current-context:\) microk8s-cluster$$#\1 cnh-node#' \
+	        -e 's#^\(\s*\(- \)\?name:\|\s*user:\) admin$$#\1 cnh-node-admin#' \
+	        -e 's#^\(\s*\(- \)\?name:\|current-context:\) microk8s$$#\1 cnh-node#' \
+	  > $(NODE_KUBECONFIG)
+	kubectl get nodes -o wide
+	$(MAKE) --no-print-directory kubectx-merge-node
 
 .PHONY: node-bootstrap
 node-bootstrap: ## Kibana token, ELSER download and the first ingest on the node
@@ -97,18 +105,28 @@ up: init-cluster apply-cluster kubeconfig init-platform apply-platform ## Cluste
 .PHONY: kubeconfig
 kubeconfig: ## Write the cluster kubeconfig to .kube/config (mode 600)
 	mkdir -p .kube
-	umask 077; $(TF) -chdir=infra/cluster output -raw kubeconfig > .kube/config
-	kubectl config rename-context "$$(kubectl config current-context)" cnh
+	umask 077; $(TF) -chdir=infra/cluster output -raw kubeconfig > $(CLUSTER_KUBECONFIG)
+	KUBECONFIG=$(CLUSTER_KUBECONFIG) kubectl config rename-context "$$(KUBECONFIG=$(CLUSTER_KUBECONFIG) kubectl config current-context)" cnh
 	$(MAKE) --no-print-directory kubectx-merge
-	kubectl get nodes -o wide
+	KUBECONFIG=$(CLUSTER_KUBECONFIG) kubectl get nodes -o wide
 
 .PHONY: kubectx-merge
 kubectx-merge: ## Merge the cnh context into ~/.kube/config (backs it up first) so kubectx/k9s see it
 	cp ~/.kube/config ~/.kube/config.bak-cnh-$$(date +%Y%m%d%H%M%S)
 	KUBECONFIG=$$HOME/.kube/config kubectl config delete-context cnh >/dev/null 2>&1 || true
-	umask 077; KUBECONFIG=$$HOME/.kube/config:$(CURDIR)/.kube/config kubectl config view --flatten > $(CURDIR)/.kube/merged
+	umask 077; KUBECONFIG=$$HOME/.kube/config:$(CLUSTER_KUBECONFIG) kubectl config view --flatten > $(CURDIR)/.kube/merged
 	mv $(CURDIR)/.kube/merged ~/.kube/config
 	@echo "cnh added to ~/.kube/config; default is still $$(KUBECONFIG=$$HOME/.kube/config kubectl config current-context). Run 'make use-cnh' to switch."
+
+.PHONY: kubectx-merge-node
+kubectx-merge-node: ## Swap the node context in for the deleted cluster's in ~/.kube/config (backs it up first); the default context is unchanged
+	cp ~/.kube/config ~/.kube/config.bak-cnh-$$(date +%Y%m%d%H%M%S)
+	for c in cnh cnh-node; do KUBECONFIG=$$HOME/.kube/config kubectl config delete-context $$c >/dev/null 2>&1 || true; done
+	KUBECONFIG=$$HOME/.kube/config kubectl config delete-cluster do-sfo3-cnh >/dev/null 2>&1 || true
+	KUBECONFIG=$$HOME/.kube/config kubectl config delete-user do-sfo3-cnh-admin >/dev/null 2>&1 || true
+	umask 077; KUBECONFIG=$$HOME/.kube/config:$(NODE_KUBECONFIG) kubectl config view --flatten > $(CURDIR)/.kube/merged
+	mv $(CURDIR)/.kube/merged ~/.kube/config
+	@echo "cnh-node is in ~/.kube/config; default is still $$(KUBECONFIG=$$HOME/.kube/config kubectl config current-context)"
 
 .PHONY: use-cnh
 use-cnh: ## Make cnh the default context in ~/.kube/config for the event
@@ -116,7 +134,7 @@ use-cnh: ## Make cnh the default context in ~/.kube/config for the event
 
 .PHONY: use-wasp
 use-wasp: ## Switch the default context back to wasp
-	KUBECONFIG=$$HOME/.kube/config kubectl config use-context lke195884-ctx
+	KUBECONFIG=$$HOME/.kube/config kubectl config use-context $(WASP_CONTEXT)
 
 .PHONY: status
 status: ## Nodes, non-running pods, gateways and certificates

@@ -81,8 +81,8 @@ func prefsCookieOf(res *http.Response) *http.Cookie {
 }
 
 const (
-	removeStepFree = `<span class="vh">Remove </span><span aria-hidden="true">&#10003; </span>Step-free only`
-	addQuiet       = `<span class="vh">Add </span>Quiet spaces matter`
+	removeStepFree = `<span class="vh">Remove </span><span aria-hidden="true">&#10003; </span><span>Step-free only`
+	addQuiet       = `<span class="vh">Add </span><span>Quiet spaces matter`
 	profileHeading = "What Wide Door knows about you"
 )
 

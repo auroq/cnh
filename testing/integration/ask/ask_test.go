@@ -92,8 +92,8 @@ func TestAsk(t *testing.T) {
 				t.Fatalf("need = %+v, summary = %q", a.Need, a.Summary)
 			}
 		})
-		t.Run("it should offer the elevator because the fixtures have no step-free entrance", func(t *testing.T) {
-			if len(a.Places) == 0 || a.Places[0].Kind != "elevator" {
+		t.Run("it should offer the step-free entrance, the need's first kind", func(t *testing.T) {
+			if len(a.Places) == 0 || a.Places[0].Kind != "step-free-entrance" {
 				t.Fatalf("places = %+v", a.Places)
 			}
 		})

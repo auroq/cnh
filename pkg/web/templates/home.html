@@ -156,7 +156,7 @@
     <input type="hidden" name="prefs" value="{{.Prefs}}">
     <p class="how">Needs, not diagnoses. Pick what applies and answers put it first.</p>
     <ul class="chips">
-      {{range .Chips}}<li><button type="submit" class="chip{{if .On}} on{{end}}{{if .Learned}} learned{{end}}" name="{{if .On}}remove{{else}}add{{end}}" value="{{.ID}}"><span class="vh">{{if .On}}Remove {{else}}Add {{end}}</span>{{if .On}}<span aria-hidden="true">&#10003; </span>{{end}}{{.Label}}{{if .Learned}}<span class="from">, from your question</span>{{end}}</button>{{if .Learned}} <button type="submit" class="chip keep" name="add" value="{{.ID}}"><span class="vh">Keep {{.Label}}</span><span aria-hidden="true">Keep</span></button>{{end}}</li>
+      {{range .Chips}}<li><button type="submit" class="chip{{if .On}} on{{end}}{{if .Learned}} learned{{end}}" name="{{if .On}}remove{{else}}add{{end}}" value="{{.ID}}"><span class="vh">{{if .On}}Remove {{else}}Add {{end}}</span>{{if .On}}<span aria-hidden="true">&#10003; </span>{{end}}<span>{{.Label}}{{if .Learned}}<span class="from">, from your question</span>{{end}}</span></button>{{if .Learned}} <button type="submit" class="chip keep" name="add" value="{{.ID}}"><span class="vh">Keep {{.Label}}</span><span aria-hidden="true">Keep</span></button>{{end}}</li>
       {{end}}
     </ul>
     <p class="privacy">Stored on this device until Thursday, sent with every page, never kept by the server. We never ask what you have, only what you need.</p>

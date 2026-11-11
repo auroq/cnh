@@ -4,7 +4,7 @@ name: cd
 #   2. CI runs again on main; when it succeeds this workflow starts
 #   3. build: the image is built and pushed, tagged with the commit SHA
 #   4. bump: a PR pins that SHA in deploy/app/kustomization.yaml and auto-merges once CI passes
-#   5. gate: wait for Argo CD and the Rollout's canary, then run the browser accessibility tests and the acceptance checks against the live site
+#   5. gate: wait for Argo CD and the Deployment, then run the browser accessibility tests and the acceptance checks against the live site
 #   6. rollback: if the gate fails, a PR reverts the bump and auto-merges; git stays the source of truth
 on:
   workflow_run:
@@ -19,6 +19,10 @@ concurrency:
   cancel-in-progress: false
 env:
   IMAGE: ghcr.io/auroq/cnh/widedoor
+defaults:
+  run:
+    shell: bash
+
 jobs:
   plan:
     if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push'
@@ -206,13 +210,13 @@ jobs:
           url=$(tools/pr.sh --title "deploy: revert images at $short" --body "The post-deploy gate failed for ${{ needs.plan.outputs.sha }} (workflow run ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}). This pins the previous image again; Argo CD's self-heal rolls the cluster back. Reverts #${{ needs.bump.outputs.pr }}." | grep -m1 'https://github.com/.*/pull/')
           echo "revert PR: $url" >> "$GITHUB_STEP_SUMMARY"
           tools/wait-pr.sh "${url##*/}" --timeout 1200
-      - name: Confirm the previous image is Healthy again
+      - name: Confirm the previous image is available again
         run: |
           install -m 600 /dev/null "$RUNNER_TEMP/kubeconfig"
           printf '%s' "$CD_KUBECONFIG" > "$RUNNER_TEMP/kubeconfig"
           export KUBECONFIG="$RUNNER_TEMP/kubeconfig"
           image=$(kubectl kustomize deploy/app | grep -m1 -oE "${IMAGE}:[0-9a-f]{40}")
-          tools/wait-rollout.sh --image "$image" --timeout 900 | tee -a "$GITHUB_STEP_SUMMARY"
+          tools/wait-deployment.sh --image "$image" --timeout 900 | tee -a "$GITHUB_STEP_SUMMARY"
         env:
           CD_KUBECONFIG: ${{ secrets.CD_KUBECONFIG }}
       - name: Say so on the bump PR
