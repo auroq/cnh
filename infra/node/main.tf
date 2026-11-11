@@ -24,6 +24,10 @@ resource "digitalocean_droplet" "node" {
   user_data = templatefile("${path.module}/cloud-init.yaml.tftpl", {
     microk8s_channel = var.microk8s_channel
   })
+
+  lifecycle {
+    ignore_changes = [user_data]
+  }
 }
 
 resource "digitalocean_firewall" "node" {
