@@ -1,0 +1,94 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: wide-door
+labels:
+  - pairs:
+      app.kubernetes.io/part-of: wide-door
+    includeSelectors: false
+resources:
+  - ../app
+  - elasticsearch.yaml
+  - kibana.yaml
+  - widedoor-deployment.yaml
+  - ingress.yaml
+  - cluster-issuer.yaml
+replacements:
+  - source:
+      kind: CronJob
+      name: ingest
+      fieldPath: spec.jobTemplate.spec.template.spec.containers.[name=ingest].image
+    targets:
+      - select:
+          kind: Deployment
+          name: widedoor
+        fieldPaths:
+          - spec.template.spec.containers.[name=widedoor].image
+patches:
+  - patch: |-
+      apiVersion: elasticsearch.k8s.elastic.co/v1
+      kind: Elasticsearch
+      metadata:
+        name: wide-door
+      $patch: delete
+  - patch: |-
+      apiVersion: kibana.k8s.elastic.co/v1
+      kind: Kibana
+      metadata:
+        name: wide-door
+      $patch: delete
+  - patch: |-
+      apiVersion: argoproj.io/v1alpha1
+      kind: Rollout
+      metadata:
+        name: widedoor
+      $patch: delete
+  - patch: |-
+      apiVersion: gateway.networking.k8s.io/v1
+      kind: HTTPRoute
+      metadata:
+        name: widedoor
+      $patch: delete
+  - patch: |-
+      apiVersion: gateway.networking.k8s.io/v1
+      kind: HTTPRoute
+      metadata:
+        name: kibana
+      $patch: delete
+  - patch: |-
+      apiVersion: operator.dash0.com/v1beta1
+      kind: Dash0Monitoring
+      metadata:
+        name: dash0-monitoring-resource
+      $patch: delete
+  - patch: |-
+      apiVersion: policy/v1
+      kind: PodDisruptionBudget
+      metadata:
+        name: widedoor
+      $patch: delete
+  - patch: |-
+      apiVersion: policy/v1
+      kind: PodDisruptionBudget
+      metadata:
+        name: kibana
+      $patch: delete
+  - patch: |-
+      apiVersion: batch/v1
+      kind: CronJob
+      metadata:
+        name: ingest
+      spec:
+        jobTemplate:
+          spec:
+            template:
+              spec:
+                containers:
+                  - name: ingest
+                    env:
+                      - name: WIDEDOOR_TELEMETRY_OTLP_ENDPOINT
+                        value: https://ingress.us-west-2.aws.dash0.com:4317
+                      - name: OTEL_EXPORTER_OTLP_HEADERS
+                        valueFrom:
+                          secretKeyRef:
+                            name: dash0-otlp
+                            key: headers

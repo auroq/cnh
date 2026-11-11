@@ -32,3 +32,4 @@ Times are Mountain Time on 2026-11-09: coding starts at 11:00, code freezes at 1
 | [079](roadmap/079-routes-not-just-destinations.md) | **after the event:** routes with obstacles, as steps in words and on a map; phase 1 is open as PR #125, not merged | 068, 075, 081 | Aria, the next project |
 | [118](roadmap/118-off-prefer-must.md) | each need is Off, Prefer or Must; Must filters and Prefer ranks since PR #124, but Must is set only through the `prefs` link today; the profile page and bar still to say which | 103, 114 | nobody |
 | [096](roadmap/096-attendee-reports.md) | attendees verify, dispute and annotate places; shown at once, trusted after a second person agrees; built in PR #102, issue still open | 063 | Aria, the trust rules |
+| [130](roadmap/130-one-node-after-the-event.md) | **after the event:** the live site on one MicroK8s droplet from `deploy/node`, the DOKS cluster destroyed | 013 | Aria, the four decisions in ADR 0014 |

@@ -1,0 +1,39 @@
+#cloud-config
+package_update: true
+package_upgrade: false
+
+write_files:
+  - path: /etc/sysctl.d/90-elasticsearch.conf
+    content: |
+      vm.max_map_count = 262144
+  - path: /usr/local/sbin/microk8s-bootstrap
+    permissions: "0755"
+    content: |
+      #!/usr/bin/env bash
+      set -euo pipefail
+      marker=/var/lib/microk8s-bootstrap.done
+      [[ -e "$marker" ]] && exit 0
+      sysctl --system
+      snap install microk8s --classic --channel="${microk8s_channel}"
+      usermod -a -G microk8s root
+      microk8s status --wait-ready --timeout 600
+      public_ip=$(curl -fsS --max-time 10 http://169.254.169.254/metadata/v1/interfaces/public/0/ipv4/address)
+      template=/var/snap/microk8s/current/certs/csr.conf.template
+      if ! grep -q "IP.100 = $public_ip" "$template"; then
+        sed -i "s/^#MOREIPS/IP.100 = $public_ip\n#MOREIPS/" "$template"
+        microk8s refresh-certs --cert server.crt
+        microk8s status --wait-ready --timeout 600
+      fi
+      microk8s enable dns
+      microk8s enable hostpath-storage
+      microk8s enable ingress
+      microk8s enable cert-manager
+      microk8s enable metrics-server
+      microk8s enable helm3
+      microk8s status --wait-ready --timeout 600
+      microk8s kubectl -n ingress rollout status daemonset/nginx-ingress-microk8s-controller --timeout=300s
+      microk8s kubectl -n cert-manager rollout status deployment/cert-manager-webhook --timeout=300s
+      date -u +%FT%TZ > "$marker"
+
+runcmd:
+  - [/usr/local/sbin/microk8s-bootstrap]

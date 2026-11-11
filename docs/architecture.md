@@ -107,6 +107,7 @@ Settings come from flags, then `WIDEDOOR_*` environment variables, then `/etc/wi
 | a field in the JSON API, or what a type means | `pkg/api/v1` (the promise), `pkg/model` (the meaning), the adapter (the storage) |
 | the QR codes on the doors, which places get one, the printable sheet | `pkg/qr`; the URL they open is `/?from=<place id>`, read by `pkg/web` and resolved id-first by `pkg/ask` |
 | what runs in the cluster, probes, resources, routes | `deploy/app` (synced by Argo CD, pinned by image SHA, bumped by `tools/bump-image.sh` or by `cd.yml`) |
+| what runs on the single node after the event | `deploy/node`, a kustomize overlay on `deploy/app` that swaps ECK, Rollouts and the Gateway for a StatefulSet, a Deployment and an Ingress (ADR 0014); the image pin is inherited from the base |
 | how a release is built, pinned, checked and rolled back | `.github/workflows/cd.yml`, `tools/wait-pr.sh`, `tools/wait-rollout.sh`, `tools/smoke.sh`, ADR 0008 |
 | which spans, metrics and logs leave the app, and where they go | `pkg/telemetry` (providers, exporters, the slog bridge), `pkg/ask/telemetry.go` and `pkg/ingest/telemetry.go` (the instruments and attribute names), `telemetry.otlp_endpoint` in `deploy/app/config.yaml` (the Dash0 operator's collector) |
 | the platform under it (gateway, ECK, Argo, Dash0, Radar) | `infra/platform` (Terraform, built before kickoff) |

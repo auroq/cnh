@@ -18,3 +18,4 @@ A record is accepted or proposed; a decision that changes gets a new record that
 | [0011](0011-types-live-by-kind.md) | types live by kind: `pkg/model`, private adapter shapes, `pkg/api/v1` | Accepted |
 | [0012](0012-how-we-describe-distance.md) | distance is route facts (level change, elevator, connection), never a single walk time | Accepted |
 | [0013](0013-gitar-blocks-on-important-findings.md) | Gitar requests changes on important findings and GitHub refuses the merge; approval stays advisory | Accepted; supersedes the blocking half of 0010 |
+| [0014](0014-one-node-after-the-event.md) | after the event the live site runs on one MicroK8s droplet from the `deploy/node` overlay; the DOKS cluster is destroyed | Accepted |

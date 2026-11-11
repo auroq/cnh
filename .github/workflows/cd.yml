@@ -142,14 +142,14 @@ jobs:
           echo "KUBECONFIG=$RUNNER_TEMP/kubeconfig" >> "$GITHUB_ENV"
         env:
           CD_KUBECONFIG: ${{ secrets.CD_KUBECONFIG }}
-      - name: Wait for the Rollout to be Healthy on the released image
+      - name: Wait for the Deployment to be available on the released image
         run: |
           if [[ "${{ needs.plan.outputs.release }}" == "true" ]]; then
             image="${IMAGE}:${{ needs.plan.outputs.sha }}"
           else
             image=$(kubectl kustomize deploy/app | grep -m1 -oE "${IMAGE}:[0-9a-f]{40}")
           fi
-          tools/wait-rollout.sh --image "$image" --timeout 900 | tee -a "$GITHUB_STEP_SUMMARY"
+          tools/wait-deployment.sh --image "$image" --timeout 900 | tee -a "$GITHUB_STEP_SUMMARY"
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
