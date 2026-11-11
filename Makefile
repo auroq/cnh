@@ -2,7 +2,9 @@ SHELL := bash
 .SHELLFLAGS := -euo pipefail -c
 .DEFAULT_GOAL := help
 
-ROOTS      := bootstrap cluster platform
+ROOTS      := bootstrap cluster platform node node-platform
+NODE_KUBECONFIG := $(CURDIR)/.kube/node.config
+TF_ARGS    ?=
 OP_TOKEN   := pass:cnh/op-service-account-token
 STATE_USER := op:CNH/cnh-tfstate/username
 STATE_PASS := op:CNH/cnh-tfstate/password
@@ -49,6 +51,45 @@ apply-%: ## terraform apply for ROOT
 
 destroy-%: ## terraform destroy for ROOT
 	$(TF) -chdir=infra/$* destroy
+
+planfile-%: ## terraform plan for ROOT saved to infra/ROOT/ROOT.tfplan (pass TF_ARGS='-var x=y' for variables)
+	$(TF) -chdir=infra/$* plan -out=$*.tfplan $(TF_ARGS)
+
+applyfile-%: ## terraform apply of the saved infra/ROOT/ROOT.tfplan, nothing else
+	$(TF) -chdir=infra/$* apply $*.tfplan
+	rm -f infra/$*/$*.tfplan
+
+.PHONY: up-node
+up-node: init-node applyfile-node node-kubeconfig init-node-platform planfile-node-platform applyfile-node-platform ## Droplet, kubeconfig, then Argo CD and secrets on it (run planfile-node first and read it)
+
+.PHONY: node-ip
+node-ip: ## Print the droplet's public IPv4
+	@$(TF) -chdir=infra/node output -raw ipv4
+
+.PHONY: node-ssh
+node-ssh: ## SSH to the droplet as root
+	ssh root@$$($(TF) -chdir=infra/node output -raw ipv4)
+
+.PHONY: node-kubeconfig
+node-kubeconfig: ## Wait for cloud-init, then write the MicroK8s admin kubeconfig to .kube/node.config (mode 600)
+	mkdir -p .kube
+	ip=$$($(TF) -chdir=infra/node output -raw ipv4); \
+	for i in $$(seq 1 60); do \
+	  if ssh -o StrictHostKeyChecking=accept-new -o ConnectTimeout=5 root@$$ip test -e /var/lib/microk8s-bootstrap.done 2>/dev/null; then break; fi; \
+	  echo "waiting for microk8s bootstrap on $$ip ($$i/60)"; sleep 10; \
+	done; \
+	umask 077; ssh root@$$ip microk8s config | sed "s#https://[0-9.]*:16443#https://$$ip:16443#" > $(NODE_KUBECONFIG)
+	KUBECONFIG=$(NODE_KUBECONFIG) kubectl get nodes -o wide
+
+.PHONY: node-bootstrap
+node-bootstrap: ## Kibana token, ELSER download and the first ingest on the node
+	KUBECONFIG=$(NODE_KUBECONFIG) tools/node-bootstrap.sh
+
+.PHONY: node-status
+node-status: ## Pods, ingress and certificate on the node
+	KUBECONFIG=$(NODE_KUBECONFIG) kubectl get nodes
+	KUBECONFIG=$(NODE_KUBECONFIG) kubectl -n wide-door get pods,ingress,certificate
+	KUBECONFIG=$(NODE_KUBECONFIG) kubectl -n argocd get applications
 
 .PHONY: up
 up: init-cluster apply-cluster kubeconfig init-platform apply-platform ## Cluster, kubeconfig, then platform add-ons
