@@ -32,6 +32,9 @@ func bulk(t *testing.T, es *esindex.Client, index string, docs ...esindex.Doc) {
 	if failed > 0 {
 		t.Fatalf("bulk: %d documents failed", failed)
 	}
+	if err := es.Refresh(ctx, index); err != nil {
+		t.Fatalf("refresh: %v", err)
+	}
 }
 
 func count(t *testing.T, es *esindex.Client, index string) int {
