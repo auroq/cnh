@@ -31,9 +31,9 @@ write_files:
       microk8s enable metrics-server
       microk8s enable helm3
       microk8s status --wait-ready --timeout 600
-      microk8s kubectl -n ingress rollout status daemonset/nginx-ingress-microk8s-controller --timeout=300s
+      microk8s kubectl -n ingress rollout status daemonset/traefik --timeout=300s
       microk8s kubectl -n cert-manager rollout status deployment/cert-manager-webhook --timeout=300s
       date -u +%FT%TZ > "$marker"
 
 runcmd:
-  - [/usr/local/sbin/microk8s-bootstrap]
+  - [sh, -c, "for i in 1 2 3; do /usr/local/sbin/microk8s-bootstrap && exit 0; sleep 20; done; exit 1"]
