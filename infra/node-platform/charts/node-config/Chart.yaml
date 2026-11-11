@@ -1,0 +1,5 @@
+apiVersion: v2
+name: node-config
+description: Argo CD Application for Wide Door on the single node
+type: application
+version: 0.1.0

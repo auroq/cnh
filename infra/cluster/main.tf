@@ -33,6 +33,8 @@ resource "digitalocean_kubernetes_cluster" "cnh" {
   auto_upgrade  = false
   surge_upgrade = true
 
+  destroy_all_associated_resources = true
+
   node_pool {
     name       = "core"
     size       = var.node_size

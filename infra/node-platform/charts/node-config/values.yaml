@@ -1,0 +1,6 @@
+application:
+  name: wide-door
+  repoURL: https://github.com/auroq/cnh.git
+  targetRevision: main
+  path: deploy/node
+  namespace: wide-door
