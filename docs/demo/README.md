@@ -1,7 +1,7 @@
 # Evidence from the day
 
 Each page here was captured while it happened, not staged afterwards.
-The live app is https://widedoor.cnh.auroq.com.
+The live app was https://widedoor.cnh.auroq.com until it was taken down on 2026-11-13; the links below no longer answer.
 
 | page | what it shows |
 | --- | --- |

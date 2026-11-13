@@ -11,12 +11,13 @@ The name comes from the curb-cut effect: access built for disabled people ends u
 
 ## Read this first
 
-- Live app: https://widedoor.cnh.auroq.com
+- The live app ran at https://widedoor.cnh.auroq.com from 2026-11-09 until it was taken down on 2026-11-13, when the repository was archived.
+  To try it, follow [Run it](#run-it) locally.
 - Architecture: the section below, then [`docs/architecture.md`](docs/architecture.md).
 - AI disclosure: [`AI_USAGE.md`](AI_USAGE.md).
 - Evidence and the demo map per track: [`docs/demo/README.md`](docs/demo/README.md).
 - Hackathon work: `git log pre-kickoff..`, every commit after the tag [`pre-kickoff`](https://github.com/auroq/cnh/releases/tag/pre-kickoff).
-- What is next: the open table in [`ROADMAP.md`](ROADMAP.md), with routes ([item 079](roadmap/079-routes-not-just-destinations.md), open PR 125) first.
+- What was next: the open table in [`ROADMAP.md`](ROADMAP.md), with routes ([item 079](roadmap/079-routes-not-just-destinations.md), PR 125, left open when the repository was archived) first.
 
 ## What it does
 
@@ -137,7 +138,8 @@ Node 24 for the browser tests; `.nvmrc` pins it.
 
 ### After the event
 
-Since 2026-11-10 the live site runs on one MicroK8s droplet instead of the three-node cluster ([ADR 0014](docs/adr/0014-one-node-after-the-event.md)).
+From 2026-11-10 to 2026-11-13 the live site ran on one MicroK8s droplet instead of the three-node cluster ([ADR 0014](docs/adr/0014-one-node-after-the-event.md)).
+On 2026-11-13 everything was destroyed: the droplet, the DNS zone and its delegation, and the Terraform state bucket.
 `make up-node` creates it from `infra/node` and `infra/node-platform`, `make node-bootstrap` seeds Elasticsearch, and the overlay it runs is `deploy/node`.
 The step-by-step cutover is in [`docs/transitions/post-event-single-node.md`](docs/transitions/post-event-single-node.md).
 
