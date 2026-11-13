@@ -1,7 +1,7 @@
 # ADR 0014: One MicroK8s node after the event
 
 Date: 2026-11-10
-Status: Accepted
+Status: Accepted; superseded by the 2026-11-13 takedown, when the node was destroyed
 Issue: #130
 
 ## Context

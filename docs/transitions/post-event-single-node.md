@@ -72,7 +72,14 @@ All times UTC.
   The release itself was fine: acceptance and all 67 browser tests pass on it.
 - 2026-11-11: the stale `cnh` context and its credentials left `~/.kube/config`, `.kube/config` was deleted, and wasp is the default context again.
 
+- 2026-11-13: the conference is over, so everything comes down: `infra/node-platform` and `infra/node` destroyed, the `cnh` NS records removed from the parent zone before the `cnh.auroq.com` zone was deleted (so nobody else can claim the subdomain), `infra/bootstrap` and its state bucket destroyed, and the repository archived.
+  The default `cnh` VPC is left; DigitalOcean does not bill VPCs.
+
 ## Going back to the event shape
+
+After the 2026-11-13 takedown nothing is left to import: run `make bootstrap-seed` and then `make up` or `make up-node` from scratch, and add the `cnh` NS records back to the `auroq.com` zone.
+The notes below are from before the takedown.
+
 
 `infra/cluster` no longer owns the domain or the VPC, so `make up` would try to create both and fail on the name.
 `make kubeconfig` writes `.kube/config` again; the cluster targets read it through `CLUSTER_KUBECONFIG`.
